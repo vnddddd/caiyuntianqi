@@ -602,25 +602,7 @@ body {
   display: none; /* 隐藏具体日期，只显示星期几 */
 }
 
-/* 页脚 */
-.footer {
-  background: rgba(255, 255, 255, 0.95);
-  backdrop-filter: blur(10px);
-  border-top: 1px solid var(--border-color);
-  padding: 1.5rem 0;
-  text-align: center;
-  color: var(--text-secondary);
-  font-size: 0.875rem;
-}
 
-.footer a {
-  color: var(--primary-color);
-  text-decoration: none;
-}
-
-.footer a:hover {
-  text-decoration: underline;
-}
 
 /* 响应式设计 */
 @media (min-width: 768px) {
@@ -841,16 +823,73 @@ body {
     grid-template-columns: repeat(2, 1fr);
   }
 
+  .daily-forecast-card {
+    padding: 1rem;
+  }
+
+  .daily-forecast {
+    gap: 0;
+  }
+
   .daily-item {
     flex-direction: column;
     align-items: flex-start;
-    gap: 0.75rem;
+    gap: 1rem;
+    padding: 1rem;
+    background: rgba(255, 255, 255, 0.8);
+    border-radius: 12px;
+    margin-bottom: 0.75rem;
   }
 
-  .daily-weather,
-  .daily-temp {
+  .daily-relative {
+    width: 100%;
+    margin-bottom: 0.5rem;
+  }
+
+  .daily-relative-day {
+    font-size: 1.1rem;
+    font-weight: 600;
+    color: #333;
+  }
+
+  .daily-weather {
+    width: 100%;
     justify-content: flex-start;
     text-align: left;
+    margin-bottom: 0.5rem;
+  }
+
+  .daily-icon {
+    font-size: 2rem;
+    margin-right: 0.75rem;
+  }
+
+  .daily-desc {
+    font-size: 1rem;
+    color: #555;
+  }
+
+  .daily-temp {
+    width: 100%;
+    justify-content: space-between;
+    text-align: left;
+    align-items: center;
+  }
+
+  .daily-temp-range {
+    font-size: 1.1rem;
+    font-weight: 600;
+    color: #333;
+  }
+
+  .daily-date {
+    text-align: right;
+  }
+
+  .daily-weekday {
+    font-size: 1rem;
+    font-weight: 500;
+    color: #666;
   }
 
   /* 移动端模态框优化 */
