@@ -117,14 +117,15 @@ class WeatherApp {
           }
         }
 
-        // 如果没有权限API或权限未授予，显示获取位置按钮
-        this.showLocationPrompt();
+        // 如果没有权限API或权限未授予，直接加载默认位置
+        this.loadDefaultLocation();
       } catch (error) {
         console.log('权限检查失败:', error);
-        this.showLocationPrompt();
+        this.loadDefaultLocation();
       }
     } else {
-      this.showError('您的浏览器不支持地理位置功能');
+      // 浏览器不支持地理位置，直接加载默认位置
+      this.loadDefaultLocation();
     }
   }
 
