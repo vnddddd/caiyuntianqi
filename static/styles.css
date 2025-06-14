@@ -462,10 +462,18 @@ body.bg-snow::before {
 /* 卡片基础样式 */
 .current-weather-card,
 .air-quality-card,
-.hourly-forecast-card,
-.daily-forecast-card {
+.hourly-forecast-card {
   background: var(--bg-card);
   border-radius: var(--border-radius);
+  padding: 1.5rem;
+  box-shadow: var(--shadow-medium);
+  transition: var(--transition);
+}
+
+/* 3天预报卡片特殊样式 - 与生活指数卡片连接 */
+.daily-forecast-card {
+  background: var(--bg-card);
+  border-radius: var(--border-radius) var(--border-radius) 0 0;
   padding: 1.5rem;
   box-shadow: var(--shadow-medium);
   transition: var(--transition);
@@ -1145,11 +1153,12 @@ body.bg-snow::before {
 /* 天气生活指数提醒卡片 */
 .weather-tips-card {
   background: var(--bg-card);
-  border-radius: var(--border-radius);
+  border-radius: 0 0 var(--border-radius) var(--border-radius);
+  border-top: 1px solid var(--border-color);
   padding: 1.5rem;
   box-shadow: var(--shadow-medium);
   transition: var(--transition);
-  margin-top: 1.5rem;
+  margin-top: 0;
 }
 
 .weather-tips-card:hover {
@@ -1223,11 +1232,28 @@ body.bg-snow::before {
   /* 增强卡片透明度以更好地展示背景 */
   .current-weather-card,
   .air-quality-card,
-  .hourly-forecast-card,
+  .hourly-forecast-card {
+    background: rgba(255, 255, 255, 0.85);
+    backdrop-filter: blur(15px);
+    border: 1px solid rgba(255, 255, 255, 0.3);
+  }
+
+  /* 3天预报卡片 - 与生活指数连接 */
   .daily-forecast-card {
     background: rgba(255, 255, 255, 0.85);
     backdrop-filter: blur(15px);
     border: 1px solid rgba(255, 255, 255, 0.3);
+    border-bottom: none;
+    border-radius: var(--border-radius) var(--border-radius) 0 0;
+  }
+
+  /* 生活指数卡片 - 与3天预报连接 */
+  .weather-tips-card {
+    background: rgba(255, 255, 255, 0.85);
+    backdrop-filter: blur(15px);
+    border: 1px solid rgba(255, 255, 255, 0.3);
+    border-top: none;
+    border-radius: 0 0 var(--border-radius) var(--border-radius);
   }
 
   /* 头部透明度调整 */
