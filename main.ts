@@ -406,13 +406,35 @@ async function handler(req: Request): Promise<Response> {
       // 获取客户端 IP
       const clientIP = req.headers.get('x-forwarded-for') ||
                       req.headers.get('x-real-ip') ||
+                      req.headers.get('cf-connecting-ip') ||
                       'auto';
+
+      console.log('客户端IP信息:', {
+        'x-forwarded-for': req.headers.get('x-forwarded-for'),
+        'x-real-ip': req.headers.get('x-real-ip'),
+        'cf-connecting-ip': req.headers.get('cf-connecting-ip'),
+        'user-agent': req.headers.get('user-agent'),
+        'final-ip': clientIP
+      });
 
       const location = await getLocationByIP(clientIP === 'auto' ? undefined : clientIP);
 
       if (location) {
+        // 添加IP调试信息
+        const result = {
+          ...location,
+          debug: {
+            clientIP: clientIP,
+            headers: {
+              'x-forwarded-for': req.headers.get('x-forwarded-for'),
+              'x-real-ip': req.headers.get('x-real-ip'),
+              'cf-connecting-ip': req.headers.get('cf-connecting-ip')
+            }
+          }
+        };
+
         return new Response(
-          JSON.stringify(location),
+          JSON.stringify(result),
           {
             headers: {
               "Content-Type": "application/json; charset=utf-8",
@@ -422,7 +444,17 @@ async function handler(req: Request): Promise<Response> {
         );
       } else {
         return new Response(
-          JSON.stringify({ error: "无法获取 IP 位置信息" }),
+          JSON.stringify({
+            error: "无法获取 IP 位置信息",
+            debug: {
+              clientIP: clientIP,
+              headers: {
+                'x-forwarded-for': req.headers.get('x-forwarded-for'),
+                'x-real-ip': req.headers.get('x-real-ip'),
+                'cf-connecting-ip': req.headers.get('cf-connecting-ip')
+              }
+            }
+          }),
           {
             status: 404,
             headers: { "Content-Type": "application/json; charset=utf-8" }

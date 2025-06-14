@@ -249,12 +249,17 @@ class WeatherApp {
       const data = await response.json();
 
       if (data.error) {
+        // 显示错误调试信息
+        this.showDebugInfo(data.debug, data.error);
         throw new Error(data.error);
       }
 
       this.currentLocation = { lat: data.lat, lng: data.lng };
 
       console.log('IP 定位成功:', this.currentLocation, '地址:', data.address);
+
+      // 显示成功的调试信息
+      this.showDebugInfo(data.debug, null, data);
 
       // 更新按钮状态
       const locationBtn = document.getElementById('locationBtn');
@@ -270,6 +275,45 @@ class WeatherApp {
       console.error('IP 定位失败:', error);
       throw error;
     }
+  }
+
+  // 显示调试信息
+  showDebugInfo(debugData, error = null, locationData = null) {
+    const debugInfo = document.getElementById('debugInfo');
+    const debugContent = document.getElementById('debugContent');
+
+    if (!debugInfo || !debugContent) return;
+
+    let debugText = '=== IP定位调试信息 ===\n\n';
+
+    if (debugData) {
+      debugText += `检测到的IP地址: ${debugData.clientIP || '未知'}\n\n`;
+
+      debugText += '请求头信息:\n';
+      if (debugData.headers) {
+        debugText += `  x-forwarded-for: ${debugData.headers['x-forwarded-for'] || '无'}\n`;
+        debugText += `  x-real-ip: ${debugData.headers['x-real-ip'] || '无'}\n`;
+        debugText += `  cf-connecting-ip: ${debugData.headers['cf-connecting-ip'] || '无'}\n`;
+      }
+      debugText += '\n';
+    }
+
+    if (error) {
+      debugText += `错误信息: ${error}\n\n`;
+    }
+
+    if (locationData) {
+      debugText += '定位结果:\n';
+      debugText += `  纬度: ${locationData.lat}\n`;
+      debugText += `  经度: ${locationData.lng}\n`;
+      debugText += `  地址: ${locationData.address}\n\n`;
+    }
+
+    debugText += `时间: ${new Date().toLocaleString('zh-CN')}\n`;
+    debugText += `用户代理: ${navigator.userAgent}\n`;
+
+    debugContent.textContent = debugText;
+    debugInfo.style.display = 'block';
   }
 
   // 加载默认位置（北京）
