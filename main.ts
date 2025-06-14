@@ -111,10 +111,10 @@ function formatWeatherData(rawData: any, longitude: number) {
       });
     }
 
-    // 7天预报 - 添加数据验证
+    // 3天预报 - 添加数据验证
     let dailyForecast: any[] = [];
     if (daily && daily.temperature && Array.isArray(daily.temperature)) {
-      dailyForecast = daily.temperature.slice(0, 7).map((temp: any, index: number) => {
+      dailyForecast = daily.temperature.slice(0, 3).map((temp: any, index: number) => {
         const date = new Date(Date.now() + index * 24 * 60 * 60 * 1000);
         const skyconValue = safeGet(daily, `skycon.${index}.value`, 'CLEAR_DAY');
 
@@ -147,7 +147,7 @@ async function getWeatherData(longitude: number, latitude: number) {
     throw new Error("彩云天气 API Token 未配置");
   }
 
-  const url = `${CAIYUN_API_BASE}/${CAIYUN_API_TOKEN}/${longitude},${latitude}/weather?alert=true&dailysteps=7&hourlysteps=24`;
+  const url = `${CAIYUN_API_BASE}/${CAIYUN_API_TOKEN}/${longitude},${latitude}/weather?alert=true&dailysteps=3&hourlysteps=24`;
 
   try {
     const response = await fetch(url);

@@ -672,11 +672,11 @@ body {
 }
 
 .location-action-btn {
-  background: rgba(255, 255, 255, 0.1);
-  border: 1px solid rgba(255, 255, 255, 0.2);
+  background: rgba(255, 255, 255, 0.9);
+  border: 1px solid rgba(0, 0, 0, 0.2);
   border-radius: 8px;
   padding: 0.5rem;
-  color: white;
+  color: #333;
   cursor: pointer;
   transition: all 0.3s ease;
   font-size: 1rem;
@@ -685,21 +685,25 @@ body {
   display: flex;
   align-items: center;
   justify-content: center;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
 }
 
 .location-action-btn:hover {
-  background: rgba(255, 255, 255, 0.2);
+  background: rgba(255, 255, 255, 1);
   transform: translateY(-2px);
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
 }
 
 .location-action-btn.active {
   background: #4CAF50;
   border-color: #4CAF50;
+  color: white;
 }
 
 .location-action-btn.default {
   background: #2196F3;
   border-color: #2196F3;
+  color: white;
 }
 
 /* 收藏地址样式 */

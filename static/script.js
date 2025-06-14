@@ -509,7 +509,7 @@ class WeatherApp {
     // 更新24小时预报
     this.updateHourlyForecast(hourly);
 
-    // 更新7天预报
+    // 更新3天预报
     this.updateDailyForecast(daily);
 
     // 更新位置和时间信息
@@ -556,7 +556,7 @@ class WeatherApp {
     `).join('');
   }
 
-  // 更新7天预报
+  // 更新3天预报
   updateDailyForecast(daily) {
     const container = document.getElementById('dailyForecast');
     if (!container || !daily) return;
@@ -725,21 +725,42 @@ class WeatherApp {
     this.updateFavoriteList();
   }
 
-  // 设为默认
+  // 设为默认/取消默认
   setAsDefault() {
     if (!this.currentLocation) return;
 
-    const currentLocationName = document.getElementById('currentLocation').textContent;
-    const locationData = {
-      name: currentLocationName,
-      lat: this.currentLocation.lat,
-      lng: this.currentLocation.lng,
-      address: currentLocationName
-    };
+    // 检查是否为当前默认位置
+    const isCurrentDefault = this.defaultLocation &&
+      Math.abs(this.defaultLocation.lat - this.currentLocation.lat) < 0.001 &&
+      Math.abs(this.defaultLocation.lng - this.currentLocation.lng) < 0.001;
 
-    this.saveDefaultLocation(locationData);
+    if (isCurrentDefault) {
+      // 取消默认位置
+      this.clearDefaultLocation();
+    } else {
+      // 设为默认位置
+      const currentLocationName = document.getElementById('currentLocation').textContent;
+      const locationData = {
+        name: currentLocationName,
+        lat: this.currentLocation.lat,
+        lng: this.currentLocation.lng,
+        address: currentLocationName
+      };
+      this.saveDefaultLocation(locationData);
+    }
+
     this.updateLocationActionButtons();
     this.updateFavoriteList();
+  }
+
+  // 清除默认位置
+  clearDefaultLocation() {
+    try {
+      localStorage.removeItem('defaultLocation');
+      this.defaultLocation = null;
+    } catch (error) {
+      console.error('清除默认位置失败:', error);
+    }
   }
 
   // 更新位置操作按钮状态
@@ -767,8 +788,8 @@ class WeatherApp {
 
     if (setDefaultBtn) {
       setDefaultBtn.classList.toggle('default', isDefault);
-      setDefaultBtn.title = isDefault ? '已设为默认' : '设为默认位置';
-      setDefaultBtn.disabled = isDefault;
+      setDefaultBtn.title = isDefault ? '取消默认位置' : '设为默认位置';
+      setDefaultBtn.querySelector('.default-icon').textContent = isDefault ? '📍' : '📌';
     }
   }
 
