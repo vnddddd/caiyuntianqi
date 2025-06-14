@@ -786,6 +786,69 @@ body {
   color: #2196F3;
 }
 
+/* 桌面端保持原来的布局 */
+@media (min-width: 768px) {
+  .daily-item {
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+    padding: 1.5rem;
+    background: rgba(255, 255, 255, 0.95);
+    border-radius: 12px;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  }
+
+  .daily-left {
+    display: block;
+    width: 100%;
+    margin-bottom: 1rem;
+  }
+
+  .daily-relative-day {
+    font-size: 1.1rem;
+    font-weight: 600;
+    color: #333;
+    margin-bottom: 0.25rem;
+  }
+
+  .daily-weekday {
+    font-size: 0.9rem;
+    font-weight: 500;
+    color: #666;
+  }
+
+  .daily-right {
+    display: block;
+    width: 100%;
+    text-align: center;
+  }
+
+  .daily-weather {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.5rem;
+    margin-bottom: 1rem;
+  }
+
+  .daily-icon {
+    font-size: 2.5rem;
+  }
+
+  .daily-desc {
+    font-size: 1rem;
+    color: #555;
+    font-weight: 500;
+  }
+
+  .daily-temp-range {
+    font-size: 1.1rem;
+    font-weight: 600;
+    color: #333;
+    text-align: center;
+  }
+}
+
 /* 移动端优化 */
 @media (max-width: 767px) {
   .container {
@@ -832,71 +895,79 @@ body {
   }
 
   .daily-item {
-    flex-direction: row;
-    align-items: center;
-    justify-content: space-between;
-    gap: 1rem;
-    padding: 1.25rem;
-    background: rgba(255, 255, 255, 0.9);
-    border-radius: 16px;
-    margin-bottom: 1rem;
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+    flex-direction: row !important;
+    align-items: center !important;
+    justify-content: space-between !important;
+    gap: 1rem !important;
+    padding: 1.25rem !important;
+    background: rgba(255, 255, 255, 0.9) !important;
+    border-radius: 16px !important;
+    margin-bottom: 1rem !important;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1) !important;
+    text-align: left !important;
   }
 
   /* 左侧：相对日期和星期几 */
   .daily-left {
-    display: flex;
-    flex-direction: column;
-    align-items: flex-start;
-    gap: 0.25rem;
-    min-width: 60px;
+    display: flex !important;
+    flex-direction: column !important;
+    align-items: flex-start !important;
+    gap: 0.25rem !important;
+    min-width: 60px !important;
+    width: auto !important;
+    margin-bottom: 0 !important;
   }
 
   .daily-relative-day {
-    font-size: 1.2rem;
-    font-weight: 700;
-    color: #333;
-    line-height: 1.2;
+    font-size: 1.2rem !important;
+    font-weight: 700 !important;
+    color: #333 !important;
+    line-height: 1.2 !important;
+    margin-bottom: 0 !important;
   }
 
   .daily-weekday {
-    font-size: 0.9rem;
-    font-weight: 500;
-    color: #666;
-    line-height: 1.2;
+    font-size: 0.9rem !important;
+    font-weight: 500 !important;
+    color: #666 !important;
+    line-height: 1.2 !important;
   }
 
   /* 右侧：天气信息和温度 */
   .daily-right {
-    display: flex;
-    align-items: center;
-    gap: 1rem;
-    flex: 1;
-    justify-content: flex-end;
+    display: flex !important;
+    align-items: center !important;
+    gap: 1rem !important;
+    flex: 1 !important;
+    justify-content: flex-end !important;
+    width: auto !important;
+    text-align: left !important;
   }
 
   .daily-weather {
-    display: flex;
-    align-items: center;
-    gap: 0.5rem;
+    display: flex !important;
+    align-items: center !important;
+    gap: 0.5rem !important;
+    flex-direction: row !important;
+    margin-bottom: 0 !important;
   }
 
   .daily-icon {
-    font-size: 2.2rem;
+    font-size: 2.2rem !important;
   }
 
   .daily-desc {
-    font-size: 1rem;
-    color: #555;
-    font-weight: 500;
+    font-size: 1rem !important;
+    color: #555 !important;
+    font-weight: 500 !important;
   }
 
   .daily-temp-range {
-    font-size: 1.1rem;
-    font-weight: 700;
-    color: #333;
-    text-align: right;
-    min-width: 80px;
+    font-size: 1.1rem !important;
+    font-weight: 700 !important;
+    color: #333 !important;
+    text-align: right !important;
+    min-width: 80px !important;
   }
 
   /* 隐藏不需要的元素 */
