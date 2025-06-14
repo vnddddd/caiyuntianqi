@@ -392,13 +392,12 @@ async function searchLocation(query: string): Promise<Array<{lat: number, lng: n
 }
 
 // 获取客户端真实IP的辅助函数
-function getClientIP(req: Request): string {
-  // 尝试从连接信息获取IP（Deno Deploy特有）
-  const connInfo = (req as any).connInfo;
-  if (connInfo && connInfo.remoteAddr) {
-    const remoteAddr = connInfo.remoteAddr;
-    if (remoteAddr.hostname) {
-      console.log('从connInfo获取IP:', remoteAddr.hostname);
+function getClientIP(req: Request, info?: Deno.ServeHandlerInfo): string {
+  // 首先尝试从Deno.ServeHandlerInfo获取IP
+  if (info && info.remoteAddr) {
+    const remoteAddr = info.remoteAddr;
+    if ('hostname' in remoteAddr && remoteAddr.hostname) {
+      console.log('从ServeHandlerInfo获取IP:', remoteAddr.hostname);
       return remoteAddr.hostname;
     }
   }
@@ -432,7 +431,7 @@ function getClientIP(req: Request): string {
 }
 
 // 路由处理器
-async function handler(req: Request): Promise<Response> {
+async function handler(req: Request, info: Deno.ServeHandlerInfo): Promise<Response> {
   const url = new URL(req.url);
   const { pathname } = url;
 
@@ -444,7 +443,7 @@ async function handler(req: Request): Promise<Response> {
 
     try {
       // 使用改进的IP获取函数
-      const clientIP = getClientIP(req);
+      const clientIP = getClientIP(req, info);
 
       // 记录所有可能的IP相关头信息
       const allHeaders = {};
@@ -476,6 +475,11 @@ async function handler(req: Request): Promise<Response> {
           ...location,
           debug: {
             clientIP: clientIP,
+            remoteAddr: info?.remoteAddr ? {
+              hostname: 'hostname' in info.remoteAddr ? info.remoteAddr.hostname : 'N/A',
+              port: 'port' in info.remoteAddr ? info.remoteAddr.port : 'N/A',
+              transport: 'transport' in info.remoteAddr ? info.remoteAddr.transport : 'N/A'
+            } : null,
             headers: {
               'x-forwarded-for': req.headers.get('x-forwarded-for'),
               'x-real-ip': req.headers.get('x-real-ip'),
@@ -499,6 +503,11 @@ async function handler(req: Request): Promise<Response> {
             error: "无法获取 IP 位置信息",
             debug: {
               clientIP: clientIP,
+              remoteAddr: info?.remoteAddr ? {
+                hostname: 'hostname' in info.remoteAddr ? info.remoteAddr.hostname : 'N/A',
+                port: 'port' in info.remoteAddr ? info.remoteAddr.port : 'N/A',
+                transport: 'transport' in info.remoteAddr ? info.remoteAddr.transport : 'N/A'
+              } : null,
               headers: {
                 'x-forwarded-for': req.headers.get('x-forwarded-for'),
                 'x-real-ip': req.headers.get('x-real-ip'),
