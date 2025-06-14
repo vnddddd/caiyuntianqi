@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>API测试</title>
+</head>
+<body>
+    <h1>API测试页面</h1>
+    <div id="result">正在测试...</div>
+    
+    <script>
+        async function testAPI() {
+            try {
+                console.log('开始测试API...');
+                const response = await fetch('/api/weather?lng=116.4074&lat=39.9042');
+                console.log('收到响应:', response.status);
+                
+                if (!response.ok) {
+                    throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+                }
+                
+                const data = await response.json();
+                console.log('数据:', data);
+                
+                document.getElementById('result').innerHTML = `
+                    <h2>API测试成功！</h2>
+                    <p>温度: ${data.current.temperature}°C</p>
+                    <p>天气: ${data.current.weather_info.desc}</p>
+                `;
+            } catch (error) {
+                console.error('API测试失败:', error);
+                document.getElementById('result').innerHTML = `
+                    <h2>API测试失败</h2>
+                    <p>错误: ${error.message}</p>
+                `;
+            }
+        }
+        
+        // 页面加载后立即测试
+        document.addEventListener('DOMContentLoaded', testAPI);
+    </script>
+</body>
+</html>

@@ -24,7 +24,6 @@ class WeatherApp {
   // 绑定事件监听器
   bindEvents() {
     const currentLocationBtn = document.getElementById('currentLocationBtn');
-    const refreshBtn = document.getElementById('refreshBtn');
     const retryBtn = document.getElementById('retryBtn');
     const closeModalBtn = document.getElementById('closeModalBtn');
     const searchBtn = document.getElementById('searchBtn');
@@ -33,7 +32,6 @@ class WeatherApp {
     const setDefaultBtn = document.getElementById('setDefaultBtn');
 
     currentLocationBtn?.addEventListener('click', () => this.showLocationModal());
-    refreshBtn?.addEventListener('click', () => this.refreshWeatherData());
     retryBtn?.addEventListener('click', () => this.getCurrentLocation());
     closeModalBtn?.addEventListener('click', () => this.hideLocationModal());
     searchBtn?.addEventListener('click', () => this.searchLocation());
@@ -66,31 +64,7 @@ class WeatherApp {
     });
   }
 
-  // 刷新天气数据
-  async refreshWeatherData() {
-    if (!this.currentLocation || this.isLoading) {
-      return;
-    }
 
-    const refreshBtn = document.getElementById('refreshBtn');
-    if (refreshBtn) {
-      refreshBtn.classList.add('loading');
-      refreshBtn.disabled = true;
-    }
-
-    // 清除缓存，强制重新获取
-    const key = this.getCacheKey(this.currentLocation.lng, this.currentLocation.lat);
-    this.cache.delete(key);
-
-    try {
-      await this.fetchWeatherData(this.currentLocation.lng, this.currentLocation.lat);
-    } finally {
-      if (refreshBtn) {
-        refreshBtn.classList.remove('loading');
-        refreshBtn.disabled = false;
-      }
-    }
-  }
 
   // 检查位置权限并自动获取位置
   async checkLocationPermission() {
@@ -728,12 +702,6 @@ class WeatherApp {
     document.getElementById('loadingState').style.display = 'none';
     document.getElementById('errorState').style.display = 'none';
     document.getElementById('weatherContent').style.display = 'block';
-
-    // 显示刷新按钮
-    const refreshBtn = document.getElementById('refreshBtn');
-    if (refreshBtn) {
-      refreshBtn.style.display = 'flex';
-    }
 
     // 更新收藏和默认按钮状态
     this.updateLocationActionButtons();
