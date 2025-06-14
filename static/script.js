@@ -565,19 +565,16 @@ class WeatherApp {
 
     container.innerHTML = daily.map(item => `
       <div class="daily-item">
-        <div class="daily-relative">
+        <div class="daily-left">
           <div class="daily-relative-day">${item.relativeDay || item.weekday}</div>
-        </div>
-        <div class="daily-weather">
-          <div class="daily-icon">${item.weather_info.icon}</div>
-          <div class="daily-desc">${item.weather_info.desc}</div>
-        </div>
-        <div class="daily-temp">
-          <div class="daily-temp-range">${item.min_temp}° / ${item.max_temp}°</div>
-        </div>
-        <div class="daily-date">
           <div class="daily-weekday">${item.weekday}</div>
-          <div class="daily-date-text">${item.date}</div>
+        </div>
+        <div class="daily-right">
+          <div class="daily-weather">
+            <div class="daily-icon">${item.weather_info.icon}</div>
+            <div class="daily-desc">${item.weather_info.desc}</div>
+          </div>
+          <div class="daily-temp-range">${item.min_temp}° / ${item.max_temp}°</div>
         </div>
       </div>
     `).join('');

@@ -832,64 +832,84 @@ body {
   }
 
   .daily-item {
-    flex-direction: column;
-    align-items: flex-start;
+    flex-direction: row;
+    align-items: center;
+    justify-content: space-between;
     gap: 1rem;
-    padding: 1rem;
-    background: rgba(255, 255, 255, 0.8);
-    border-radius: 12px;
-    margin-bottom: 0.75rem;
+    padding: 1.25rem;
+    background: rgba(255, 255, 255, 0.9);
+    border-radius: 16px;
+    margin-bottom: 1rem;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
   }
 
-  .daily-relative {
-    width: 100%;
-    margin-bottom: 0.5rem;
+  /* 左侧：相对日期和星期几 */
+  .daily-left {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0.25rem;
+    min-width: 60px;
   }
 
   .daily-relative-day {
-    font-size: 1.1rem;
-    font-weight: 600;
+    font-size: 1.2rem;
+    font-weight: 700;
     color: #333;
+    line-height: 1.2;
+  }
+
+  .daily-weekday {
+    font-size: 0.9rem;
+    font-weight: 500;
+    color: #666;
+    line-height: 1.2;
+  }
+
+  /* 右侧：天气信息和温度 */
+  .daily-right {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    flex: 1;
+    justify-content: flex-end;
   }
 
   .daily-weather {
-    width: 100%;
-    justify-content: flex-start;
-    text-align: left;
-    margin-bottom: 0.5rem;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
   }
 
   .daily-icon {
-    font-size: 2rem;
-    margin-right: 0.75rem;
+    font-size: 2.2rem;
   }
 
   .daily-desc {
     font-size: 1rem;
     color: #555;
-  }
-
-  .daily-temp {
-    width: 100%;
-    justify-content: space-between;
-    text-align: left;
-    align-items: center;
+    font-weight: 500;
   }
 
   .daily-temp-range {
     font-size: 1.1rem;
-    font-weight: 600;
+    font-weight: 700;
     color: #333;
+    text-align: right;
+    min-width: 80px;
+  }
+
+  /* 隐藏不需要的元素 */
+  .daily-temp {
+    display: none;
   }
 
   .daily-date {
-    text-align: right;
+    display: none;
   }
 
-  .daily-weekday {
-    font-size: 1rem;
-    font-weight: 500;
-    color: #666;
+  .daily-relative {
+    display: none;
   }
 
   /* 移动端模态框优化 */
