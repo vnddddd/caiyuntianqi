@@ -288,7 +288,10 @@ class WeatherApp {
 
   // 获取天气数据
   async fetchWeatherData(lng, lat, locationName = null) {
+    console.log(`开始获取天气数据: lng=${lng}, lat=${lat}, locationName=${locationName}`);
+
     if (this.isLoading) {
+      console.log('已有请求在进行中，跳过');
       return; // 防止重复请求
     }
 
@@ -303,22 +306,30 @@ class WeatherApp {
 
     this.isLoading = true;
     this.showLoading('正在获取天气信息...');
+    console.log('开始发送API请求...');
 
     try {
       const controller = new AbortController();
-      const timeoutId = setTimeout(() => controller.abort(), 10000); // 10秒超时
+      const timeoutId = setTimeout(() => {
+        console.log('请求超时，中止请求');
+        controller.abort();
+      }, 10000); // 10秒超时
 
+      console.log('发送fetch请求到:', `/api/weather?lng=${lng}&lat=${lat}`);
       const response = await fetch(`/api/weather?lng=${lng}&lat=${lat}`, {
         signal: controller.signal
       });
 
       clearTimeout(timeoutId);
+      console.log('收到响应:', response.status, response.statusText);
 
       if (!response.ok) {
         throw new Error(`HTTP ${response.status}: ${response.statusText}`);
       }
 
+      console.log('开始解析JSON...');
       const data = await response.json();
+      console.log('JSON解析完成，数据:', data);
 
       if (data.error) {
         throw new Error(data.error);
@@ -328,9 +339,12 @@ class WeatherApp {
       this.setCachedData(lng, lat, data);
 
       this.weatherData = data;
+      console.log('开始显示天气数据...');
       this.displayWeatherData(locationName);
+      console.log('天气数据显示完成');
 
     } catch (error) {
+      console.error('获取天气数据出错:', error);
       if (error.name === 'AbortError') {
         this.showError('请求超时，请检查网络连接');
       } else {
@@ -339,6 +353,7 @@ class WeatherApp {
       }
     } finally {
       this.isLoading = false;
+      console.log('fetchWeatherData 完成，isLoading 设为 false');
     }
   }
 
@@ -476,7 +491,7 @@ class WeatherApp {
     this.updateWeatherTips(daily);
 
     // 更新位置和时间信息
-    await this.updateLocationInfo(forecast_keypoint, locationName);
+    this.updateLocationInfo(forecast_keypoint, locationName);
 
     // 显示天气内容
     this.showWeatherContent();
@@ -653,7 +668,7 @@ class WeatherApp {
   }
 
   // 更新位置和时间信息
-  async updateLocationInfo(forecastKeypoint, locationName = null) {
+  updateLocationInfo(forecastKeypoint, locationName = null) {
     const now = new Date();
     const timeString = now.toLocaleString('zh-CN', {
       month: 'short',
@@ -662,13 +677,10 @@ class WeatherApp {
       minute: '2-digit'
     });
 
-    // 如果没有提供位置名称，尝试获取详细地址
-    let displayLocation = locationName;
-    if (!displayLocation && this.currentLocation) {
-      displayLocation = await this.getDetailedAddress(this.currentLocation.lng, this.currentLocation.lat);
-    }
+    // 使用提供的位置名称，如果没有则使用默认值
+    const displayLocation = locationName || '当前位置';
 
-    document.getElementById('currentLocation').textContent = displayLocation || '当前位置';
+    document.getElementById('currentLocation').textContent = displayLocation;
     document.getElementById('updateTime').textContent = `更新时间: ${timeString}`;
 
     // 如果有预报要点，可以在某处显示
