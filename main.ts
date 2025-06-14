@@ -182,9 +182,30 @@ async function getWeatherData(longitude: number, latitude: number) {
 
 // IP 地理位置获取 - 使用多个备用接口
 async function getLocationByIP(clientIP?: string): Promise<{ lat: number; lng: number; address: string } | null> {
-  // 定义多个IP定位服务
+  // 定义多个IP定位服务（按准确度排序）
   const ipServices = [
-    // 服务1: 美团接口
+    // 服务1: 腾讯位置服务（国内最准确）
+    async () => {
+      const ipApiUrl = clientIP
+        ? `https://apis.map.qq.com/ws/location/v1/ip?ip=${clientIP}&key=OB4BZ-D4W3U-B7VVO-4PJWW-6TKDJ-WPB77`
+        : `https://apis.map.qq.com/ws/location/v1/ip?key=OB4BZ-D4W3U-B7VVO-4PJWW-6TKDJ-WPB77`;
+
+      const response = await fetch(ipApiUrl);
+      if (!response.ok) throw new Error(`腾讯API: ${response.status}`);
+
+      const data = await response.json();
+      if (data.status === 0 && data.result) {
+        const { location, ad_info } = data.result;
+        return {
+          lat: location.lat,
+          lng: location.lng,
+          address: `${ad_info.nation || ''} ${ad_info.province || ''} ${ad_info.city || ''} ${ad_info.district || ''}`.trim() || '未知位置'
+        };
+      }
+      throw new Error('腾讯API返回错误');
+    },
+
+    // 服务2: 美团接口
     async () => {
       const ipApiUrl = clientIP
         ? `https://apimobile.meituan.com/locate/v2/ip/loc?rgeo=true&ip=${clientIP}`
@@ -211,7 +232,7 @@ async function getLocationByIP(clientIP?: string): Promise<{ lat: number; lng: n
       throw new Error('美团API返回数据格式错误');
     },
 
-    // 服务2: ip-api.com (免费，支持中文)
+    // 服务3: ip-api.com (免费，支持中文)
     async () => {
       const ipApiUrl = clientIP
         ? `http://ip-api.com/json/${clientIP}?lang=zh-CN&fields=status,lat,lon,country,regionName,city,district`
@@ -231,7 +252,7 @@ async function getLocationByIP(clientIP?: string): Promise<{ lat: number; lng: n
       throw new Error('ip-api返回失败状态');
     },
 
-    // 服务3: ipinfo.io (备用)
+    // 服务4: ipinfo.io (备用)
     async () => {
       const ipApiUrl = clientIP
         ? `https://ipinfo.io/${clientIP}/json`
