@@ -1,0 +1,148 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>彩云天气 - 实时天气查看</title>
+    <meta name="description" content="基于彩云天气API的响应式天气查看网站，支持实时天气、预报信息查询">
+    <link rel="stylesheet" href="/static/styles.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+</head>
+<body>
+    <div class="app-container">
+        <!-- 头部 -->
+        <header class="header">
+            <div class="container">
+                <h1 class="logo">
+                    <span class="logo-icon">🌤️</span>
+                    彩云天气
+                </h1>
+                <div class="header-actions">
+                    <button class="location-btn" id="locationBtn">
+                        <span class="location-icon">📍</span>
+                        获取位置
+                    </button>
+                    <button class="refresh-btn" id="refreshBtn" style="display: none;">
+                        <span class="refresh-icon">🔄</span>
+                        刷新
+                    </button>
+                </div>
+            </div>
+        </header>
+
+        <!-- 主要内容区域 -->
+        <main class="main-content">
+            <div class="container">
+                <!-- 加载状态 -->
+                <div class="loading-state" id="loadingState">
+                    <div class="loading-spinner"></div>
+                    <p>正在获取天气信息...</p>
+                </div>
+
+                <!-- 错误状态 -->
+                <div class="error-state" id="errorState" style="display: none;">
+                    <div class="error-icon">⚠️</div>
+                    <h3>获取天气信息失败</h3>
+                    <p id="errorMessage">请检查网络连接或稍后重试</p>
+                    <button class="retry-btn" id="retryBtn">重试</button>
+                </div>
+
+                <!-- 天气信息展示 -->
+                <div class="weather-content" id="weatherContent" style="display: none;">
+                    <!-- 当前天气卡片 -->
+                    <div class="current-weather-card">
+                        <div class="current-weather-header">
+                            <div class="location-info">
+                                <h2 id="currentLocation">当前位置</h2>
+                                <p id="updateTime">更新时间</p>
+                            </div>
+                            <div class="weather-icon" id="weatherIcon">☀️</div>
+                        </div>
+                        
+                        <div class="current-weather-main">
+                            <div class="temperature-display">
+                                <span class="current-temp" id="currentTemp">--</span>
+                                <span class="temp-unit">°C</span>
+                            </div>
+                            <div class="weather-desc">
+                                <p id="weatherDesc">--</p>
+                                <p id="feelsLike">体感温度 --°C</p>
+                            </div>
+                        </div>
+
+                        <div class="weather-details">
+                            <div class="detail-item">
+                                <span class="detail-label">湿度</span>
+                                <span class="detail-value" id="humidity">--%</span>
+                            </div>
+                            <div class="detail-item">
+                                <span class="detail-label">风速</span>
+                                <span class="detail-value" id="windSpeed">-- km/h</span>
+                            </div>
+                            <div class="detail-item">
+                                <span class="detail-label">能见度</span>
+                                <span class="detail-value" id="visibility">-- km</span>
+                            </div>
+                            <div class="detail-item">
+                                <span class="detail-label">气压</span>
+                                <span class="detail-value" id="pressure">-- hPa</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- 空气质量卡片 -->
+                    <div class="air-quality-card">
+                        <h3>空气质量</h3>
+                        <div class="aqi-display">
+                            <div class="aqi-value" id="aqiValue">--</div>
+                            <div class="aqi-desc" id="aqiDesc">--</div>
+                        </div>
+                        <div class="air-details">
+                            <div class="air-item">
+                                <span>PM2.5</span>
+                                <span id="pm25">-- μg/m³</span>
+                            </div>
+                            <div class="air-item">
+                                <span>PM10</span>
+                                <span id="pm10">-- μg/m³</span>
+                            </div>
+                            <div class="air-item">
+                                <span>O₃</span>
+                                <span id="o3">-- μg/m³</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- 24小时预报 -->
+                    <div class="hourly-forecast-card">
+                        <h3>24小时预报</h3>
+                        <div class="hourly-forecast-list" id="hourlyForecast">
+                            <!-- 动态生成 -->
+                        </div>
+                    </div>
+
+                    <!-- 7天预报 -->
+                    <div class="daily-forecast-card">
+                        <h3>7天预报</h3>
+                        <div class="daily-forecast-list" id="dailyForecast">
+                            <!-- 动态生成 -->
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </main>
+
+        <!-- 页脚 -->
+        <footer class="footer">
+            <div class="container">
+                <p>数据来源：<a href="https://caiyunapp.com/" target="_blank">彩云天气</a></p>
+                <p>Powered by Deno Deploy</p>
+            </div>
+        </footer>
+    </div>
+
+    <script src="/static/script.js"></script>
+</body>
+</html>
