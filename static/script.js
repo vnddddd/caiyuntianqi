@@ -564,7 +564,7 @@ class WeatherApp {
     if (!container || !daily) return;
 
     container.innerHTML = daily.map(item => `
-      <div class="daily-item">
+      <div class="daily-item" data-weekday="${item.weekday}">
         <div class="daily-left">
           <div class="daily-relative-day">${item.relativeDay || item.weekday}</div>
           <div class="daily-weekday">${item.weekday}</div>
