@@ -391,6 +391,46 @@ async function searchLocation(query: string): Promise<Array<{lat: number, lng: n
   }
 }
 
+// 获取客户端真实IP的辅助函数
+function getClientIP(req: Request): string {
+  // 尝试从连接信息获取IP（Deno Deploy特有）
+  const connInfo = (req as any).connInfo;
+  if (connInfo && connInfo.remoteAddr) {
+    const remoteAddr = connInfo.remoteAddr;
+    if (remoteAddr.hostname) {
+      console.log('从connInfo获取IP:', remoteAddr.hostname);
+      return remoteAddr.hostname;
+    }
+  }
+
+  // 尝试各种可能的头字段
+  const possibleHeaders = [
+    'x-forwarded-for',
+    'x-real-ip',
+    'cf-connecting-ip',
+    'x-client-ip',
+    'x-forwarded',
+    'forwarded-for',
+    'forwarded',
+    'true-client-ip',
+    'x-cluster-client-ip'
+  ];
+
+  for (const header of possibleHeaders) {
+    const value = req.headers.get(header);
+    if (value) {
+      // x-forwarded-for 可能包含多个IP，取第一个
+      const ip = value.split(',')[0].trim();
+      if (ip && ip !== 'unknown') {
+        console.log(`从${header}获取IP:`, ip);
+        return ip;
+      }
+    }
+  }
+
+  return 'auto';
+}
+
 // 路由处理器
 async function handler(req: Request): Promise<Response> {
   const url = new URL(req.url);
@@ -403,17 +443,28 @@ async function handler(req: Request): Promise<Response> {
     }
 
     try {
-      // 获取客户端 IP
-      const clientIP = req.headers.get('x-forwarded-for') ||
-                      req.headers.get('x-real-ip') ||
-                      req.headers.get('cf-connecting-ip') ||
-                      'auto';
+      // 使用改进的IP获取函数
+      const clientIP = getClientIP(req);
+
+      // 记录所有可能的IP相关头信息
+      const allHeaders = {};
+      for (const [key, value] of req.headers.entries()) {
+        if (key.toLowerCase().includes('ip') ||
+            key.toLowerCase().includes('forward') ||
+            key.toLowerCase().includes('client') ||
+            key.toLowerCase().includes('real')) {
+          allHeaders[key] = value;
+        }
+      }
 
       console.log('客户端IP信息:', {
         'x-forwarded-for': req.headers.get('x-forwarded-for'),
         'x-real-ip': req.headers.get('x-real-ip'),
         'cf-connecting-ip': req.headers.get('cf-connecting-ip'),
+        'x-client-ip': req.headers.get('x-client-ip'),
+        'true-client-ip': req.headers.get('true-client-ip'),
         'user-agent': req.headers.get('user-agent'),
+        'all-ip-headers': allHeaders,
         'final-ip': clientIP
       });
 
