@@ -24,6 +24,10 @@
                         <span class="location-icon">📍</span>
                         获取位置
                     </button>
+                    <button class="manual-location-btn" id="manualLocationBtn">
+                        <span class="search-icon">🔍</span>
+                        选择位置
+                    </button>
                     <button class="refresh-btn" id="refreshBtn" style="display: none;">
                         <span class="refresh-icon">🔄</span>
                         刷新
@@ -35,6 +39,38 @@
         <!-- 主要内容区域 -->
         <main class="main-content">
             <div class="container">
+                <!-- 位置选择模态框 -->
+                <div class="location-modal" id="locationModal" style="display: none;">
+                    <div class="modal-content">
+                        <div class="modal-header">
+                            <h3>选择位置</h3>
+                            <button class="close-btn" id="closeModalBtn">×</button>
+                        </div>
+                        <div class="modal-body">
+                            <div class="search-container">
+                                <input type="text" id="locationSearch" placeholder="输入城市名称，如：北京、上海、广州" />
+                                <button class="search-btn" id="searchBtn">搜索</button>
+                            </div>
+                            <div class="search-results" id="searchResults">
+                                <!-- 搜索结果将在这里显示 -->
+                            </div>
+                            <div class="popular-cities">
+                                <h4>热门城市</h4>
+                                <div class="city-grid">
+                                    <button class="city-btn" data-city="北京" data-lng="116.4074" data-lat="39.9042">北京</button>
+                                    <button class="city-btn" data-city="上海" data-lng="121.4737" data-lat="31.2304">上海</button>
+                                    <button class="city-btn" data-city="广州" data-lng="113.2644" data-lat="23.1291">广州</button>
+                                    <button class="city-btn" data-city="深圳" data-lng="114.0579" data-lat="22.5431">深圳</button>
+                                    <button class="city-btn" data-city="杭州" data-lng="120.1551" data-lat="30.2741">杭州</button>
+                                    <button class="city-btn" data-city="南京" data-lng="118.7969" data-lat="32.0603">南京</button>
+                                    <button class="city-btn" data-city="成都" data-lng="104.0665" data-lat="30.5723">成都</button>
+                                    <button class="city-btn" data-city="西安" data-lng="108.9398" data-lat="34.3416">西安</button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
                 <!-- 加载状态 -->
                 <div class="loading-state" id="loadingState">
                     <div class="loading-spinner"></div>

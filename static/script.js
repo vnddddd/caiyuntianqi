@@ -22,12 +22,44 @@ class WeatherApp {
   // 绑定事件监听器
   bindEvents() {
     const locationBtn = document.getElementById('locationBtn');
+    const manualLocationBtn = document.getElementById('manualLocationBtn');
     const refreshBtn = document.getElementById('refreshBtn');
     const retryBtn = document.getElementById('retryBtn');
+    const closeModalBtn = document.getElementById('closeModalBtn');
+    const searchBtn = document.getElementById('searchBtn');
+    const locationSearch = document.getElementById('locationSearch');
 
     locationBtn?.addEventListener('click', () => this.getCurrentLocation());
+    manualLocationBtn?.addEventListener('click', () => this.showLocationModal());
     refreshBtn?.addEventListener('click', () => this.refreshWeatherData());
     retryBtn?.addEventListener('click', () => this.getCurrentLocation());
+    closeModalBtn?.addEventListener('click', () => this.hideLocationModal());
+    searchBtn?.addEventListener('click', () => this.searchLocation());
+
+    // 回车键搜索
+    locationSearch?.addEventListener('keypress', (e) => {
+      if (e.key === 'Enter') {
+        this.searchLocation();
+      }
+    });
+
+    // 热门城市按钮
+    document.querySelectorAll('.city-btn').forEach(btn => {
+      btn.addEventListener('click', (e) => {
+        const target = e.target as HTMLElement;
+        const city = target.dataset.city;
+        const lng = parseFloat(target.dataset.lng || '0');
+        const lat = parseFloat(target.dataset.lat || '0');
+        this.selectLocation(lng, lat, city || '');
+      });
+    });
+
+    // 点击模态框外部关闭
+    document.getElementById('locationModal')?.addEventListener('click', (e) => {
+      if (e.target === e.currentTarget) {
+        this.hideLocationModal();
+      }
+    });
   }
 
   // 刷新天气数据
@@ -111,9 +143,9 @@ class WeatherApp {
   async onLocationSuccess(position) {
     const { latitude, longitude } = position.coords;
     this.currentLocation = { lat: latitude, lng: longitude };
-    
+
     console.log('位置获取成功:', this.currentLocation);
-    
+
     // 更新按钮状态
     const locationBtn = document.getElementById('locationBtn');
     if (locationBtn) {
@@ -121,28 +153,73 @@ class WeatherApp {
       locationBtn.disabled = true;
     }
 
-    // 获取天气数据
-    await this.fetchWeatherData(longitude, latitude);
+    // 获取详细地址并获取天气数据
+    this.showLoading('正在获取位置信息...');
+    const detailedAddress = await this.getDetailedAddress(longitude, latitude);
+    await this.fetchWeatherData(longitude, latitude, detailedAddress);
   }
 
   // 位置获取失败
-  onLocationError(error) {
+  async onLocationError(error) {
     console.error('位置获取失败:', error);
-    
+
     let errorMessage = '获取位置失败';
     switch (error.code) {
       case error.PERMISSION_DENIED:
-        errorMessage = '位置访问被拒绝，请允许位置权限后重试';
+        errorMessage = '位置访问被拒绝，尝试使用 IP 定位...';
         break;
       case error.POSITION_UNAVAILABLE:
-        errorMessage = '位置信息不可用，请检查GPS设置';
+        errorMessage = '位置信息不可用，尝试使用 IP 定位...';
         break;
       case error.TIMEOUT:
-        errorMessage = '位置获取超时，请重试';
+        errorMessage = '位置获取超时，尝试使用 IP 定位...';
         break;
     }
-    
-    this.showError(errorMessage);
+
+    this.showLoading(errorMessage);
+
+    // 尝试 IP 定位作为备用方案
+    try {
+      await this.getLocationByIP();
+    } catch (ipError) {
+      console.error('IP 定位也失败:', ipError);
+      this.showError('无法获取位置信息，请手动选择位置');
+    }
+  }
+
+  // 通过 IP 获取位置
+  async getLocationByIP() {
+    try {
+      const response = await fetch('/api/location/ip');
+
+      if (!response.ok) {
+        throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+      }
+
+      const data = await response.json();
+
+      if (data.error) {
+        throw new Error(data.error);
+      }
+
+      this.currentLocation = { lat: data.lat, lng: data.lng };
+
+      console.log('IP 定位成功:', this.currentLocation, '地址:', data.address);
+
+      // 更新按钮状态
+      const locationBtn = document.getElementById('locationBtn');
+      if (locationBtn) {
+        locationBtn.innerHTML = '<span class="location-icon">🌐</span>IP 定位';
+        locationBtn.disabled = true;
+      }
+
+      // 获取天气数据
+      await this.fetchWeatherData(this.currentLocation.lng, this.currentLocation.lat, data.address);
+
+    } catch (error) {
+      console.error('IP 定位失败:', error);
+      throw error;
+    }
   }
 
   // 生成缓存键
@@ -172,7 +249,7 @@ class WeatherApp {
   }
 
   // 获取天气数据
-  async fetchWeatherData(lng, lat) {
+  async fetchWeatherData(lng, lat, locationName = null) {
     if (this.isLoading) {
       return; // 防止重复请求
     }
@@ -182,7 +259,7 @@ class WeatherApp {
     if (cachedData) {
       console.log('使用缓存数据');
       this.weatherData = cachedData;
-      this.displayWeatherData();
+      this.displayWeatherData(locationName);
       return;
     }
 
@@ -213,7 +290,7 @@ class WeatherApp {
       this.setCachedData(lng, lat, data);
 
       this.weatherData = data;
-      this.displayWeatherData();
+      this.displayWeatherData(locationName);
 
     } catch (error) {
       if (error.name === 'AbortError') {
@@ -227,27 +304,139 @@ class WeatherApp {
     }
   }
 
+  // 获取详细地址
+  async getDetailedAddress(lng, lat) {
+    try {
+      const response = await fetch(`/api/location/geocode?lng=${lng}&lat=${lat}`);
+
+      if (!response.ok) {
+        return '未知位置';
+      }
+
+      const data = await response.json();
+      return data.address || '未知位置';
+    } catch (error) {
+      console.error('获取地址失败:', error);
+      return '未知位置';
+    }
+  }
+
+  // 显示位置选择模态框
+  showLocationModal() {
+    const modal = document.getElementById('locationModal');
+    if (modal) {
+      modal.style.display = 'flex';
+      // 清空搜索框
+      const searchInput = document.getElementById('locationSearch');
+      if (searchInput) {
+        searchInput.value = '';
+        searchInput.focus();
+      }
+      // 清空搜索结果
+      const searchResults = document.getElementById('searchResults');
+      if (searchResults) {
+        searchResults.innerHTML = '';
+      }
+    }
+  }
+
+  // 隐藏位置选择模态框
+  hideLocationModal() {
+    const modal = document.getElementById('locationModal');
+    if (modal) {
+      modal.style.display = 'none';
+    }
+  }
+
+  // 搜索位置
+  async searchLocation() {
+    const searchInput = document.getElementById('locationSearch');
+    const searchResults = document.getElementById('searchResults');
+
+    if (!searchInput || !searchResults) return;
+
+    const query = searchInput.value.trim();
+    if (!query) return;
+
+    searchResults.innerHTML = '<div style="text-align: center; padding: 1rem; color: #666;">搜索中...</div>';
+
+    try {
+      // 使用高德地理编码 API 搜索
+      const geocodeUrl = `https://restapi.amap.com/v3/geocode/geo?address=${encodeURIComponent(query)}&output=json`;
+      const response = await fetch(geocodeUrl);
+      const data = await response.json();
+
+      if (data.status === '1' && data.geocodes && data.geocodes.length > 0) {
+        const results = data.geocodes.slice(0, 5); // 最多显示5个结果
+
+        searchResults.innerHTML = results.map(result => {
+          const [lng, lat] = result.location.split(',').map(Number);
+          return `
+            <div class="search-result-item" data-lng="${lng}" data-lat="${lat}" data-name="${result.formatted_address}">
+              <div style="font-weight: 500;">${result.formatted_address}</div>
+              <div style="font-size: 0.875rem; color: #666; margin-top: 0.25rem;">
+                ${result.province} ${result.city} ${result.district}
+              </div>
+            </div>
+          `;
+        }).join('');
+
+        // 绑定点击事件
+        searchResults.querySelectorAll('.search-result-item').forEach(item => {
+          item.addEventListener('click', (e) => {
+            const target = e.currentTarget as HTMLElement;
+            const lng = parseFloat(target.dataset.lng || '0');
+            const lat = parseFloat(target.dataset.lat || '0');
+            const name = target.dataset.name || '';
+            this.selectLocation(lng, lat, name);
+          });
+        });
+      } else {
+        searchResults.innerHTML = '<div style="text-align: center; padding: 1rem; color: #666;">未找到相关位置</div>';
+      }
+    } catch (error) {
+      console.error('搜索位置失败:', error);
+      searchResults.innerHTML = '<div style="text-align: center; padding: 1rem; color: #f56565;">搜索失败，请重试</div>';
+    }
+  }
+
+  // 选择位置
+  async selectLocation(lng, lat, locationName) {
+    this.hideLocationModal();
+    this.currentLocation = { lat, lng };
+
+    // 更新按钮状态
+    const locationBtn = document.getElementById('locationBtn');
+    if (locationBtn) {
+      locationBtn.innerHTML = '<span class="location-icon">📍</span>已选择位置';
+      locationBtn.disabled = true;
+    }
+
+    // 获取天气数据
+    await this.fetchWeatherData(lng, lat, locationName);
+  }
+
   // 显示天气数据
-  displayWeatherData() {
+  async displayWeatherData(locationName = null) {
     if (!this.weatherData) return;
 
     const { current, hourly, daily, forecast_keypoint } = this.weatherData;
 
     // 更新当前天气
     this.updateCurrentWeather(current);
-    
+
     // 更新空气质量
     this.updateAirQuality(current.air_quality);
-    
+
     // 更新24小时预报
     this.updateHourlyForecast(hourly);
-    
+
     // 更新7天预报
     this.updateDailyForecast(daily);
-    
+
     // 更新位置和时间信息
-    this.updateLocationInfo(forecast_keypoint);
-    
+    await this.updateLocationInfo(forecast_keypoint, locationName);
+
     // 显示天气内容
     this.showWeatherContent();
   }
@@ -312,7 +501,7 @@ class WeatherApp {
   }
 
   // 更新位置和时间信息
-  updateLocationInfo(forecastKeypoint) {
+  async updateLocationInfo(forecastKeypoint, locationName = null) {
     const now = new Date();
     const timeString = now.toLocaleString('zh-CN', {
       month: 'short',
@@ -321,9 +510,15 @@ class WeatherApp {
       minute: '2-digit'
     });
 
-    document.getElementById('currentLocation').textContent = '当前位置';
+    // 如果没有提供位置名称，尝试获取详细地址
+    let displayLocation = locationName;
+    if (!displayLocation && this.currentLocation) {
+      displayLocation = await this.getDetailedAddress(this.currentLocation.lng, this.currentLocation.lat);
+    }
+
+    document.getElementById('currentLocation').textContent = displayLocation || '当前位置';
     document.getElementById('updateTime').textContent = `更新时间: ${timeString}`;
-    
+
     // 如果有预报要点，可以在某处显示
     if (forecastKeypoint) {
       console.log('预报要点:', forecastKeypoint);

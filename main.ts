@@ -159,10 +159,165 @@ async function getWeatherData(longitude: number, latitude: number) {
   }
 }
 
+// IP 地理位置获取
+async function getLocationByIP(clientIP?: string): Promise<{ lat: number; lng: number; address: string } | null> {
+  try {
+    // 使用免费的 IP 地理位置服务
+    const ipApiUrl = clientIP
+      ? `http://ip-api.com/json/${clientIP}?lang=zh-CN&fields=status,lat,lon,country,regionName,city,district`
+      : `http://ip-api.com/json?lang=zh-CN&fields=status,lat,lon,country,regionName,city,district`;
+
+    const response = await fetch(ipApiUrl);
+    const data = await response.json();
+
+    if (data.status === 'success') {
+      return {
+        lat: data.lat,
+        lng: data.lon,
+        address: `${data.country} ${data.regionName} ${data.city}${data.district ? ' ' + data.district : ''}`
+      };
+    }
+
+    return null;
+  } catch (error) {
+    console.error('IP 定位失败:', error);
+    return null;
+  }
+}
+
+// 地理编码 - 将经纬度转换为详细地址
+async function reverseGeocode(lat: number, lng: number): Promise<string> {
+  try {
+    // 使用高德地理编码 API（免费，无需 key 的基础服务）
+    const geocodeUrl = `https://restapi.amap.com/v3/geocode/regeo?location=${lng},${lat}&output=json&radius=1000&extensions=all`;
+
+    const response = await fetch(geocodeUrl);
+    const data = await response.json();
+
+    if (data.status === '1' && data.regeocode) {
+      const addressComponent = data.regeocode.addressComponent;
+      const formatted = data.regeocode.formatted_address;
+
+      // 构建详细地址
+      let detailedAddress = '';
+      if (addressComponent.province) detailedAddress += addressComponent.province;
+      if (addressComponent.city && addressComponent.city !== addressComponent.province) {
+        detailedAddress += ' ' + addressComponent.city;
+      }
+      if (addressComponent.district) detailedAddress += ' ' + addressComponent.district;
+      if (addressComponent.township) detailedAddress += ' ' + addressComponent.township;
+
+      return detailedAddress.trim() || formatted || '未知位置';
+    }
+
+    // 备用：使用免费的 OpenStreetMap Nominatim 服务
+    const nominatimUrl = `https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lng}&accept-language=zh-CN`;
+    const nominatimResponse = await fetch(nominatimUrl, {
+      headers: { 'User-Agent': 'CaiyunWeatherApp/1.0' }
+    });
+    const nominatimData = await nominatimResponse.json();
+
+    if (nominatimData.display_name) {
+      return nominatimData.display_name;
+    }
+
+    return '未知位置';
+  } catch (error) {
+    console.error('地理编码失败:', error);
+    return '未知位置';
+  }
+}
+
 // 路由处理器
 async function handler(req: Request): Promise<Response> {
   const url = new URL(req.url);
   const { pathname } = url;
+
+  // IP 定位 API
+  if (pathname === "/api/location/ip") {
+    if (req.method !== "GET") {
+      return new Response("Method not allowed", { status: 405 });
+    }
+
+    try {
+      // 获取客户端 IP
+      const clientIP = req.headers.get('x-forwarded-for') ||
+                      req.headers.get('x-real-ip') ||
+                      'auto';
+
+      const location = await getLocationByIP(clientIP === 'auto' ? undefined : clientIP);
+
+      if (location) {
+        return new Response(
+          JSON.stringify(location),
+          {
+            headers: {
+              "Content-Type": "application/json; charset=utf-8",
+              "Access-Control-Allow-Origin": "*"
+            }
+          }
+        );
+      } else {
+        return new Response(
+          JSON.stringify({ error: "无法获取 IP 位置信息" }),
+          {
+            status: 404,
+            headers: { "Content-Type": "application/json; charset=utf-8" }
+          }
+        );
+      }
+    } catch (error) {
+      return new Response(
+        JSON.stringify({ error: error.message }),
+        {
+          status: 500,
+          headers: { "Content-Type": "application/json; charset=utf-8" }
+        }
+      );
+    }
+  }
+
+  // 地理编码 API
+  if (pathname === "/api/location/geocode") {
+    if (req.method !== "GET") {
+      return new Response("Method not allowed", { status: 405 });
+    }
+
+    const lat = url.searchParams.get("lat");
+    const lng = url.searchParams.get("lng");
+
+    if (!lat || !lng) {
+      return new Response(
+        JSON.stringify({ error: "缺少经纬度参数" }),
+        {
+          status: 400,
+          headers: { "Content-Type": "application/json; charset=utf-8" }
+        }
+      );
+    }
+
+    try {
+      const address = await reverseGeocode(parseFloat(lat), parseFloat(lng));
+
+      return new Response(
+        JSON.stringify({ address }),
+        {
+          headers: {
+            "Content-Type": "application/json; charset=utf-8",
+            "Access-Control-Allow-Origin": "*"
+          }
+        }
+      );
+    } catch (error) {
+      return new Response(
+        JSON.stringify({ error: error.message }),
+        {
+          status: 500,
+          headers: { "Content-Type": "application/json; charset=utf-8" }
+        }
+      );
+    }
+  }
 
   // API 路由
   if (pathname === "/api/weather") {
