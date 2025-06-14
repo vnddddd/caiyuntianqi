@@ -246,6 +246,80 @@ body.bg-snow::before {
   overflow-y: auto;
 }
 
+/* 当前位置操作区域 */
+.current-location-actions {
+  margin-bottom: 1.5rem;
+  padding: 1rem;
+  background: var(--bg-secondary);
+  border-radius: var(--border-radius);
+  border: 1px solid var(--border-color);
+}
+
+.current-location-info h4 {
+  margin: 0 0 0.75rem 0;
+  font-size: 1rem;
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.current-location-display {
+  margin-bottom: 1rem;
+  padding: 0.75rem;
+  background: var(--bg-card);
+  border-radius: 6px;
+  border: 1px solid var(--border-color);
+}
+
+.current-location-display span {
+  font-size: 0.95rem;
+  color: var(--text-primary);
+  font-weight: 500;
+}
+
+.location-action-buttons {
+  display: flex;
+  gap: 0.75rem;
+}
+
+.location-action-buttons .location-action-btn {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  padding: 0.75rem 1rem;
+  background: var(--bg-card);
+  border: 1px solid var(--border-color);
+  border-radius: 6px;
+  color: var(--text-secondary);
+  font-size: 0.875rem;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.location-action-buttons .location-action-btn:hover {
+  background: var(--primary-color);
+  color: white;
+  border-color: var(--primary-color);
+  transform: translateY(-1px);
+}
+
+.location-action-buttons .location-action-btn.active {
+  background: var(--primary-color);
+  color: white;
+  border-color: var(--primary-color);
+}
+
+.location-action-buttons .location-action-btn.default {
+  background: var(--accent-color);
+  color: white;
+  border-color: var(--accent-color);
+}
+
+.location-action-buttons .location-action-btn .action-text {
+  font-weight: 500;
+}
+
 .search-container {
   display: flex;
   gap: 0.75rem;
@@ -715,45 +789,7 @@ body.bg-snow::before {
   gap: 1rem;
 }
 
-.location-actions {
-  display: flex;
-  gap: 0.5rem;
-}
 
-.location-action-btn {
-  background: rgba(255, 255, 255, 0.9);
-  border: 1px solid rgba(0, 0, 0, 0.2);
-  border-radius: 8px;
-  padding: 0.5rem;
-  color: #333;
-  cursor: pointer;
-  transition: all 0.3s ease;
-  font-size: 1rem;
-  min-width: 40px;
-  height: 40px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-}
-
-.location-action-btn:hover {
-  background: rgba(255, 255, 255, 1);
-  transform: translateY(-2px);
-  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
-}
-
-.location-action-btn.active {
-  background: #4CAF50;
-  border-color: #4CAF50;
-  color: white;
-}
-
-.location-action-btn.default {
-  background: #2196F3;
-  border-color: #2196F3;
-  color: white;
-}
 
 /* 收藏地址样式 */
 .favorite-locations {

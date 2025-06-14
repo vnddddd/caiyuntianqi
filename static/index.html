@@ -25,6 +25,26 @@
                             <button class="close-btn" id="closeModalBtn">×</button>
                         </div>
                         <div class="modal-body">
+                            <!-- 当前位置操作区域 -->
+                            <div class="current-location-actions" id="currentLocationActions" style="display: none;">
+                                <div class="current-location-info">
+                                    <h4>当前位置</h4>
+                                    <div class="current-location-display">
+                                        <span id="modalCurrentLocation">当前位置</span>
+                                    </div>
+                                    <div class="location-action-buttons">
+                                        <button class="location-action-btn" id="modalFavoriteBtn" title="收藏此位置">
+                                            <span class="favorite-icon">☆</span>
+                                            <span class="action-text">收藏</span>
+                                        </button>
+                                        <button class="location-action-btn" id="modalSetDefaultBtn" title="设为默认位置">
+                                            <span class="default-icon">📌</span>
+                                            <span class="action-text">设为默认</span>
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+
                             <div class="search-container">
                                 <input type="text" id="locationSearch" placeholder="输入城市名称，如：北京、上海、广州" />
                                 <button class="search-btn" id="searchBtn">搜索</button>
@@ -83,14 +103,6 @@
                                         <span id="currentLocation">当前位置</span>
                                         <span class="location-arrow">📍</span>
                                     </button>
-                                    <div class="location-actions">
-                                        <button class="location-action-btn" id="favoriteBtn" title="收藏此位置">
-                                            <span class="favorite-icon">⭐</span>
-                                        </button>
-                                        <button class="location-action-btn" id="setDefaultBtn" title="设为默认位置">
-                                            <span class="default-icon">📍</span>
-                                        </button>
-                                    </div>
                                 </div>
                                 <p id="updateTime">更新时间</p>
                             </div>

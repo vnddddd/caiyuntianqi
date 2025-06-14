@@ -35,8 +35,12 @@ class WeatherApp {
     retryBtn?.addEventListener('click', () => this.getCurrentLocation());
     closeModalBtn?.addEventListener('click', () => this.hideLocationModal());
     searchBtn?.addEventListener('click', () => this.searchLocation());
-    favoriteBtn?.addEventListener('click', () => this.toggleFavorite());
-    setDefaultBtn?.addEventListener('click', () => this.setAsDefault());
+
+    // 模态框中的按钮事件
+    const modalFavoriteBtn = document.getElementById('modalFavoriteBtn');
+    const modalSetDefaultBtn = document.getElementById('modalSetDefaultBtn');
+    modalFavoriteBtn?.addEventListener('click', () => this.toggleFavorite());
+    modalSetDefaultBtn?.addEventListener('click', () => this.setAsDefault());
 
     // 回车键搜索
     locationSearch?.addEventListener('keypress', (e) => {
@@ -372,6 +376,10 @@ class WeatherApp {
     const modal = document.getElementById('locationModal');
     if (modal) {
       modal.style.display = 'flex';
+
+      // 显示当前位置操作区域
+      this.updateCurrentLocationActions();
+
       // 清空搜索框
       const searchInput = document.getElementById('locationSearch');
       if (searchInput) {
@@ -831,12 +839,32 @@ class WeatherApp {
     }
   }
 
-  // 更新位置操作按钮状态
-  updateLocationActionButtons() {
+  // 更新当前位置操作区域
+  updateCurrentLocationActions() {
+    const currentLocationActions = document.getElementById('currentLocationActions');
+    const modalCurrentLocation = document.getElementById('modalCurrentLocation');
+
+    if (!this.currentLocation || !currentLocationActions) return;
+
+    // 显示当前位置操作区域
+    currentLocationActions.style.display = 'block';
+
+    // 更新当前位置显示
+    const currentLocationName = document.getElementById('currentLocation')?.textContent || '当前位置';
+    if (modalCurrentLocation) {
+      modalCurrentLocation.textContent = currentLocationName;
+    }
+
+    // 更新按钮状态
+    this.updateModalActionButtons();
+  }
+
+  // 更新模态框中的操作按钮状态
+  updateModalActionButtons() {
     if (!this.currentLocation) return;
 
-    const favoriteBtn = document.getElementById('favoriteBtn');
-    const setDefaultBtn = document.getElementById('setDefaultBtn');
+    const modalFavoriteBtn = document.getElementById('modalFavoriteBtn');
+    const modalSetDefaultBtn = document.getElementById('modalSetDefaultBtn');
 
     // 检查是否已收藏
     const isFavorited = this.favoriteLocations.some(
@@ -848,17 +876,24 @@ class WeatherApp {
       Math.abs(this.defaultLocation.lat - this.currentLocation.lat) < 0.001 &&
       Math.abs(this.defaultLocation.lng - this.currentLocation.lng) < 0.001;
 
-    if (favoriteBtn) {
-      favoriteBtn.classList.toggle('active', isFavorited);
-      favoriteBtn.title = isFavorited ? '取消收藏' : '收藏此位置';
-      favoriteBtn.querySelector('.favorite-icon').textContent = isFavorited ? '⭐' : '☆';
+    if (modalFavoriteBtn) {
+      modalFavoriteBtn.classList.toggle('active', isFavorited);
+      modalFavoriteBtn.title = isFavorited ? '取消收藏' : '收藏此位置';
+      modalFavoriteBtn.querySelector('.favorite-icon').textContent = isFavorited ? '⭐' : '☆';
+      modalFavoriteBtn.querySelector('.action-text').textContent = isFavorited ? '取消收藏' : '收藏';
     }
 
-    if (setDefaultBtn) {
-      setDefaultBtn.classList.toggle('default', isDefault);
-      setDefaultBtn.title = isDefault ? '取消默认位置' : '设为默认位置';
-      setDefaultBtn.querySelector('.default-icon').textContent = isDefault ? '📍' : '📌';
+    if (modalSetDefaultBtn) {
+      modalSetDefaultBtn.classList.toggle('default', isDefault);
+      modalSetDefaultBtn.title = isDefault ? '取消默认位置' : '设为默认位置';
+      modalSetDefaultBtn.querySelector('.default-icon').textContent = isDefault ? '📍' : '📌';
+      modalSetDefaultBtn.querySelector('.action-text').textContent = isDefault ? '取消默认' : '设为默认';
     }
+  }
+
+  // 更新位置操作按钮状态（保留用于兼容性，但现在主要更新模态框按钮）
+  updateLocationActionButtons() {
+    this.updateModalActionButtons();
   }
 
   // 更新收藏列表显示
