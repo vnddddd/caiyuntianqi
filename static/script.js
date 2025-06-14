@@ -81,18 +81,10 @@ class WeatherApp {
       return;
     }
 
-    // 首先尝试IP定位作为主要方案
-    console.log('开始尝试IP定位...');
-    try {
-      await this.getLocationByIP();
-      return; // IP定位成功，直接返回
-    } catch (ipError) {
-      console.log('IP定位失败，尝试GPS定位:', ipError);
-    }
-
-    // IP定位失败，尝试GPS定位
+    // 首先尝试GPS定位作为主要方案（更准确）
     if ('geolocation' in navigator) {
       try {
+        console.log('开始尝试GPS定位...');
         // 尝试获取位置权限状态
         if ('permissions' in navigator) {
           const permission = await navigator.permissions.query({ name: 'geolocation' });
@@ -104,6 +96,8 @@ class WeatherApp {
             console.log('GPS权限需要用户确认，尝试请求权限...');
             this.getCurrentLocation(); // 这会触发权限请求
             return;
+          } else {
+            console.log('GPS权限被拒绝，尝试IP定位...');
           }
         } else {
           // 没有权限API，直接尝试获取位置（会触发权限请求）
@@ -111,17 +105,21 @@ class WeatherApp {
           this.getCurrentLocation();
           return;
         }
-
-        // 权限被拒绝，加载默认位置
-        console.log('GPS权限被拒绝，加载默认位置（北京）');
-        await this.loadBeijingWeather();
       } catch (error) {
-        console.log('GPS权限检查失败:', error);
-        await this.loadBeijingWeather();
+        console.log('GPS权限检查失败，尝试IP定位:', error);
       }
     } else {
-      // 浏览器不支持地理位置，直接加载默认位置
-      console.log('浏览器不支持地理位置API，加载默认位置（北京）');
+      console.log('浏览器不支持地理位置API，尝试IP定位...');
+    }
+
+    // GPS定位失败或不可用，尝试IP定位作为备用方案
+    console.log('开始尝试IP定位作为备用方案...');
+    try {
+      await this.getLocationByIP();
+      return; // IP定位成功，直接返回
+    } catch (ipError) {
+      console.log('IP定位也失败，加载默认位置（北京）:', ipError);
+      // 直接加载默认位置（北京）
       await this.loadBeijingWeather();
     }
   }
@@ -166,18 +164,18 @@ class WeatherApp {
 
   // 位置获取失败
   async onLocationError(error) {
-    console.error('位置获取失败:', error);
+    console.error('GPS定位失败:', error);
 
-    let errorMessage = '获取位置失败';
+    let errorMessage = 'GPS定位失败';
     switch (error.code) {
       case error.PERMISSION_DENIED:
-        errorMessage = '位置访问被拒绝，尝试使用 IP 定位...';
+        errorMessage = 'GPS位置访问被拒绝，尝试使用 IP 定位...';
         break;
       case error.POSITION_UNAVAILABLE:
-        errorMessage = '位置信息不可用，尝试使用 IP 定位...';
+        errorMessage = 'GPS位置信息不可用，尝试使用 IP 定位...';
         break;
       case error.TIMEOUT:
-        errorMessage = '位置获取超时，尝试使用 IP 定位...';
+        errorMessage = 'GPS定位超时，尝试使用 IP 定位...';
         break;
     }
 
@@ -194,6 +192,7 @@ class WeatherApp {
           <h3>🌍 无法自动获取位置</h3>
           <p>可能的原因：</p>
           <ul style="text-align: left; display: inline-block;">
+            <li>GPS权限被拒绝</li>
             <li>网络连接问题</li>
             <li>位置服务被禁用</li>
             <li>防火墙或网络限制</li>
