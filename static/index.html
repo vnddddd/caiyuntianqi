@@ -95,7 +95,7 @@
                 <!-- 天气信息展示 -->
                 <div class="weather-content" id="weatherContent" style="display: none;">
                     <!-- 当前天气卡片 -->
-                    <div class="current-weather-card">
+                    <div class="current-weather-card" style="background: white; border-radius: 12px; padding: 24px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); margin-bottom: 24px;">
                         <!-- 位置和更新时间 -->
                         <div class="current-weather-header">
                             <div class="location-info">
@@ -117,7 +117,7 @@
                         </div>
 
                         <!-- 主要天气信息：左侧温度，中间图标，右侧空气质量 -->
-                        <div class="current-weather-main">
+                        <div class="current-weather-main" style="display: flex; align-items: center; justify-content: space-between; gap: 32px; margin-bottom: 24px;">
                             <div class="temperature-section">
                                 <div class="temperature-display">
                                     <span class="current-temp" id="currentTemp">--</span>
@@ -142,7 +142,7 @@
                         </div>
 
                         <!-- 空气质量详细数据 -->
-                        <div class="air-quality-details">
+                        <div class="air-quality-details" style="display: flex; justify-content: space-between; gap: 16px; margin-bottom: 24px; padding: 16px; background: #f8f9fa; border-radius: 8px;">
                             <div class="air-item">
                                 <span class="air-label">PM2.5</span>
                                 <span class="air-value" id="pm25">-- μg/m³</span>
