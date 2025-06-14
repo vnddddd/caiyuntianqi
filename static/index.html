@@ -96,6 +96,7 @@
                 <div class="weather-content" id="weatherContent" style="display: none;">
                     <!-- 当前天气卡片 -->
                     <div class="current-weather-card">
+                        <!-- 位置和更新时间 -->
                         <div class="current-weather-header">
                             <div class="location-info">
                                 <div class="location-title">
@@ -106,20 +107,51 @@
                                 </div>
                                 <p id="updateTime">更新时间</p>
                             </div>
-                            <div class="weather-icon" id="weatherIcon">☀️</div>
-                        </div>
-                        
-                        <div class="current-weather-main">
-                            <div class="temperature-display">
-                                <span class="current-temp" id="currentTemp">--</span>
-                                <span class="temp-unit">°C</span>
-                            </div>
-                            <div class="weather-desc">
-                                <p id="weatherDesc">--</p>
-                                <p id="feelsLike">体感温度 --°C</p>
+                            <div class="air-quality-info">
+                                <h4>空气质量</h4>
+                                <div class="aqi-display">
+                                    <div class="aqi-value" id="aqiValue">--</div>
+                                    <div class="aqi-desc" id="aqiDesc">--</div>
+                                </div>
                             </div>
                         </div>
 
+                        <!-- 主要天气信息：左侧温度，中间图标，右侧空气质量详情 -->
+                        <div class="current-weather-main">
+                            <div class="temperature-section">
+                                <div class="temperature-display">
+                                    <span class="current-temp" id="currentTemp">--</span>
+                                    <span class="temp-unit">°C</span>
+                                </div>
+                                <div class="weather-desc">
+                                    <p id="weatherDesc">--</p>
+                                    <p id="feelsLike">体感温度 --°C</p>
+                                </div>
+                            </div>
+
+                            <div class="weather-icon-section">
+                                <div class="weather-icon" id="weatherIcon">☀️</div>
+                            </div>
+
+                            <div class="air-details-section">
+                                <div class="air-details">
+                                    <div class="air-item">
+                                        <span>PM2.5</span>
+                                        <span id="pm25">-- μg/m³</span>
+                                    </div>
+                                    <div class="air-item">
+                                        <span>PM10</span>
+                                        <span id="pm10">-- μg/m³</span>
+                                    </div>
+                                    <div class="air-item">
+                                        <span>O₃</span>
+                                        <span id="o3">-- μg/m³</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- 底部详细信息 -->
                         <div class="weather-details">
                             <div class="detail-item">
                                 <span class="detail-label">湿度</span>
@@ -140,28 +172,7 @@
                         </div>
                     </div>
 
-                    <!-- 空气质量卡片 -->
-                    <div class="air-quality-card">
-                        <h3>空气质量</h3>
-                        <div class="aqi-display">
-                            <div class="aqi-value" id="aqiValue">--</div>
-                            <div class="aqi-desc" id="aqiDesc">--</div>
-                        </div>
-                        <div class="air-details">
-                            <div class="air-item">
-                                <span>PM2.5</span>
-                                <span id="pm25">-- μg/m³</span>
-                            </div>
-                            <div class="air-item">
-                                <span>PM10</span>
-                                <span id="pm10">-- μg/m³</span>
-                            </div>
-                            <div class="air-item">
-                                <span>O₃</span>
-                                <span id="o3">-- μg/m³</span>
-                            </div>
-                        </div>
-                    </div>
+
 
                     <!-- 24小时预报 -->
                     <div class="hourly-forecast-card">
