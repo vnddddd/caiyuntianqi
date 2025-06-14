@@ -59,7 +59,7 @@ function safeRound(value: any, defaultValue: number = 0): number {
 }
 
 // 格式化天气数据
-function formatWeatherData(rawData: any) {
+function formatWeatherData(rawData: any, longitude: number) {
   try {
     const { result } = rawData;
 
@@ -90,8 +90,16 @@ function formatWeatherData(rawData: any) {
     // 24小时预报 - 添加数据验证
     let hourlyForecast: any[] = [];
     if (hourly && hourly.temperature && Array.isArray(hourly.temperature)) {
+      // 获取当前时间，并根据经纬度估算时区
+      const now = new Date();
+      // 简单的时区估算：经度每15度约等于1小时时差
+      const timezoneOffset = Math.round(longitude / 15);
+
       hourlyForecast = hourly.temperature.slice(0, 24).map((temp: any, index: number) => {
-        const hour = new Date(Date.now() + index * 60 * 60 * 1000).getHours();
+        // 计算本地时间（考虑时区）
+        const utcTime = new Date(now.getTime() + index * 60 * 60 * 1000);
+        const localTime = new Date(utcTime.getTime() + timezoneOffset * 60 * 60 * 1000);
+        const hour = localTime.getHours();
         const skyconValue = safeGet(hourly, `skycon.${index}.value`, 'CLEAR_DAY');
 
         return {
@@ -152,7 +160,7 @@ async function getWeatherData(longitude: number, latitude: number) {
       throw new Error(`API 返回错误: ${rawData.error || "未知错误"}`);
     }
 
-    return formatWeatherData(rawData);
+    return formatWeatherData(rawData, longitude);
   } catch (error) {
     console.error("获取天气数据失败:", error);
     throw error;
