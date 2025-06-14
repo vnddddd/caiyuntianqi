@@ -21,6 +21,7 @@ class WeatherApp {
 
   // 绑定事件监听器
   bindEvents() {
+    console.log('绑定事件监听器');
     const locationBtn = document.getElementById('locationBtn');
     const manualLocationBtn = document.getElementById('manualLocationBtn');
     const refreshBtn = document.getElementById('refreshBtn');
@@ -29,8 +30,13 @@ class WeatherApp {
     const searchBtn = document.getElementById('searchBtn');
     const locationSearch = document.getElementById('locationSearch');
 
+    console.log('手动位置按钮:', manualLocationBtn);
+
     locationBtn?.addEventListener('click', () => this.getCurrentLocation());
-    manualLocationBtn?.addEventListener('click', () => this.showLocationModal());
+    manualLocationBtn?.addEventListener('click', () => {
+      console.log('手动位置按钮被点击');
+      this.showLocationModal();
+    });
     refreshBtn?.addEventListener('click', () => this.refreshWeatherData());
     retryBtn?.addEventListener('click', () => this.getCurrentLocation());
     closeModalBtn?.addEventListener('click', () => this.hideLocationModal());
@@ -46,7 +52,7 @@ class WeatherApp {
     // 热门城市按钮
     document.querySelectorAll('.city-btn').forEach(btn => {
       btn.addEventListener('click', (e) => {
-        const target = e.target as HTMLElement;
+        const target = e.target;
         const city = target.dataset.city;
         const lng = parseFloat(target.dataset.lng || '0');
         const lat = parseFloat(target.dataset.lat || '0');
@@ -90,35 +96,49 @@ class WeatherApp {
 
   // 检查位置权限并自动获取位置
   async checkLocationPermission() {
+    console.log('检查位置权限');
     if ('geolocation' in navigator) {
       try {
         // 尝试获取位置权限状态
         if ('permissions' in navigator) {
+          console.log('检查权限状态');
           const permission = await navigator.permissions.query({ name: 'geolocation' });
+          console.log('权限状态:', permission.state);
           if (permission.state === 'granted') {
             this.getCurrentLocation();
             return;
           }
         }
-        
+
         // 如果没有权限API或权限未授予，显示获取位置按钮
+        console.log('显示位置获取提示');
         this.showLocationPrompt();
       } catch (error) {
         console.log('权限检查失败:', error);
         this.showLocationPrompt();
       }
     } else {
+      console.log('浏览器不支持地理位置');
       this.showError('您的浏览器不支持地理位置功能');
     }
   }
 
   // 显示位置获取提示
   showLocationPrompt() {
+    console.log('显示位置获取提示');
     this.hideLoading();
     const locationBtn = document.getElementById('locationBtn');
+    const manualLocationBtn = document.getElementById('manualLocationBtn');
+    console.log('位置按钮:', locationBtn, '手动位置按钮:', manualLocationBtn);
+
     if (locationBtn) {
       locationBtn.style.display = 'flex';
       locationBtn.innerHTML = '<span class="location-icon">📍</span>获取我的位置';
+      locationBtn.disabled = false;
+    }
+
+    if (manualLocationBtn) {
+      manualLocationBtn.style.display = 'flex';
     }
   }
 
@@ -323,9 +343,12 @@ class WeatherApp {
 
   // 显示位置选择模态框
   showLocationModal() {
+    console.log('显示位置选择模态框');
     const modal = document.getElementById('locationModal');
+    console.log('模态框元素:', modal);
     if (modal) {
       modal.style.display = 'flex';
+      console.log('模态框已显示');
       // 清空搜索框
       const searchInput = document.getElementById('locationSearch');
       if (searchInput) {
@@ -337,6 +360,8 @@ class WeatherApp {
       if (searchResults) {
         searchResults.innerHTML = '';
       }
+    } else {
+      console.error('找不到模态框元素');
     }
   }
 
@@ -384,7 +409,7 @@ class WeatherApp {
         // 绑定点击事件
         searchResults.querySelectorAll('.search-result-item').forEach(item => {
           item.addEventListener('click', (e) => {
-            const target = e.currentTarget as HTMLElement;
+            const target = e.currentTarget;
             const lng = parseFloat(target.dataset.lng || '0');
             const lat = parseFloat(target.dataset.lat || '0');
             const name = target.dataset.name || '';
