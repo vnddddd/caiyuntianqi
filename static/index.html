@@ -107,7 +107,7 @@
                                 </div>
                                 <p id="updateTime">更新时间</p>
                             </div>
-                            <div class="air-quality-info">
+                            <div class="air-quality-header">
                                 <h4>空气质量</h4>
                                 <div class="aqi-display">
                                     <div class="aqi-value" id="aqiValue">--</div>
@@ -116,7 +116,7 @@
                             </div>
                         </div>
 
-                        <!-- 主要天气信息：左侧温度，中间图标，右侧空气质量详情 -->
+                        <!-- 主要天气信息：左侧温度，中间图标，右侧空气质量 -->
                         <div class="current-weather-main">
                             <div class="temperature-section">
                                 <div class="temperature-display">
@@ -133,21 +133,27 @@
                                 <div class="weather-icon" id="weatherIcon">☀️</div>
                             </div>
 
-                            <div class="air-details-section">
-                                <div class="air-details">
-                                    <div class="air-item">
-                                        <span>PM2.5</span>
-                                        <span id="pm25">-- μg/m³</span>
-                                    </div>
-                                    <div class="air-item">
-                                        <span>PM10</span>
-                                        <span id="pm10">-- μg/m³</span>
-                                    </div>
-                                    <div class="air-item">
-                                        <span>O₃</span>
-                                        <span id="o3">-- μg/m³</span>
-                                    </div>
+                            <div class="air-quality-section">
+                                <div class="aqi-main">
+                                    <div class="aqi-value-large" id="aqiValueLarge">--</div>
+                                    <div class="aqi-desc-large" id="aqiDescLarge">--</div>
                                 </div>
+                            </div>
+                        </div>
+
+                        <!-- 空气质量详细数据 -->
+                        <div class="air-quality-details">
+                            <div class="air-item">
+                                <span class="air-label">PM2.5</span>
+                                <span class="air-value" id="pm25">-- μg/m³</span>
+                            </div>
+                            <div class="air-item">
+                                <span class="air-label">PM10</span>
+                                <span class="air-value" id="pm10">-- μg/m³</span>
+                            </div>
+                            <div class="air-item">
+                                <span class="air-label">O₃</span>
+                                <span class="air-value" id="o3">-- μg/m³</span>
                             </div>
                         </div>
 

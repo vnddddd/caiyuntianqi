@@ -575,9 +575,19 @@ class WeatherApp {
   // 更新空气质量信息
   updateAirQuality(airQuality) {
     if (!airQuality) return;
-    
-    document.getElementById('aqiValue').textContent = airQuality.aqi?.chn || '--';
-    document.getElementById('aqiDesc').textContent = airQuality.description?.chn || '--';
+
+    const aqiValue = airQuality.aqi?.chn || '--';
+    const aqiDesc = airQuality.description?.chn || '--';
+
+    // 更新右上角的空气质量显示
+    document.getElementById('aqiValue').textContent = aqiValue;
+    document.getElementById('aqiDesc').textContent = aqiDesc;
+
+    // 更新右侧主要显示区域
+    document.getElementById('aqiValueLarge').textContent = aqiValue;
+    document.getElementById('aqiDescLarge').textContent = aqiDesc;
+
+    // 更新详细数据
     document.getElementById('pm25').textContent = `${airQuality.pm25 || '--'} μg/m³`;
     document.getElementById('pm10').textContent = `${airQuality.pm10 || '--'} μg/m³`;
     document.getElementById('o3').textContent = `${airQuality.o3 || '--'} μg/m³`;

@@ -512,30 +512,16 @@ body.bg-snow::before {
   font-size: 0.875rem;
 }
 
-/* 右上角空气质量信息 */
-.air-quality-info h4 {
+/* 右上角空气质量标题 */
+.air-quality-header h4 {
   font-size: 0.875rem;
   color: var(--text-secondary);
   margin-bottom: 0.5rem;
   text-align: right;
 }
 
-.air-quality-info .aqi-display {
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-  justify-content: flex-end;
-}
-
-.air-quality-info .aqi-value {
-  font-size: 1.5rem;
-  font-weight: 600;
-  color: var(--primary-color);
-}
-
-.air-quality-info .aqi-desc {
-  font-size: 0.875rem;
-  font-weight: 500;
+.air-quality-header .aqi-display {
+  display: none; /* 隐藏这里的显示，在右侧主区域显示 */
 }
 
 /* 主要天气信息布局：左中右三栏 */
@@ -596,28 +582,60 @@ body.bg-snow::before {
   font-size: 5rem;
 }
 
-/* 右侧空气质量详情区域 */
-.air-details-section {
+/* 右侧空气质量主要显示区域 */
+.air-quality-section {
   flex: 1;
   display: flex;
   justify-content: flex-end;
+  align-items: center;
 }
 
-.air-details-section .air-details {
-  display: flex;
-  flex-direction: column;
-  gap: 0.5rem;
-  min-width: 120px;
+.aqi-main {
+  text-align: right;
 }
 
-.air-details-section .air-item {
+.aqi-value-large {
+  font-size: 2.5rem;
+  font-weight: 600;
+  color: var(--primary-color);
+  line-height: 1;
+}
+
+.aqi-desc-large {
+  font-size: 1rem;
+  font-weight: 500;
+  color: var(--text-primary);
+  margin-top: 0.25rem;
+}
+
+/* 空气质量详细数据 - 横向排列 */
+.air-quality-details {
   display: flex;
   justify-content: space-between;
-  align-items: center;
-  padding: 0.5rem;
+  gap: 1rem;
+  margin-bottom: 1.5rem;
+  padding: 1rem;
   background: var(--bg-secondary);
   border-radius: 8px;
+}
+
+.air-quality-details .air-item {
+  flex: 1;
+  text-align: center;
+}
+
+.air-label {
+  display: block;
   font-size: 0.875rem;
+  color: var(--text-secondary);
+  margin-bottom: 0.25rem;
+}
+
+.air-value {
+  display: block;
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: var(--text-primary);
 }
 
 .weather-details {
