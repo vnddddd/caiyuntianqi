@@ -54,6 +54,15 @@
                             <div class="search-results" id="searchResults">
                                 <!-- 搜索结果将在这里显示 -->
                             </div>
+
+                            <!-- 收藏地址 -->
+                            <div class="favorite-locations" id="favoriteLocations" style="display: none;">
+                                <h4>收藏地址</h4>
+                                <div class="favorite-list" id="favoriteList">
+                                    <!-- 收藏的地址将在这里显示 -->
+                                </div>
+                            </div>
+
                             <div class="popular-cities">
                                 <h4>热门城市</h4>
                                 <div class="city-grid">
@@ -91,7 +100,17 @@
                     <div class="current-weather-card">
                         <div class="current-weather-header">
                             <div class="location-info">
-                                <h2 id="currentLocation">当前位置</h2>
+                                <div class="location-title">
+                                    <h2 id="currentLocation">当前位置</h2>
+                                    <div class="location-actions">
+                                        <button class="location-action-btn" id="favoriteBtn" title="收藏此位置">
+                                            <span class="favorite-icon">⭐</span>
+                                        </button>
+                                        <button class="location-action-btn" id="setDefaultBtn" title="设为默认位置">
+                                            <span class="default-icon">📍</span>
+                                        </button>
+                                    </div>
+                                </div>
                                 <p id="updateTime">更新时间</p>
                             </div>
                             <div class="weather-icon" id="weatherIcon">☀️</div>

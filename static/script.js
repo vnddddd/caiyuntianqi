@@ -10,6 +10,8 @@ class WeatherApp {
     this.cache = new Map();
     this.cacheExpiry = 5 * 60 * 1000; // 5分钟缓存
     this.isLoading = false;
+    this.favoriteLocations = this.loadFavoriteLocations();
+    this.defaultLocation = this.loadDefaultLocation();
     this.init();
   }
 
@@ -28,6 +30,8 @@ class WeatherApp {
     const closeModalBtn = document.getElementById('closeModalBtn');
     const searchBtn = document.getElementById('searchBtn');
     const locationSearch = document.getElementById('locationSearch');
+    const favoriteBtn = document.getElementById('favoriteBtn');
+    const setDefaultBtn = document.getElementById('setDefaultBtn');
 
     locationBtn?.addEventListener('click', () => this.getCurrentLocation());
     manualLocationBtn?.addEventListener('click', () => this.showLocationModal());
@@ -35,6 +39,8 @@ class WeatherApp {
     retryBtn?.addEventListener('click', () => this.getCurrentLocation());
     closeModalBtn?.addEventListener('click', () => this.hideLocationModal());
     searchBtn?.addEventListener('click', () => this.searchLocation());
+    favoriteBtn?.addEventListener('click', () => this.toggleFavorite());
+    setDefaultBtn?.addEventListener('click', () => this.setAsDefault());
 
     // 回车键搜索
     locationSearch?.addEventListener('keypress', (e) => {
@@ -90,6 +96,23 @@ class WeatherApp {
 
   // 检查位置权限并自动获取位置
   async checkLocationPermission() {
+    // 优先检查是否有默认位置
+    if (this.defaultLocation) {
+      console.log('加载默认位置:', this.defaultLocation);
+      this.currentLocation = { lat: this.defaultLocation.lat, lng: this.defaultLocation.lng };
+
+      // 更新按钮状态
+      const locationBtn = document.getElementById('locationBtn');
+      if (locationBtn) {
+        locationBtn.innerHTML = '<span class="location-icon">🏠</span>默认位置';
+        locationBtn.disabled = true;
+      }
+
+      // 获取天气数据
+      await this.fetchWeatherData(this.defaultLocation.lng, this.defaultLocation.lat, this.defaultLocation.name);
+      return;
+    }
+
     if ('geolocation' in navigator) {
       try {
         // 尝试获取位置权限状态
@@ -387,6 +410,8 @@ class WeatherApp {
       if (searchResults) {
         searchResults.innerHTML = '';
       }
+      // 更新收藏列表
+      this.updateFavoriteList();
     }
   }
 
@@ -628,6 +653,190 @@ class WeatherApp {
     if (refreshBtn) {
       refreshBtn.style.display = 'flex';
     }
+
+    // 更新收藏和默认按钮状态
+    this.updateLocationActionButtons();
+  }
+
+  // 本地存储相关方法
+  loadFavoriteLocations() {
+    try {
+      const stored = localStorage.getItem('favoriteLocations');
+      return stored ? JSON.parse(stored) : [];
+    } catch (error) {
+      console.error('加载收藏位置失败:', error);
+      return [];
+    }
+  }
+
+  saveFavoriteLocations() {
+    try {
+      localStorage.setItem('favoriteLocations', JSON.stringify(this.favoriteLocations));
+    } catch (error) {
+      console.error('保存收藏位置失败:', error);
+    }
+  }
+
+  loadDefaultLocation() {
+    try {
+      const stored = localStorage.getItem('defaultLocation');
+      return stored ? JSON.parse(stored) : null;
+    } catch (error) {
+      console.error('加载默认位置失败:', error);
+      return null;
+    }
+  }
+
+  saveDefaultLocation(location) {
+    try {
+      localStorage.setItem('defaultLocation', JSON.stringify(location));
+      this.defaultLocation = location;
+    } catch (error) {
+      console.error('保存默认位置失败:', error);
+    }
+  }
+
+  // 收藏功能
+  toggleFavorite() {
+    if (!this.currentLocation) return;
+
+    const currentLocationName = document.getElementById('currentLocation').textContent;
+    const locationData = {
+      name: currentLocationName,
+      lat: this.currentLocation.lat,
+      lng: this.currentLocation.lng,
+      address: currentLocationName
+    };
+
+    const existingIndex = this.favoriteLocations.findIndex(
+      loc => Math.abs(loc.lat - locationData.lat) < 0.001 && Math.abs(loc.lng - locationData.lng) < 0.001
+    );
+
+    if (existingIndex >= 0) {
+      // 取消收藏
+      this.favoriteLocations.splice(existingIndex, 1);
+    } else {
+      // 添加收藏
+      this.favoriteLocations.push(locationData);
+    }
+
+    this.saveFavoriteLocations();
+    this.updateLocationActionButtons();
+    this.updateFavoriteList();
+  }
+
+  // 设为默认
+  setAsDefault() {
+    if (!this.currentLocation) return;
+
+    const currentLocationName = document.getElementById('currentLocation').textContent;
+    const locationData = {
+      name: currentLocationName,
+      lat: this.currentLocation.lat,
+      lng: this.currentLocation.lng,
+      address: currentLocationName
+    };
+
+    this.saveDefaultLocation(locationData);
+    this.updateLocationActionButtons();
+    this.updateFavoriteList();
+  }
+
+  // 更新位置操作按钮状态
+  updateLocationActionButtons() {
+    if (!this.currentLocation) return;
+
+    const favoriteBtn = document.getElementById('favoriteBtn');
+    const setDefaultBtn = document.getElementById('setDefaultBtn');
+
+    // 检查是否已收藏
+    const isFavorited = this.favoriteLocations.some(
+      loc => Math.abs(loc.lat - this.currentLocation.lat) < 0.001 && Math.abs(loc.lng - this.currentLocation.lng) < 0.001
+    );
+
+    // 检查是否为默认位置
+    const isDefault = this.defaultLocation &&
+      Math.abs(this.defaultLocation.lat - this.currentLocation.lat) < 0.001 &&
+      Math.abs(this.defaultLocation.lng - this.currentLocation.lng) < 0.001;
+
+    if (favoriteBtn) {
+      favoriteBtn.classList.toggle('active', isFavorited);
+      favoriteBtn.title = isFavorited ? '取消收藏' : '收藏此位置';
+      favoriteBtn.querySelector('.favorite-icon').textContent = isFavorited ? '⭐' : '☆';
+    }
+
+    if (setDefaultBtn) {
+      setDefaultBtn.classList.toggle('default', isDefault);
+      setDefaultBtn.title = isDefault ? '已设为默认' : '设为默认位置';
+      setDefaultBtn.disabled = isDefault;
+    }
+  }
+
+  // 更新收藏列表显示
+  updateFavoriteList() {
+    const favoriteLocations = document.getElementById('favoriteLocations');
+    const favoriteList = document.getElementById('favoriteList');
+
+    if (!favoriteList) return;
+
+    if (this.favoriteLocations.length === 0) {
+      favoriteLocations.style.display = 'none';
+      return;
+    }
+
+    favoriteLocations.style.display = 'block';
+    favoriteList.innerHTML = this.favoriteLocations.map((location, index) => {
+      const isDefault = this.defaultLocation &&
+        Math.abs(this.defaultLocation.lat - location.lat) < 0.001 &&
+        Math.abs(this.defaultLocation.lng - location.lng) < 0.001;
+
+      return `
+        <div class="favorite-item ${isDefault ? 'default' : ''}" data-index="${index}">
+          <div class="favorite-info">
+            <div class="favorite-name">${location.name}</div>
+            <div class="favorite-address">${location.address}</div>
+          </div>
+          <div class="favorite-actions">
+            ${!isDefault ? `<button class="favorite-action-btn set-default" title="设为默认">📍</button>` : ''}
+            <button class="favorite-action-btn delete" title="删除">🗑️</button>
+          </div>
+        </div>
+      `;
+    }).join('');
+
+    // 绑定收藏项点击事件
+    favoriteList.querySelectorAll('.favorite-item').forEach(item => {
+      const index = parseInt(item.dataset.index);
+      const location = this.favoriteLocations[index];
+
+      // 点击收藏项选择位置
+      item.addEventListener('click', (e) => {
+        if (e.target.classList.contains('favorite-action-btn')) return;
+        this.selectLocation(location.lng, location.lat, location.name);
+      });
+
+      // 设为默认按钮
+      const setDefaultBtn = item.querySelector('.set-default');
+      if (setDefaultBtn) {
+        setDefaultBtn.addEventListener('click', (e) => {
+          e.stopPropagation();
+          this.saveDefaultLocation(location);
+          this.updateFavoriteList();
+        });
+      }
+
+      // 删除按钮
+      const deleteBtn = item.querySelector('.delete');
+      if (deleteBtn) {
+        deleteBtn.addEventListener('click', (e) => {
+          e.stopPropagation();
+          this.favoriteLocations.splice(index, 1);
+          this.saveFavoriteLocations();
+          this.updateFavoriteList();
+          this.updateLocationActionButtons();
+        });
+      }
+    });
   }
 }
 

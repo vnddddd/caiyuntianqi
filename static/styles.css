@@ -658,6 +658,136 @@ body {
   }
 }
 
+/* 位置操作按钮 */
+.location-title {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+}
+
+.location-actions {
+  display: flex;
+  gap: 0.5rem;
+}
+
+.location-action-btn {
+  background: rgba(255, 255, 255, 0.1);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  border-radius: 8px;
+  padding: 0.5rem;
+  color: white;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  font-size: 1rem;
+  min-width: 40px;
+  height: 40px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.location-action-btn:hover {
+  background: rgba(255, 255, 255, 0.2);
+  transform: translateY(-2px);
+}
+
+.location-action-btn.active {
+  background: #4CAF50;
+  border-color: #4CAF50;
+}
+
+.location-action-btn.default {
+  background: #2196F3;
+  border-color: #2196F3;
+}
+
+/* 收藏地址样式 */
+.favorite-locations {
+  margin-bottom: 1.5rem;
+}
+
+.favorite-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  max-height: 200px;
+  overflow-y: auto;
+}
+
+.favorite-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0.75rem;
+  background: #f8f9fa;
+  border: 1px solid #e9ecef;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.favorite-item:hover {
+  background: #e9ecef;
+  transform: translateY(-1px);
+}
+
+.favorite-item.default {
+  background: #e3f2fd;
+  border-color: #2196F3;
+}
+
+.favorite-item.default::after {
+  content: "默认";
+  background: #2196F3;
+  color: white;
+  padding: 0.25rem 0.5rem;
+  border-radius: 4px;
+  font-size: 0.75rem;
+}
+
+.favorite-info {
+  flex: 1;
+}
+
+.favorite-name {
+  font-weight: 500;
+  color: #333;
+  margin-bottom: 0.25rem;
+}
+
+.favorite-address {
+  font-size: 0.875rem;
+  color: #666;
+}
+
+.favorite-actions {
+  display: flex;
+  gap: 0.5rem;
+}
+
+.favorite-action-btn {
+  background: none;
+  border: none;
+  padding: 0.25rem;
+  cursor: pointer;
+  border-radius: 4px;
+  transition: background-color 0.3s ease;
+  font-size: 1rem;
+}
+
+.favorite-action-btn:hover {
+  background: rgba(0, 0, 0, 0.1);
+}
+
+.favorite-action-btn.delete {
+  color: #f44336;
+}
+
+.favorite-action-btn.set-default {
+  color: #2196F3;
+}
+
 /* 移动端优化 */
 @media (max-width: 767px) {
   .container {
