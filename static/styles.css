@@ -1142,8 +1142,8 @@ body.bg-snow::before {
   }
 }
 
-/* 沉浸式底部提醒 */
-.immersive-footer {
+/* 天气生活指数提醒 */
+.weather-tips-footer {
   background: rgba(255, 255, 255, 0.1);
   backdrop-filter: blur(10px);
   border-top: 1px solid rgba(255, 255, 255, 0.2);
@@ -1151,12 +1151,44 @@ body.bg-snow::before {
   margin-top: 2rem;
 }
 
-.immersive-reminder {
-  text-align: center;
-  color: rgba(255, 255, 255, 0.9);
+.weather-tips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 1rem;
+  justify-content: center;
+  align-items: center;
+}
+
+.weather-tip-item {
+  background: rgba(255, 255, 255, 0.15);
+  backdrop-filter: blur(8px);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  border-radius: 20px;
+  padding: 0.5rem 1rem;
+  color: rgba(255, 255, 255, 0.95);
   font-size: 0.875rem;
-  margin: 0;
   font-weight: 500;
+  white-space: nowrap;
+  transition: all 0.3s ease;
+}
+
+.weather-tip-item:hover {
+  background: rgba(255, 255, 255, 0.2);
+  transform: translateY(-2px);
+}
+
+/* 移动端优化 */
+@media (max-width: 767px) {
+  .weather-tips {
+    flex-direction: column;
+    gap: 0.5rem;
+  }
+
+  .weather-tip-item {
+    width: 100%;
+    text-align: center;
+    border-radius: 12px;
+  }
 }
 
 /* 桌面端沉浸式布局优化 */

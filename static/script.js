@@ -546,6 +546,9 @@ class WeatherApp {
     // 更新3天预报
     this.updateDailyForecast(daily);
 
+    // 更新生活指数提醒
+    this.updateWeatherTips(daily);
+
     // 更新位置和时间信息
     await this.updateLocationInfo(forecast_keypoint, locationName);
 
@@ -672,6 +675,55 @@ class WeatherApp {
         </div>
       </div>
     `).join('');
+  }
+
+  // 更新生活指数提醒
+  updateWeatherTips(daily) {
+    if (!daily || !daily[0] || !daily[0].life_index) {
+      return;
+    }
+
+    const todayLifeIndex = daily[0].life_index;
+    const tips = [];
+
+    // 生活指数图标映射
+    const indexIcons = {
+      ultraviolet: '☀️',
+      carWashing: '🚗',
+      dressing: '👕',
+      comfort: '😊',
+      coldRisk: '🤧'
+    };
+
+    // 生活指数名称映射
+    const indexNames = {
+      ultraviolet: '紫外线',
+      carWashing: '洗车',
+      dressing: '穿衣',
+      comfort: '舒适度',
+      coldRisk: '感冒'
+    };
+
+    // 生成提醒信息
+    Object.keys(indexIcons).forEach(key => {
+      const indexData = todayLifeIndex[key];
+      if (indexData && indexData.desc && indexData.desc !== '暂无数据') {
+        tips.push(`${indexIcons[key]} ${indexNames[key]}: ${indexData.desc}`);
+      }
+    });
+
+    // 显示生活指数提醒
+    if (tips.length > 0) {
+      const tipsContainer = document.getElementById('weatherTips');
+      const tipsFooter = document.getElementById('weatherTipsFooter');
+
+      if (tipsContainer && tipsFooter) {
+        tipsContainer.innerHTML = tips.map(tip =>
+          `<div class="weather-tip-item">${tip}</div>`
+        ).join('');
+        tipsFooter.style.display = 'block';
+      }
+    }
   }
 
   // 更新位置和时间信息

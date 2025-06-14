@@ -130,6 +130,9 @@ function formatWeatherData(rawData: any, longitude: number) {
           relativeDay = date.toLocaleDateString('zh-CN', { weekday: 'short' });
         }
 
+        // 获取生活指数
+        const lifeIndex = safeGet(daily, `life_index`, {});
+
         return {
           date: date.toLocaleDateString('zh-CN', { month: 'short', day: 'numeric' }),
           weekday: date.toLocaleDateString('zh-CN', { weekday: 'short' }), // 星期几
@@ -137,7 +140,14 @@ function formatWeatherData(rawData: any, longitude: number) {
           max_temp: safeRound(safeGet(temp, 'max', 0)),
           min_temp: safeRound(safeGet(temp, 'min', 0)),
           skycon: skyconValue,
-          weather_info: SKYCON_MAP[skyconValue] || { icon: "🌤️", desc: "未知" }
+          weather_info: SKYCON_MAP[skyconValue] || { icon: "🌤️", desc: "未知" },
+          life_index: {
+            ultraviolet: safeGet(lifeIndex, `ultraviolet.${index}`, { index: '', desc: '暂无数据' }),
+            carWashing: safeGet(lifeIndex, `carWashing.${index}`, { index: '', desc: '暂无数据' }),
+            dressing: safeGet(lifeIndex, `dressing.${index}`, { index: '', desc: '暂无数据' }),
+            comfort: safeGet(lifeIndex, `comfort.${index}`, { index: '', desc: '暂无数据' }),
+            coldRisk: safeGet(lifeIndex, `coldRisk.${index}`, { index: '', desc: '暂无数据' })
+          }
         };
       });
     }
