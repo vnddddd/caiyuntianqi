@@ -118,14 +118,14 @@ class WeatherApp {
         }
 
         // 如果没有权限API或权限未授予，直接加载默认位置
-        this.loadDefaultLocation();
+        await this.loadDefaultLocation();
       } catch (error) {
         console.log('权限检查失败:', error);
-        this.loadDefaultLocation();
+        await this.loadDefaultLocation();
       }
     } else {
       // 浏览器不支持地理位置，直接加载默认位置
-      this.loadDefaultLocation();
+      await this.loadDefaultLocation();
     }
   }
 
@@ -206,7 +206,7 @@ class WeatherApp {
       `);
 
       // 直接加载默认位置（北京）
-      this.loadDefaultLocation();
+      await this.loadDefaultLocation();
     }
   }
 
