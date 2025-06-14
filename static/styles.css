@@ -1142,52 +1142,79 @@ body.bg-snow::before {
   }
 }
 
-/* 天气生活指数提醒 */
-.weather-tips-footer {
-  background: rgba(255, 255, 255, 0.1);
-  backdrop-filter: blur(10px);
-  border-top: 1px solid rgba(255, 255, 255, 0.2);
-  padding: 1rem 0;
-  margin-top: 2rem;
+/* 天气生活指数提醒卡片 */
+.weather-tips-card {
+  background: var(--bg-card);
+  border-radius: var(--border-radius);
+  padding: 1.5rem;
+  box-shadow: var(--shadow-medium);
+  transition: var(--transition);
+  margin-top: 1.5rem;
+}
+
+.weather-tips-card:hover {
+  transform: translateY(-2px);
+  box-shadow: var(--shadow-medium);
 }
 
 .weather-tips {
-  display: flex;
-  flex-wrap: wrap;
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
   gap: 1rem;
-  justify-content: center;
   align-items: center;
 }
 
 .weather-tip-item {
-  background: rgba(255, 255, 255, 0.15);
-  backdrop-filter: blur(8px);
-  border: 1px solid rgba(255, 255, 255, 0.2);
-  border-radius: 20px;
-  padding: 0.5rem 1rem;
-  color: rgba(255, 255, 255, 0.95);
+  background: var(--bg-secondary);
+  border: 1px solid var(--border-color);
+  border-radius: 8px;
+  padding: 0.75rem 1rem;
+  color: var(--text-primary);
   font-size: 0.875rem;
   font-weight: 500;
-  white-space: nowrap;
+  text-align: center;
   transition: all 0.3s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
 }
 
 .weather-tip-item:hover {
-  background: rgba(255, 255, 255, 0.2);
+  background: #E8F4FD;
+  border-color: var(--primary-color);
   transform: translateY(-2px);
+}
+
+/* 桌面端沉浸式布局优化 */
+@media (min-width: 1024px) {
+  .weather-tips-card {
+    background: rgba(255, 255, 255, 0.85);
+    backdrop-filter: blur(15px);
+    border: 1px solid rgba(255, 255, 255, 0.3);
+  }
+
+  .weather-tip-item {
+    background: rgba(255, 255, 255, 0.7);
+    backdrop-filter: blur(8px);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+  }
+
+  .weather-tip-item:hover {
+    background: rgba(255, 255, 255, 0.9);
+  }
 }
 
 /* 移动端优化 */
 @media (max-width: 767px) {
   .weather-tips {
-    flex-direction: column;
-    gap: 0.5rem;
+    grid-template-columns: 1fr;
+    gap: 0.75rem;
   }
 
   .weather-tip-item {
-    width: 100%;
-    text-align: center;
-    border-radius: 12px;
+    padding: 1rem;
+    font-size: 0.9rem;
   }
 }
 

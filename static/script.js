@@ -715,13 +715,13 @@ class WeatherApp {
     // 显示生活指数提醒
     if (tips.length > 0) {
       const tipsContainer = document.getElementById('weatherTips');
-      const tipsFooter = document.getElementById('weatherTipsFooter');
+      const tipsCard = document.getElementById('weatherTipsCard');
 
-      if (tipsContainer && tipsFooter) {
+      if (tipsContainer && tipsCard) {
         tipsContainer.innerHTML = tips.map(tip =>
           `<div class="weather-tip-item">${tip}</div>`
         ).join('');
-        tipsFooter.style.display = 'block';
+        tipsCard.style.display = 'block';
       }
     }
   }
