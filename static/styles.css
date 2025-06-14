@@ -494,6 +494,14 @@ body.bg-snow::before {
 }
 
 /* 当前天气卡片 */
+.current-weather-card {
+  background: var(--bg-card);
+  border-radius: var(--border-radius);
+  padding: 1.5rem;
+  box-shadow: var(--shadow-medium);
+  margin-bottom: 1.5rem;
+}
+
 .current-weather-header {
   display: flex;
   justify-content: space-between;
@@ -526,11 +534,11 @@ body.bg-snow::before {
 
 /* 主要天气信息布局：左中右三栏 */
 .current-weather-main {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 2rem;
-  margin-bottom: 1.5rem;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: space-between !important;
+  gap: 2rem !important;
+  margin-bottom: 1.5rem !important;
 }
 
 /* 左侧温度区域 */
@@ -610,13 +618,13 @@ body.bg-snow::before {
 
 /* 空气质量详细数据 - 横向排列 */
 .air-quality-details {
-  display: flex;
-  justify-content: space-between;
-  gap: 1rem;
-  margin-bottom: 1.5rem;
-  padding: 1rem;
-  background: var(--bg-secondary);
-  border-radius: 8px;
+  display: flex !important;
+  justify-content: space-between !important;
+  gap: 1rem !important;
+  margin-bottom: 1.5rem !important;
+  padding: 1rem !important;
+  background: var(--bg-secondary) !important;
+  border-radius: 8px !important;
 }
 
 .air-quality-details .air-item {
