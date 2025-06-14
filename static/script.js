@@ -563,6 +563,9 @@ class WeatherApp {
 
     container.innerHTML = daily.map(item => `
       <div class="daily-item">
+        <div class="daily-relative">
+          <div class="daily-relative-day">${item.relativeDay || item.weekday}</div>
+        </div>
         <div class="daily-weather">
           <div class="daily-icon">${item.weather_info.icon}</div>
           <div class="daily-desc">${item.weather_info.desc}</div>

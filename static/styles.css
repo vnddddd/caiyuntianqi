@@ -550,12 +550,22 @@ body {
   background: #E8F4FD;
 }
 
+.daily-relative {
+  flex: 1;
+  text-align: left;
+}
+
+.daily-relative-day {
+  font-weight: 600;
+  font-size: 1rem;
+}
+
 .daily-weather {
   display: flex;
   align-items: center;
   gap: 0.75rem;
-  flex: 1;
-  justify-content: flex-start;
+  flex: 2;
+  justify-content: center;
 }
 
 .daily-icon {
@@ -589,6 +599,7 @@ body {
 .daily-date-text {
   font-size: 0.875rem;
   color: var(--text-secondary);
+  display: none; /* 隐藏具体日期，只显示星期几 */
 }
 
 /* 页脚 */
