@@ -18,7 +18,39 @@ class WeatherApp {
   // 初始化应用
   init() {
     this.bindEvents();
+    this.initScrollHandler();
     this.checkLocationPermission();
+  }
+
+  // 初始化滚动处理器
+  initScrollHandler() {
+    let lastScrollY = window.scrollY;
+    let ticking = false;
+
+    const updateHeader = () => {
+      const header = document.querySelector('.header');
+      const currentScrollY = window.scrollY;
+
+      if (currentScrollY > lastScrollY && currentScrollY > 100) {
+        // 向下滚动且超过100px，隐藏头部
+        header.classList.add('hidden');
+      } else {
+        // 向上滚动或在顶部，显示头部
+        header.classList.remove('hidden');
+      }
+
+      lastScrollY = currentScrollY;
+      ticking = false;
+    };
+
+    const onScroll = () => {
+      if (!ticking) {
+        requestAnimationFrame(updateHeader);
+        ticking = true;
+      }
+    };
+
+    window.addEventListener('scroll', onScroll, { passive: true });
   }
 
   // 绑定事件监听器
