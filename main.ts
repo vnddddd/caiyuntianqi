@@ -159,22 +159,39 @@ async function getWeatherData(longitude: number, latitude: number) {
   }
 }
 
-// IP 地理位置获取
+// IP 地理位置获取 - 使用美团接口
 async function getLocationByIP(clientIP?: string): Promise<{ lat: number; lng: number; address: string } | null> {
   try {
-    // 使用免费的 IP 地理位置服务
+    // 使用美团 IP 地理位置服务
     const ipApiUrl = clientIP
-      ? `http://ip-api.com/json/${clientIP}?lang=zh-CN&fields=status,lat,lon,country,regionName,city,district`
-      : `http://ip-api.com/json?lang=zh-CN&fields=status,lat,lon,country,regionName,city,district`;
+      ? `https://apimobile.meituan.com/locate/v2/ip/loc?rgeo=true&ip=${clientIP}`
+      : `https://apimobile.meituan.com/locate/v2/ip/loc?rgeo=true`;
 
-    const response = await fetch(ipApiUrl);
+    const response = await fetch(ipApiUrl, {
+      headers: {
+        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36',
+        'Referer': 'https://www.meituan.com/'
+      }
+    });
+
+    if (!response.ok) {
+      throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+    }
+
     const data = await response.json();
 
-    if (data.status === 'success') {
+    if (data.data && data.data.lat && data.data.lng) {
+      const { lat, lng, rgeo } = data.data;
+      let address = '未知位置';
+
+      if (rgeo) {
+        address = `${rgeo.country || ''} ${rgeo.province || ''} ${rgeo.city || ''} ${rgeo.district || ''}`.trim();
+      }
+
       return {
-        lat: data.lat,
-        lng: data.lon,
-        address: `${data.country} ${data.regionName} ${data.city}${data.district ? ' ' + data.district : ''}`
+        lat: lat,
+        lng: lng,
+        address: address || '未知位置'
       };
     }
 
@@ -185,29 +202,38 @@ async function getLocationByIP(clientIP?: string): Promise<{ lat: number; lng: n
   }
 }
 
-// 地理编码 - 将经纬度转换为详细地址
+// 地理编码 - 将经纬度转换为详细地址 - 使用美团接口
 async function reverseGeocode(lat: number, lng: number): Promise<string> {
   try {
-    // 使用高德地理编码 API（免费，无需 key 的基础服务）
-    const geocodeUrl = `https://restapi.amap.com/v3/geocode/regeo?location=${lng},${lat}&output=json&radius=1000&extensions=all`;
+    // 使用美团地理编码 API
+    const geocodeUrl = `https://apimobile.meituan.com/group/v1/city/latlng/${lat},${lng}?tag=0`;
 
-    const response = await fetch(geocodeUrl);
+    const response = await fetch(geocodeUrl, {
+      headers: {
+        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36',
+        'Referer': 'https://www.meituan.com/'
+      }
+    });
+
+    if (!response.ok) {
+      throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+    }
+
     const data = await response.json();
 
-    if (data.status === '1' && data.regeocode) {
-      const addressComponent = data.regeocode.addressComponent;
-      const formatted = data.regeocode.formatted_address;
+    if (data.data) {
+      const { country, province, city, district, areaName, detail } = data.data;
 
       // 构建详细地址
       let detailedAddress = '';
-      if (addressComponent.province) detailedAddress += addressComponent.province;
-      if (addressComponent.city && addressComponent.city !== addressComponent.province) {
-        detailedAddress += ' ' + addressComponent.city;
-      }
-      if (addressComponent.district) detailedAddress += ' ' + addressComponent.district;
-      if (addressComponent.township) detailedAddress += ' ' + addressComponent.township;
+      if (country) detailedAddress += country;
+      if (province && province !== city) detailedAddress += ' ' + province;
+      if (city) detailedAddress += ' ' + city;
+      if (district) detailedAddress += ' ' + district;
+      if (areaName) detailedAddress += ' ' + areaName;
+      if (detail) detailedAddress += ' ' + detail;
 
-      return detailedAddress.trim() || formatted || '未知位置';
+      return detailedAddress.trim() || '未知位置';
     }
 
     // 备用：使用免费的 OpenStreetMap Nominatim 服务
@@ -225,6 +251,54 @@ async function reverseGeocode(lat: number, lng: number): Promise<string> {
   } catch (error) {
     console.error('地理编码失败:', error);
     return '未知位置';
+  }
+}
+
+// 位置搜索功能
+async function searchLocation(query: string): Promise<Array<{lat: number, lng: number, name: string, address: string}>> {
+  try {
+    // 首先尝试使用 OpenStreetMap Nominatim 服务进行搜索
+    const nominatimUrl = `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(query)}&limit=5&accept-language=zh-CN&countrycodes=cn`;
+
+    const response = await fetch(nominatimUrl, {
+      headers: { 'User-Agent': 'CaiyunWeatherApp/1.0' }
+    });
+
+    if (!response.ok) {
+      throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+    }
+
+    const data = await response.json();
+
+    if (data && data.length > 0) {
+      return data.map((item: any) => ({
+        lat: parseFloat(item.lat),
+        lng: parseFloat(item.lon),
+        name: item.display_name.split(',')[0].trim(),
+        address: item.display_name
+      }));
+    }
+
+    // 如果没有结果，返回一些常见城市的匹配
+    const commonCities = [
+      { name: '北京', lat: 39.9042, lng: 116.4074, address: '中国 北京市' },
+      { name: '上海', lat: 31.2304, lng: 121.4737, address: '中国 上海市' },
+      { name: '广州', lat: 23.1291, lng: 113.2644, address: '中国 广东省 广州市' },
+      { name: '深圳', lat: 22.5431, lng: 114.0579, address: '中国 广东省 深圳市' },
+      { name: '杭州', lat: 30.2741, lng: 120.1551, address: '中国 浙江省 杭州市' },
+      { name: '南京', lat: 32.0603, lng: 118.7969, address: '中国 江苏省 南京市' },
+      { name: '成都', lat: 30.5728, lng: 104.0668, address: '中国 四川省 成都市' },
+      { name: '西安', lat: 34.3416, lng: 108.9398, address: '中国 陕西省 西安市' }
+    ];
+
+    const matchedCities = commonCities.filter(city =>
+      city.name.includes(query) || query.includes(city.name)
+    );
+
+    return matchedCities;
+  } catch (error) {
+    console.error('位置搜索失败:', error);
+    return [];
   }
 }
 
@@ -301,6 +375,47 @@ async function handler(req: Request): Promise<Response> {
 
       return new Response(
         JSON.stringify({ address }),
+        {
+          headers: {
+            "Content-Type": "application/json; charset=utf-8",
+            "Access-Control-Allow-Origin": "*"
+          }
+        }
+      );
+    } catch (error) {
+      return new Response(
+        JSON.stringify({ error: error.message }),
+        {
+          status: 500,
+          headers: { "Content-Type": "application/json; charset=utf-8" }
+        }
+      );
+    }
+  }
+
+  // 位置搜索 API
+  if (pathname === "/api/location/search") {
+    if (req.method !== "GET") {
+      return new Response("Method not allowed", { status: 405 });
+    }
+
+    const query = url.searchParams.get("q");
+
+    if (!query) {
+      return new Response(
+        JSON.stringify({ error: "缺少搜索关键词" }),
+        {
+          status: 400,
+          headers: { "Content-Type": "application/json; charset=utf-8" }
+        }
+      );
+    }
+
+    try {
+      const results = await searchLocation(query);
+
+      return new Response(
+        JSON.stringify({ results }),
         {
           headers: {
             "Content-Type": "application/json; charset=utf-8",

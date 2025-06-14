@@ -21,7 +21,6 @@ class WeatherApp {
 
   // 绑定事件监听器
   bindEvents() {
-    console.log('绑定事件监听器');
     const locationBtn = document.getElementById('locationBtn');
     const manualLocationBtn = document.getElementById('manualLocationBtn');
     const refreshBtn = document.getElementById('refreshBtn');
@@ -30,13 +29,8 @@ class WeatherApp {
     const searchBtn = document.getElementById('searchBtn');
     const locationSearch = document.getElementById('locationSearch');
 
-    console.log('手动位置按钮:', manualLocationBtn);
-
     locationBtn?.addEventListener('click', () => this.getCurrentLocation());
-    manualLocationBtn?.addEventListener('click', () => {
-      console.log('手动位置按钮被点击');
-      this.showLocationModal();
-    });
+    manualLocationBtn?.addEventListener('click', () => this.showLocationModal());
     refreshBtn?.addEventListener('click', () => this.refreshWeatherData());
     retryBtn?.addEventListener('click', () => this.getCurrentLocation());
     closeModalBtn?.addEventListener('click', () => this.hideLocationModal());
@@ -96,14 +90,11 @@ class WeatherApp {
 
   // 检查位置权限并自动获取位置
   async checkLocationPermission() {
-    console.log('检查位置权限');
     if ('geolocation' in navigator) {
       try {
         // 尝试获取位置权限状态
         if ('permissions' in navigator) {
-          console.log('检查权限状态');
           const permission = await navigator.permissions.query({ name: 'geolocation' });
-          console.log('权限状态:', permission.state);
           if (permission.state === 'granted') {
             this.getCurrentLocation();
             return;
@@ -111,25 +102,21 @@ class WeatherApp {
         }
 
         // 如果没有权限API或权限未授予，显示获取位置按钮
-        console.log('显示位置获取提示');
         this.showLocationPrompt();
       } catch (error) {
         console.log('权限检查失败:', error);
         this.showLocationPrompt();
       }
     } else {
-      console.log('浏览器不支持地理位置');
       this.showError('您的浏览器不支持地理位置功能');
     }
   }
 
   // 显示位置获取提示
   showLocationPrompt() {
-    console.log('显示位置获取提示');
     this.hideLoading();
     const locationBtn = document.getElementById('locationBtn');
     const manualLocationBtn = document.getElementById('manualLocationBtn');
-    console.log('位置按钮:', locationBtn, '手动位置按钮:', manualLocationBtn);
 
     if (locationBtn) {
       locationBtn.style.display = 'flex';
@@ -343,12 +330,9 @@ class WeatherApp {
 
   // 显示位置选择模态框
   showLocationModal() {
-    console.log('显示位置选择模态框');
     const modal = document.getElementById('locationModal');
-    console.log('模态框元素:', modal);
     if (modal) {
       modal.style.display = 'flex';
-      console.log('模态框已显示');
       // 清空搜索框
       const searchInput = document.getElementById('locationSearch');
       if (searchInput) {
@@ -360,8 +344,6 @@ class WeatherApp {
       if (searchResults) {
         searchResults.innerHTML = '';
       }
-    } else {
-      console.error('找不到模态框元素');
     }
   }
 
@@ -386,21 +368,24 @@ class WeatherApp {
     searchResults.innerHTML = '<div style="text-align: center; padding: 1rem; color: #666;">搜索中...</div>';
 
     try {
-      // 使用高德地理编码 API 搜索
-      const geocodeUrl = `https://restapi.amap.com/v3/geocode/geo?address=${encodeURIComponent(query)}&output=json`;
-      const response = await fetch(geocodeUrl);
+      // 使用后端搜索API
+      const response = await fetch(`/api/location/search?q=${encodeURIComponent(query)}`);
+
+      if (!response.ok) {
+        throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+      }
+
       const data = await response.json();
 
-      if (data.status === '1' && data.geocodes && data.geocodes.length > 0) {
-        const results = data.geocodes.slice(0, 5); // 最多显示5个结果
+      if (data.results && data.results.length > 0) {
+        const results = data.results.slice(0, 5); // 最多显示5个结果
 
         searchResults.innerHTML = results.map(result => {
-          const [lng, lat] = result.location.split(',').map(Number);
           return `
-            <div class="search-result-item" data-lng="${lng}" data-lat="${lat}" data-name="${result.formatted_address}">
-              <div style="font-weight: 500;">${result.formatted_address}</div>
+            <div class="search-result-item" data-lng="${result.lng}" data-lat="${result.lat}" data-name="${result.name}">
+              <div style="font-weight: 500;">${result.name}</div>
               <div style="font-size: 0.875rem; color: #666; margin-top: 0.25rem;">
-                ${result.province} ${result.city} ${result.district}
+                ${result.address || ''}
               </div>
             </div>
           `;
