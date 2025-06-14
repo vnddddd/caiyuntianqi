@@ -131,8 +131,7 @@ class WeatherApp {
   // 显示位置获取提示
   showLocationPrompt() {
     this.hideLoading();
-    // 显示选择位置的提示
-    this.showLocationModal();
+    // 不自动显示模态框，让用户手动点击位置名称来选择
   }
 
   // 获取当前位置
@@ -205,13 +204,8 @@ class WeatherApp {
         </div>
       `);
 
-      // 自动显示位置选择按钮
-      this.showLocationPrompt();
-
-      // 3秒后自动加载北京天气作为默认
-      setTimeout(() => {
-        this.loadDefaultLocation();
-      }, 3000);
+      // 直接加载默认位置（北京）
+      this.loadDefaultLocation();
     }
   }
 
