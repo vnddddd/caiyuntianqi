@@ -118,14 +118,14 @@ class WeatherApp {
         }
 
         // 如果没有权限API或权限未授予，直接加载默认位置
-        await this.loadDefaultLocation();
+        await this.loadBeijingWeather();
       } catch (error) {
         console.log('权限检查失败:', error);
-        await this.loadDefaultLocation();
+        await this.loadBeijingWeather();
       }
     } else {
       // 浏览器不支持地理位置，直接加载默认位置
-      await this.loadDefaultLocation();
+      await this.loadBeijingWeather();
     }
   }
 
@@ -206,7 +206,7 @@ class WeatherApp {
       `);
 
       // 直接加载默认位置（北京）
-      await this.loadDefaultLocation();
+      await this.loadBeijingWeather();
     }
   }
 
@@ -243,7 +243,7 @@ class WeatherApp {
 
 
   // 加载默认位置（北京）
-  async loadDefaultLocation() {
+  async loadBeijingWeather() {
     try {
       console.log('加载默认位置：北京');
       this.currentLocation = { lat: 39.9042, lng: 116.4074 };
