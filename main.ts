@@ -615,6 +615,18 @@ async function handler(req: Request, info: Deno.ServeHandlerInfo): Promise<Respo
     }
   }
 
+  // favicon.ico 处理
+  if (pathname === "/favicon.ico") {
+    // 返回一个简单的天气图标作为favicon
+    const svgIcon = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><text y=".9em" font-size="90">🌤️</text></svg>`;
+    return new Response(svgIcon, {
+      headers: {
+        "Content-Type": "image/svg+xml",
+        "Cache-Control": "public, max-age=86400" // 缓存1天
+      }
+    });
+  }
+
   // 静态文件服务
   if (pathname === "/" || pathname === "/index.html") {
     try {
