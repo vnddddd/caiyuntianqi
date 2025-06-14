@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>天气 - 实时天气查看</title>
     <meta name="description" content="基于彩云天气API的响应式天气查看网站，支持实时天气、预报信息查询">
-    <link rel="stylesheet" href="/static/styles.css?v=3">
+    <link rel="stylesheet" href="/static/styles.css?v=4">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
@@ -108,11 +108,7 @@
                                 <p id="updateTime">更新时间</p>
                             </div>
                             <div class="air-quality-header">
-                                <h4>空气质量</h4>
-                                <div class="aqi-display">
-                                    <div class="aqi-value" id="aqiValue">--</div>
-                                    <div class="aqi-desc" id="aqiDesc">--</div>
-                                </div>
+                                <!-- 空气质量标题移到右侧显示区域 -->
                             </div>
                         </div>
 
@@ -135,25 +131,26 @@
 
                             <div class="air-quality-section">
                                 <div class="aqi-main">
+                                    <h4 class="aqi-title">空气质量</h4>
                                     <div class="aqi-value-large" id="aqiValueLarge">--</div>
                                     <div class="aqi-desc-large" id="aqiDescLarge">--</div>
                                 </div>
                             </div>
                         </div>
 
-                        <!-- 空气质量详细数据 -->
-                        <div class="air-quality-details" style="display: flex; justify-content: space-between; gap: 16px; margin-bottom: 24px; padding: 16px; background: #f8f9fa; border-radius: 8px;">
-                            <div class="air-item">
-                                <span class="air-label">PM2.5</span>
-                                <span class="air-value" id="pm25">-- μg/m³</span>
+                        <!-- 空气质量详细数据 - 改为和天气详情一样的格式 -->
+                        <div class="air-quality-details">
+                            <div class="detail-item">
+                                <span class="detail-label">PM2.5</span>
+                                <span class="detail-value" id="pm25">-- μg/m³</span>
                             </div>
-                            <div class="air-item">
-                                <span class="air-label">PM10</span>
-                                <span class="air-value" id="pm10">-- μg/m³</span>
+                            <div class="detail-item">
+                                <span class="detail-label">PM10</span>
+                                <span class="detail-value" id="pm10">-- μg/m³</span>
                             </div>
-                            <div class="air-item">
-                                <span class="air-label">O₃</span>
-                                <span class="air-value" id="o3">-- μg/m³</span>
+                            <div class="detail-item">
+                                <span class="detail-label">O₃</span>
+                                <span class="detail-value" id="o3">-- μg/m³</span>
                             </div>
                         </div>
 

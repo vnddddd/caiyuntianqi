@@ -602,6 +602,13 @@ body.bg-snow::before {
   text-align: right;
 }
 
+.aqi-title {
+  font-size: 0.875rem;
+  color: var(--text-secondary);
+  margin-bottom: 0.5rem;
+  text-align: right;
+}
+
 .aqi-value-large {
   font-size: 2.5rem;
   font-weight: 600;
@@ -616,34 +623,14 @@ body.bg-snow::before {
   margin-top: 0.25rem;
 }
 
-/* 空气质量详细数据 - 横向排列 */
+/* 空气质量详细数据 - 改为和天气详情一样的格式 */
 .air-quality-details {
-  display: flex !important;
-  justify-content: space-between !important;
+  display: grid !important;
+  grid-template-columns: repeat(3, 1fr) !important;
   gap: 1rem !important;
   margin-bottom: 1.5rem !important;
-  padding: 1rem !important;
-  background: var(--bg-secondary) !important;
-  border-radius: 8px !important;
-}
-
-.air-quality-details .air-item {
-  flex: 1;
-  text-align: center;
-}
-
-.air-label {
-  display: block;
-  font-size: 0.875rem;
-  color: var(--text-secondary);
-  margin-bottom: 0.25rem;
-}
-
-.air-value {
-  display: block;
-  font-size: 0.875rem;
-  font-weight: 600;
-  color: var(--text-primary);
+  padding-top: 1.5rem !important;
+  border-top: 1px solid var(--border-color) !important;
 }
 
 .weather-details {
