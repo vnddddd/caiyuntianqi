@@ -579,18 +579,25 @@ class WeatherApp {
     const aqiValue = airQuality.aqi?.chn || '--';
     const aqiDesc = airQuality.description?.chn || '--';
 
-    // 更新右上角的空气质量显示
-    document.getElementById('aqiValue').textContent = aqiValue;
-    document.getElementById('aqiDesc').textContent = aqiDesc;
+    // 更新右上角的空气质量显示（如果存在）
+    const aqiValueEl = document.getElementById('aqiValue');
+    const aqiDescEl = document.getElementById('aqiDesc');
+    if (aqiValueEl) aqiValueEl.textContent = aqiValue;
+    if (aqiDescEl) aqiDescEl.textContent = aqiDesc;
 
     // 更新右侧主要显示区域
-    document.getElementById('aqiValueLarge').textContent = aqiValue;
-    document.getElementById('aqiDescLarge').textContent = aqiDesc;
+    const aqiValueLargeEl = document.getElementById('aqiValueLarge');
+    const aqiDescLargeEl = document.getElementById('aqiDescLarge');
+    if (aqiValueLargeEl) aqiValueLargeEl.textContent = aqiValue;
+    if (aqiDescLargeEl) aqiDescLargeEl.textContent = aqiDesc;
 
     // 更新详细数据
-    document.getElementById('pm25').textContent = `${airQuality.pm25 || '--'} μg/m³`;
-    document.getElementById('pm10').textContent = `${airQuality.pm10 || '--'} μg/m³`;
-    document.getElementById('o3').textContent = `${airQuality.o3 || '--'} μg/m³`;
+    const pm25El = document.getElementById('pm25');
+    const pm10El = document.getElementById('pm10');
+    const o3El = document.getElementById('o3');
+    if (pm25El) pm25El.textContent = `${airQuality.pm25 || '--'} μg/m³`;
+    if (pm10El) pm10El.textContent = `${airQuality.pm10 || '--'} μg/m³`;
+    if (o3El) o3El.textContent = `${airQuality.o3 || '--'} μg/m³`;
   }
 
   // 更新24小时预报
