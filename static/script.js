@@ -190,7 +190,27 @@ class WeatherApp {
       await this.getLocationByIP();
     } catch (ipError) {
       console.error('IP 定位也失败:', ipError);
-      this.showError('无法获取位置信息，请手动选择位置');
+      // 显示更友好的错误信息和建议
+      this.showError(`
+        <div style="text-align: center;">
+          <h3>🌍 无法自动获取位置</h3>
+          <p>可能的原因：</p>
+          <ul style="text-align: left; display: inline-block;">
+            <li>网络连接问题</li>
+            <li>位置服务被禁用</li>
+            <li>防火墙或网络限制</li>
+          </ul>
+          <p><strong>正在为您显示北京天气，您也可以手动选择位置</strong></p>
+        </div>
+      `);
+
+      // 自动显示位置选择按钮
+      this.showLocationPrompt();
+
+      // 3秒后自动加载北京天气作为默认
+      setTimeout(() => {
+        this.loadDefaultLocation();
+      }, 3000);
     }
   }
 
@@ -226,6 +246,29 @@ class WeatherApp {
     } catch (error) {
       console.error('IP 定位失败:', error);
       throw error;
+    }
+  }
+
+  // 加载默认位置（北京）
+  async loadDefaultLocation() {
+    try {
+      console.log('加载默认位置：北京');
+      this.currentLocation = { lat: 39.9042, lng: 116.4074 };
+
+      // 更新按钮状态
+      const locationBtn = document.getElementById('locationBtn');
+      if (locationBtn) {
+        locationBtn.innerHTML = '<span class="location-icon">🏙️</span>默认位置';
+        locationBtn.disabled = true;
+      }
+
+      // 获取天气数据
+      await this.fetchWeatherData(116.4074, 39.9042, '北京市');
+
+    } catch (error) {
+      console.error('加载默认位置失败:', error);
+      // 如果连默认位置都失败了，显示最终错误
+      this.showError('网络连接异常，请检查网络后重试');
     }
   }
 
@@ -557,8 +600,14 @@ class WeatherApp {
     document.getElementById('loadingState').style.display = 'none';
     document.getElementById('errorState').style.display = 'block';
     document.getElementById('weatherContent').style.display = 'none';
-    
-    document.getElementById('errorMessage').textContent = message;
+
+    // 支持HTML内容
+    const errorMessageElement = document.getElementById('errorMessage');
+    if (message.includes('<')) {
+      errorMessageElement.innerHTML = message;
+    } else {
+      errorMessageElement.textContent = message;
+    }
     
     // 重置位置按钮
     const locationBtn = document.getElementById('locationBtn');

@@ -167,47 +167,94 @@ async function getWeatherData(longitude: number, latitude: number) {
   }
 }
 
-// IP 地理位置获取 - 使用美团接口
+// IP 地理位置获取 - 使用多个备用接口
 async function getLocationByIP(clientIP?: string): Promise<{ lat: number; lng: number; address: string } | null> {
-  try {
-    // 使用美团 IP 地理位置服务
-    const ipApiUrl = clientIP
-      ? `https://apimobile.meituan.com/locate/v2/ip/loc?rgeo=true&ip=${clientIP}`
-      : `https://apimobile.meituan.com/locate/v2/ip/loc?rgeo=true`;
+  // 定义多个IP定位服务
+  const ipServices = [
+    // 服务1: 美团接口
+    async () => {
+      const ipApiUrl = clientIP
+        ? `https://apimobile.meituan.com/locate/v2/ip/loc?rgeo=true&ip=${clientIP}`
+        : `https://apimobile.meituan.com/locate/v2/ip/loc?rgeo=true`;
 
-    const response = await fetch(ipApiUrl, {
-      headers: {
-        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36',
-        'Referer': 'https://www.meituan.com/'
+      const response = await fetch(ipApiUrl, {
+        headers: {
+          'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36',
+          'Referer': 'https://www.meituan.com/'
+        }
+      });
+
+      if (!response.ok) throw new Error(`美团API: ${response.status}`);
+
+      const data = await response.json();
+      if (data.data && data.data.lat && data.data.lng) {
+        const { lat, lng, rgeo } = data.data;
+        let address = '未知位置';
+        if (rgeo) {
+          address = `${rgeo.country || ''} ${rgeo.province || ''} ${rgeo.city || ''} ${rgeo.district || ''}`.trim();
+        }
+        return { lat, lng, address: address || '未知位置' };
       }
-    });
+      throw new Error('美团API返回数据格式错误');
+    },
 
-    if (!response.ok) {
-      throw new Error(`HTTP ${response.status}: ${response.statusText}`);
-    }
+    // 服务2: ip-api.com (免费，支持中文)
+    async () => {
+      const ipApiUrl = clientIP
+        ? `http://ip-api.com/json/${clientIP}?lang=zh-CN&fields=status,lat,lon,country,regionName,city,district`
+        : `http://ip-api.com/json?lang=zh-CN&fields=status,lat,lon,country,regionName,city,district`;
 
-    const data = await response.json();
+      const response = await fetch(ipApiUrl);
+      if (!response.ok) throw new Error(`ip-api: ${response.status}`);
 
-    if (data.data && data.data.lat && data.data.lng) {
-      const { lat, lng, rgeo } = data.data;
-      let address = '未知位置';
-
-      if (rgeo) {
-        address = `${rgeo.country || ''} ${rgeo.province || ''} ${rgeo.city || ''} ${rgeo.district || ''}`.trim();
+      const data = await response.json();
+      if (data.status === 'success') {
+        return {
+          lat: data.lat,
+          lng: data.lon,
+          address: `${data.country} ${data.regionName} ${data.city}${data.district ? ' ' + data.district : ''}`
+        };
       }
+      throw new Error('ip-api返回失败状态');
+    },
 
-      return {
-        lat: lat,
-        lng: lng,
-        address: address || '未知位置'
-      };
+    // 服务3: ipinfo.io (备用)
+    async () => {
+      const ipApiUrl = clientIP
+        ? `https://ipinfo.io/${clientIP}/json`
+        : `https://ipinfo.io/json`;
+
+      const response = await fetch(ipApiUrl);
+      if (!response.ok) throw new Error(`ipinfo: ${response.status}`);
+
+      const data = await response.json();
+      if (data.loc) {
+        const [lat, lng] = data.loc.split(',').map(Number);
+        return {
+          lat,
+          lng,
+          address: `${data.country || ''} ${data.region || ''} ${data.city || ''}`.trim() || '未知位置'
+        };
+      }
+      throw new Error('ipinfo返回数据格式错误');
     }
+  ];
 
-    return null;
-  } catch (error) {
-    console.error('IP 定位失败:', error);
-    return null;
+  // 依次尝试各个服务
+  for (let i = 0; i < ipServices.length; i++) {
+    try {
+      console.log(`尝试IP定位服务 ${i + 1}...`);
+      const result = await ipServices[i]();
+      console.log(`IP定位服务 ${i + 1} 成功:`, result);
+      return result;
+    } catch (error) {
+      console.log(`IP定位服务 ${i + 1} 失败:`, error.message);
+      // 继续尝试下一个服务
+    }
   }
+
+  console.error('所有IP定位服务都失败了');
+  return null;
 }
 
 // 地理编码 - 将经纬度转换为详细地址 - 使用美团接口
