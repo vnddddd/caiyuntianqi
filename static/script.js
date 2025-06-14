@@ -72,33 +72,52 @@ class WeatherApp {
     if (this.defaultLocation) {
       console.log('加载默认位置:', this.defaultLocation);
       this.currentLocation = { lat: this.defaultLocation.lat, lng: this.defaultLocation.lng };
-
-
-
       // 获取天气数据
       await this.fetchWeatherData(this.defaultLocation.lng, this.defaultLocation.lat, this.defaultLocation.name);
       return;
     }
 
+    // 首先尝试IP定位作为主要方案
+    console.log('开始尝试IP定位...');
+    try {
+      await this.getLocationByIP();
+      return; // IP定位成功，直接返回
+    } catch (ipError) {
+      console.log('IP定位失败，尝试GPS定位:', ipError);
+    }
+
+    // IP定位失败，尝试GPS定位
     if ('geolocation' in navigator) {
       try {
         // 尝试获取位置权限状态
         if ('permissions' in navigator) {
           const permission = await navigator.permissions.query({ name: 'geolocation' });
           if (permission.state === 'granted') {
+            console.log('GPS权限已授予，开始GPS定位...');
             this.getCurrentLocation();
             return;
+          } else if (permission.state === 'prompt') {
+            console.log('GPS权限需要用户确认，尝试请求权限...');
+            this.getCurrentLocation(); // 这会触发权限请求
+            return;
           }
+        } else {
+          // 没有权限API，直接尝试获取位置（会触发权限请求）
+          console.log('浏览器不支持权限API，直接尝试GPS定位...');
+          this.getCurrentLocation();
+          return;
         }
 
-        // 如果没有权限API或权限未授予，直接加载默认位置
+        // 权限被拒绝，加载默认位置
+        console.log('GPS权限被拒绝，加载默认位置（北京）');
         await this.loadBeijingWeather();
       } catch (error) {
-        console.log('权限检查失败:', error);
+        console.log('GPS权限检查失败:', error);
         await this.loadBeijingWeather();
       }
     } else {
       // 浏览器不支持地理位置，直接加载默认位置
+      console.log('浏览器不支持地理位置API，加载默认位置（北京）');
       await this.loadBeijingWeather();
     }
   }
