@@ -118,9 +118,21 @@ function formatWeatherData(rawData: any, longitude: number) {
         const date = new Date(Date.now() + index * 24 * 60 * 60 * 1000);
         const skyconValue = safeGet(daily, `skycon.${index}.value`, 'CLEAR_DAY');
 
+        // 生成相对日期描述
+        let weekday: string;
+        if (index === 0) {
+          weekday = '今天';
+        } else if (index === 1) {
+          weekday = '明天';
+        } else if (index === 2) {
+          weekday = '后天';
+        } else {
+          weekday = date.toLocaleDateString('zh-CN', { weekday: 'short' });
+        }
+
         return {
           date: date.toLocaleDateString('zh-CN', { month: 'short', day: 'numeric' }),
-          weekday: date.toLocaleDateString('zh-CN', { weekday: 'short' }),
+          weekday: weekday,
           max_temp: safeRound(safeGet(temp, 'max', 0)),
           min_temp: safeRound(safeGet(temp, 'min', 0)),
           skycon: skyconValue,
