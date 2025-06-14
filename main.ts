@@ -397,7 +397,6 @@ function getClientIP(req: Request, info?: Deno.ServeHandlerInfo): string {
   if (info && info.remoteAddr) {
     const remoteAddr = info.remoteAddr;
     if ('hostname' in remoteAddr && remoteAddr.hostname) {
-      console.log('从ServeHandlerInfo获取IP:', remoteAddr.hostname);
       return remoteAddr.hostname;
     }
   }
@@ -421,7 +420,6 @@ function getClientIP(req: Request, info?: Deno.ServeHandlerInfo): string {
       // x-forwarded-for 可能包含多个IP，取第一个
       const ip = value.split(',')[0].trim();
       if (ip && ip !== 'unknown') {
-        console.log(`从${header}获取IP:`, ip);
         return ip;
       }
     }
@@ -445,51 +443,13 @@ async function handler(req: Request, info: Deno.ServeHandlerInfo): Promise<Respo
       // 使用改进的IP获取函数
       const clientIP = getClientIP(req, info);
 
-      // 记录所有可能的IP相关头信息
-      const allHeaders = {};
-      for (const [key, value] of req.headers.entries()) {
-        if (key.toLowerCase().includes('ip') ||
-            key.toLowerCase().includes('forward') ||
-            key.toLowerCase().includes('client') ||
-            key.toLowerCase().includes('real')) {
-          allHeaders[key] = value;
-        }
-      }
 
-      console.log('客户端IP信息:', {
-        'x-forwarded-for': req.headers.get('x-forwarded-for'),
-        'x-real-ip': req.headers.get('x-real-ip'),
-        'cf-connecting-ip': req.headers.get('cf-connecting-ip'),
-        'x-client-ip': req.headers.get('x-client-ip'),
-        'true-client-ip': req.headers.get('true-client-ip'),
-        'user-agent': req.headers.get('user-agent'),
-        'all-ip-headers': allHeaders,
-        'final-ip': clientIP
-      });
 
       const location = await getLocationByIP(clientIP === 'auto' ? undefined : clientIP);
 
       if (location) {
-        // 添加IP调试信息
-        const result = {
-          ...location,
-          debug: {
-            clientIP: clientIP,
-            remoteAddr: info?.remoteAddr ? {
-              hostname: 'hostname' in info.remoteAddr ? info.remoteAddr.hostname : 'N/A',
-              port: 'port' in info.remoteAddr ? info.remoteAddr.port : 'N/A',
-              transport: 'transport' in info.remoteAddr ? info.remoteAddr.transport : 'N/A'
-            } : null,
-            headers: {
-              'x-forwarded-for': req.headers.get('x-forwarded-for'),
-              'x-real-ip': req.headers.get('x-real-ip'),
-              'cf-connecting-ip': req.headers.get('cf-connecting-ip')
-            }
-          }
-        };
-
         return new Response(
-          JSON.stringify(result),
+          JSON.stringify(location),
           {
             headers: {
               "Content-Type": "application/json; charset=utf-8",
@@ -499,22 +459,7 @@ async function handler(req: Request, info: Deno.ServeHandlerInfo): Promise<Respo
         );
       } else {
         return new Response(
-          JSON.stringify({
-            error: "无法获取 IP 位置信息",
-            debug: {
-              clientIP: clientIP,
-              remoteAddr: info?.remoteAddr ? {
-                hostname: 'hostname' in info.remoteAddr ? info.remoteAddr.hostname : 'N/A',
-                port: 'port' in info.remoteAddr ? info.remoteAddr.port : 'N/A',
-                transport: 'transport' in info.remoteAddr ? info.remoteAddr.transport : 'N/A'
-              } : null,
-              headers: {
-                'x-forwarded-for': req.headers.get('x-forwarded-for'),
-                'x-real-ip': req.headers.get('x-real-ip'),
-                'cf-connecting-ip': req.headers.get('cf-connecting-ip')
-              }
-            }
-          }),
+          JSON.stringify({ error: "无法获取 IP 位置信息" }),
           {
             status: 404,
             headers: { "Content-Type": "application/json; charset=utf-8" }
