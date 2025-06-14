@@ -12,29 +12,7 @@
 </head>
 <body>
     <div class="app-container">
-        <!-- 头部 -->
-        <header class="header">
-            <div class="container">
-                <h1 class="logo">
-                    <span class="logo-icon">🌤️</span>
-                    天气
-                </h1>
-                <div class="header-actions">
-                    <button class="location-btn" id="locationBtn">
-                        <span class="location-icon">📍</span>
-                        获取位置
-                    </button>
-                    <button class="manual-location-btn" id="manualLocationBtn">
-                        <span class="search-icon">🔍</span>
-                        选择位置
-                    </button>
-                    <button class="refresh-btn" id="refreshBtn" style="display: none;">
-                        <span class="refresh-icon">🔄</span>
-                        刷新
-                    </button>
-                </div>
-            </div>
-        </header>
+
 
         <!-- 主要内容区域 -->
         <main class="main-content">
@@ -101,13 +79,19 @@
                         <div class="current-weather-header">
                             <div class="location-info">
                                 <div class="location-title">
-                                    <h2 id="currentLocation">当前位置</h2>
+                                    <button class="location-name-btn" id="currentLocationBtn" title="点击选择位置">
+                                        <span id="currentLocation">当前位置</span>
+                                        <span class="location-arrow">📍</span>
+                                    </button>
                                     <div class="location-actions">
                                         <button class="location-action-btn" id="favoriteBtn" title="收藏此位置">
                                             <span class="favorite-icon">⭐</span>
                                         </button>
                                         <button class="location-action-btn" id="setDefaultBtn" title="设为默认位置">
                                             <span class="default-icon">📍</span>
+                                        </button>
+                                        <button class="location-action-btn" id="refreshBtn" title="刷新天气">
+                                            <span class="refresh-icon">🔄</span>
                                         </button>
                                     </div>
                                 </div>

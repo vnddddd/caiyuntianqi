@@ -18,45 +18,12 @@ class WeatherApp {
   // 初始化应用
   init() {
     this.bindEvents();
-    this.initScrollHandler();
     this.checkLocationPermission();
-  }
-
-  // 初始化滚动处理器
-  initScrollHandler() {
-    let lastScrollY = window.scrollY;
-    let ticking = false;
-
-    const updateHeader = () => {
-      const header = document.querySelector('.header');
-      const currentScrollY = window.scrollY;
-
-      if (currentScrollY > lastScrollY && currentScrollY > 100) {
-        // 向下滚动且超过100px，隐藏头部
-        header.classList.add('hidden');
-      } else {
-        // 向上滚动或在顶部，显示头部
-        header.classList.remove('hidden');
-      }
-
-      lastScrollY = currentScrollY;
-      ticking = false;
-    };
-
-    const onScroll = () => {
-      if (!ticking) {
-        requestAnimationFrame(updateHeader);
-        ticking = true;
-      }
-    };
-
-    window.addEventListener('scroll', onScroll, { passive: true });
   }
 
   // 绑定事件监听器
   bindEvents() {
-    const locationBtn = document.getElementById('locationBtn');
-    const manualLocationBtn = document.getElementById('manualLocationBtn');
+    const currentLocationBtn = document.getElementById('currentLocationBtn');
     const refreshBtn = document.getElementById('refreshBtn');
     const retryBtn = document.getElementById('retryBtn');
     const closeModalBtn = document.getElementById('closeModalBtn');
@@ -65,8 +32,7 @@ class WeatherApp {
     const favoriteBtn = document.getElementById('favoriteBtn');
     const setDefaultBtn = document.getElementById('setDefaultBtn');
 
-    locationBtn?.addEventListener('click', () => this.getCurrentLocation());
-    manualLocationBtn?.addEventListener('click', () => this.showLocationModal());
+    currentLocationBtn?.addEventListener('click', () => this.showLocationModal());
     refreshBtn?.addEventListener('click', () => this.refreshWeatherData());
     retryBtn?.addEventListener('click', () => this.getCurrentLocation());
     closeModalBtn?.addEventListener('click', () => this.hideLocationModal());
@@ -133,12 +99,7 @@ class WeatherApp {
       console.log('加载默认位置:', this.defaultLocation);
       this.currentLocation = { lat: this.defaultLocation.lat, lng: this.defaultLocation.lng };
 
-      // 更新按钮状态
-      const locationBtn = document.getElementById('locationBtn');
-      if (locationBtn) {
-        locationBtn.innerHTML = '<span class="location-icon">🏠</span>默认位置';
-        locationBtn.disabled = true;
-      }
+
 
       // 获取天气数据
       await this.fetchWeatherData(this.defaultLocation.lng, this.defaultLocation.lat, this.defaultLocation.name);
@@ -170,18 +131,8 @@ class WeatherApp {
   // 显示位置获取提示
   showLocationPrompt() {
     this.hideLoading();
-    const locationBtn = document.getElementById('locationBtn');
-    const manualLocationBtn = document.getElementById('manualLocationBtn');
-
-    if (locationBtn) {
-      locationBtn.style.display = 'flex';
-      locationBtn.innerHTML = '<span class="location-icon">📍</span>获取我的位置';
-      locationBtn.disabled = false;
-    }
-
-    if (manualLocationBtn) {
-      manualLocationBtn.style.display = 'flex';
-    }
+    // 显示选择位置的提示
+    this.showLocationModal();
   }
 
   // 获取当前位置
@@ -208,12 +159,7 @@ class WeatherApp {
 
     console.log('位置获取成功:', this.currentLocation);
 
-    // 更新按钮状态
-    const locationBtn = document.getElementById('locationBtn');
-    if (locationBtn) {
-      locationBtn.innerHTML = '<span class="location-icon">✅</span>位置已获取';
-      locationBtn.disabled = true;
-    }
+
 
     // 获取详细地址并获取天气数据
     this.showLoading('正在获取位置信息...');
@@ -288,12 +234,7 @@ class WeatherApp {
 
       console.log('IP 定位成功:', this.currentLocation, '地址:', data.address);
 
-      // 更新按钮状态
-      const locationBtn = document.getElementById('locationBtn');
-      if (locationBtn) {
-        locationBtn.innerHTML = '<span class="location-icon">🌐</span>IP 定位';
-        locationBtn.disabled = true;
-      }
+
 
       // 获取天气数据
       await this.fetchWeatherData(this.currentLocation.lng, this.currentLocation.lat, data.address);
@@ -312,12 +253,7 @@ class WeatherApp {
       console.log('加载默认位置：北京');
       this.currentLocation = { lat: 39.9042, lng: 116.4074 };
 
-      // 更新按钮状态
-      const locationBtn = document.getElementById('locationBtn');
-      if (locationBtn) {
-        locationBtn.innerHTML = '<span class="location-icon">🏙️</span>默认位置';
-        locationBtn.disabled = true;
-      }
+
 
       // 获取天气数据
       await this.fetchWeatherData(116.4074, 39.9042, '北京市');
@@ -517,12 +453,7 @@ class WeatherApp {
     this.hideLocationModal();
     this.currentLocation = { lat, lng };
 
-    // 更新按钮状态
-    const locationBtn = document.getElementById('locationBtn');
-    if (locationBtn) {
-      locationBtn.innerHTML = '<span class="location-icon">📍</span>已选择位置';
-      locationBtn.disabled = true;
-    }
+
 
     // 获取天气数据
     await this.fetchWeatherData(lng, lat, locationName);
@@ -782,12 +713,7 @@ class WeatherApp {
       errorMessageElement.textContent = message;
     }
     
-    // 重置位置按钮
-    const locationBtn = document.getElementById('locationBtn');
-    if (locationBtn) {
-      locationBtn.innerHTML = '<span class="location-icon">📍</span>重新获取位置';
-      locationBtn.disabled = false;
-    }
+
   }
 
   // 显示天气内容
