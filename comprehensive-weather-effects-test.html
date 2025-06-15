@@ -1,0 +1,1321 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>全面天气特效测试系统</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%);
+            min-height: 100vh;
+            color: white;
+            overflow-x: hidden;
+        }
+
+        .header {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            z-index: 1000;
+            background: rgba(0, 0, 0, 0.9);
+            backdrop-filter: blur(20px);
+            padding: 15px 20px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .header-content {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+
+        .title {
+            font-size: 1.5em;
+            font-weight: bold;
+            background: linear-gradient(45deg, #4facfe, #00f2fe);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .global-controls {
+            display: flex;
+            gap: 10px;
+            align-items: center;
+        }
+
+        .global-stats {
+            display: flex;
+            gap: 20px;
+            font-size: 0.9em;
+        }
+
+        .stat-item {
+            text-align: center;
+        }
+
+        .stat-value {
+            font-weight: bold;
+            color: #4facfe;
+        }
+
+        .main-container {
+            margin-top: 80px;
+            padding: 20px;
+            max-width: 1400px;
+            margin-left: auto;
+            margin-right: auto;
+        }
+
+        .effects-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+
+        .effect-panel {
+            position: relative;
+            height: 300px;
+            background: rgba(0, 0, 0, 0.3);
+            border-radius: 15px;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            overflow: hidden;
+            backdrop-filter: blur(10px);
+        }
+
+        .effect-container {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            overflow: hidden;
+        }
+
+        .panel-overlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: linear-gradient(to bottom, 
+                rgba(0, 0, 0, 0.7) 0%, 
+                transparent 30%, 
+                transparent 70%, 
+                rgba(0, 0, 0, 0.7) 100%);
+            z-index: 10;
+            pointer-events: none;
+        }
+
+        .panel-header {
+            position: absolute;
+            top: 15px;
+            left: 15px;
+            right: 15px;
+            z-index: 20;
+        }
+
+        .panel-title {
+            font-size: 1.1em;
+            font-weight: bold;
+            margin-bottom: 10px;
+            text-shadow: 0 2px 4px rgba(0, 0, 0, 0.8);
+        }
+
+        .panel-controls {
+            display: flex;
+            gap: 8px;
+            flex-wrap: wrap;
+            margin-bottom: 10px;
+        }
+
+        .control-btn {
+            background: rgba(255, 255, 255, 0.15);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            color: white;
+            padding: 6px 12px;
+            border-radius: 15px;
+            cursor: pointer;
+            font-size: 11px;
+            transition: all 0.3s ease;
+            backdrop-filter: blur(10px);
+        }
+
+        .control-btn:hover {
+            background: rgba(255, 255, 255, 0.25);
+            transform: translateY(-1px);
+        }
+
+        .control-btn.active {
+            background: rgba(74, 172, 254, 0.8);
+            border-color: rgba(74, 172, 254, 1);
+            box-shadow: 0 0 10px rgba(74, 172, 254, 0.5);
+        }
+
+        .panel-stats {
+            position: absolute;
+            bottom: 15px;
+            left: 15px;
+            right: 15px;
+            z-index: 20;
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 10px;
+            font-size: 10px;
+        }
+
+        .panel-stat {
+            text-align: center;
+            background: rgba(0, 0, 0, 0.6);
+            padding: 5px;
+            border-radius: 8px;
+            backdrop-filter: blur(5px);
+        }
+
+        .panel-stat-value {
+            font-weight: bold;
+            color: #4facfe;
+            font-size: 12px;
+        }
+
+        .performance-warning {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: rgba(255, 193, 7, 0.9);
+            color: #000;
+            padding: 10px 15px;
+            border-radius: 10px;
+            font-size: 12px;
+            font-weight: bold;
+            z-index: 30;
+            display: none;
+            text-align: center;
+            box-shadow: 0 4px 15px rgba(255, 193, 7, 0.3);
+        }
+
+        .performance-warning.show {
+            display: block;
+        }
+
+        .comparison-section {
+            background: rgba(0, 0, 0, 0.3);
+            border-radius: 15px;
+            padding: 20px;
+            margin-top: 20px;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .comparison-title {
+            font-size: 1.3em;
+            font-weight: bold;
+            margin-bottom: 15px;
+            text-align: center;
+        }
+
+        .comparison-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+        }
+
+        .comparison-card {
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 10px;
+            padding: 15px;
+            text-align: center;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .comparison-metric {
+            font-size: 1.5em;
+            font-weight: bold;
+            color: #4facfe;
+            margin-bottom: 5px;
+        }
+
+        .comparison-label {
+            font-size: 0.9em;
+            opacity: 0.8;
+        }
+
+        /* 全局控制按钮样式 */
+        .global-btn {
+            background: rgba(255, 255, 255, 0.1);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            color: white;
+            padding: 8px 16px;
+            border-radius: 20px;
+            cursor: pointer;
+            font-size: 12px;
+            transition: all 0.3s ease;
+        }
+
+        .global-btn:hover {
+            background: rgba(255, 255, 255, 0.2);
+        }
+
+        .global-btn.danger {
+            background: rgba(220, 53, 69, 0.3);
+            border-color: rgba(220, 53, 69, 0.5);
+        }
+
+        .global-btn.danger:hover {
+            background: rgba(220, 53, 69, 0.5);
+        }
+
+        /* 天气特效样式 */
+
+        /* 雨滴特效 */
+        .rain-effect-optimized {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            overflow: hidden;
+        }
+
+        .raindrop {
+            position: absolute;
+            width: 2px;
+            height: 12px;
+            background: linear-gradient(to bottom,
+                rgba(255, 255, 255, 0.9) 0%,
+                rgba(255, 255, 255, 0.7) 30%,
+                rgba(174, 194, 224, 0.5) 70%,
+                rgba(174, 194, 224, 0.3) 100%);
+            border-radius: 0 0 50% 50%;
+            animation: raindropFall linear infinite;
+            transform: translateZ(0);
+            will-change: transform;
+            box-shadow: 0 0 1px rgba(0, 0, 0, 0.1);
+            filter: drop-shadow(0 0 0.5px rgba(0, 0, 0, 0.2));
+        }
+
+        .rain-light .raindrop {
+            opacity: 0.6;
+            width: 1.5px;
+            height: 8px;
+        }
+
+        .rain-moderate .raindrop {
+            opacity: 0.7;
+            width: 2px;
+            height: 12px;
+        }
+
+        .rain-heavy .raindrop {
+            opacity: 0.8;
+            width: 2.5px;
+            height: 16px;
+        }
+
+        @keyframes raindropFall {
+            0% {
+                transform: translateY(-20px) translateZ(0);
+                opacity: 0;
+            }
+            5% {
+                opacity: 1;
+            }
+            95% {
+                opacity: 1;
+            }
+            100% {
+                transform: translateY(calc(100vh + 20px)) translateZ(0);
+                opacity: 0;
+            }
+        }
+
+        /* 雪花特效 */
+        .snow-effect {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+        }
+
+        .snowflake {
+            position: absolute;
+            color: white;
+            font-size: 1em;
+            animation: snowfall linear infinite;
+            opacity: 0.8;
+            text-shadow: 0 0 2px rgba(255, 255, 255, 0.5);
+        }
+
+        .snow-light .snowflake {
+            font-size: 0.8em;
+            opacity: 0.6;
+        }
+
+        .snow-moderate .snowflake {
+            font-size: 1.2em;
+            opacity: 0.8;
+        }
+
+        .snow-heavy .snowflake {
+            font-size: 1.5em;
+            opacity: 0.9;
+        }
+
+        @keyframes snowfall {
+            0% {
+                transform: translateY(-100vh) rotate(0deg);
+                opacity: 1;
+            }
+            100% {
+                transform: translateY(100vh) rotate(360deg);
+                opacity: 0;
+            }
+        }
+
+        /* 雷暴特效 */
+        .thunder-effect {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            background: rgba(255, 255, 255, 0);
+            animation: thunderFlash 3s infinite;
+        }
+
+        @keyframes thunderFlash {
+            0%, 90%, 100% { background: rgba(255, 255, 255, 0); }
+            91%, 93% { background: rgba(255, 255, 255, 0.8); }
+            92% { background: rgba(255, 255, 255, 0.3); }
+        }
+
+        /* 雾霾特效 */
+        .fog-effect {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            background: rgba(200, 200, 200, 0.3);
+            backdrop-filter: blur(2px);
+            animation: fogWave 8s ease-in-out infinite;
+        }
+
+        .fog-light {
+            background: rgba(200, 200, 200, 0.2);
+            backdrop-filter: blur(1px);
+        }
+
+        .fog-moderate {
+            background: rgba(180, 180, 180, 0.4);
+            backdrop-filter: blur(3px);
+        }
+
+        .fog-heavy {
+            background: rgba(160, 160, 160, 0.6);
+            backdrop-filter: blur(5px);
+        }
+
+        @keyframes fogWave {
+            0%, 100% { opacity: 0.8; }
+            50% { opacity: 1; }
+        }
+
+        /* 风力特效 */
+        .wind-effect {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+        }
+
+        .wind-particle {
+            position: absolute;
+            width: 2px;
+            height: 2px;
+            background: rgba(255,255,255,0.3);
+            border-radius: 50%;
+            animation: windBlow linear infinite;
+        }
+
+        .wind-light .wind-particle {
+            animation-duration: 4s;
+            opacity: 0.3;
+        }
+
+        .wind-moderate .wind-particle {
+            animation-duration: 2s;
+            opacity: 0.5;
+        }
+
+        .wind-strong .wind-particle {
+            animation-duration: 1s;
+            opacity: 0.7;
+            width: 3px;
+            height: 3px;
+        }
+
+        @keyframes windBlow {
+            0% {
+                transform: translateX(-100vw) translateY(0);
+                opacity: 0;
+            }
+            10% {
+                opacity: 1;
+            }
+            90% {
+                opacity: 1;
+            }
+            100% {
+                transform: translateX(100vw) translateY(-20px);
+                opacity: 0;
+            }
+        }
+
+        /* 沙尘特效 */
+        .dust-effect {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            background: rgba(139, 69, 19, 0.3);
+            animation: dustStorm 2s ease-in-out infinite;
+        }
+
+        .dust-particle {
+            position: absolute;
+            width: 1px;
+            height: 1px;
+            background: rgba(139, 69, 19, 0.6);
+            animation: dustBlow 1.5s linear infinite;
+        }
+
+        @keyframes dustStorm {
+            0%, 100% { opacity: 0.6; }
+            50% { opacity: 0.9; }
+        }
+
+        @keyframes dustBlow {
+            0% {
+                transform: translateX(-100vw) translateY(0) rotate(0deg);
+                opacity: 0;
+            }
+            10% {
+                opacity: 1;
+            }
+            90% {
+                opacity: 1;
+            }
+            100% {
+                transform: translateX(100vw) translateY(-30px) rotate(180deg);
+                opacity: 0;
+            }
+        }
+
+        /* 冰雹特效 */
+        .hail-effect {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+        }
+
+        .hailstone {
+            position: absolute;
+            width: 4px;
+            height: 4px;
+            background: white;
+            border-radius: 50%;
+            animation: hailFall 0.8s linear infinite;
+            box-shadow: 0 0 2px rgba(255,255,255,0.8);
+        }
+
+        @keyframes hailFall {
+            0% {
+                transform: translateY(-100vh) scale(0);
+                opacity: 1;
+            }
+            50% {
+                transform: translateY(50vh) scale(1);
+                opacity: 1;
+            }
+            100% {
+                transform: translateY(100vh) scale(0.5);
+                opacity: 0;
+            }
+        }
+
+        /* 阳光特效 */
+        .sunshine-effect {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            background: radial-gradient(circle at 70% 30%, rgba(255, 255, 0, 0.1) 0%, transparent 50%);
+            animation: sunGlow 6s ease-in-out infinite;
+        }
+
+        .sunshine-strong {
+            background: radial-gradient(circle at 70% 30%, rgba(255, 255, 0, 0.2) 0%, transparent 60%);
+        }
+
+        @keyframes sunGlow {
+            0%, 100% { opacity: 0.8; }
+            50% { opacity: 1; }
+        }
+
+        /* 云朵特效 */
+        .clouds-effect {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(45deg,
+                rgba(255, 255, 255, 0.1) 0%,
+                rgba(200, 200, 200, 0.2) 50%,
+                rgba(255, 255, 255, 0.1) 100%);
+            animation: cloudsMove 10s ease-in-out infinite;
+        }
+
+        @keyframes cloudsMove {
+            0%, 100% {
+                transform: translateX(0);
+                opacity: 0.6;
+            }
+            50% {
+                transform: translateX(20px);
+                opacity: 0.8;
+            }
+        }
+
+        /* 性能优化 - 硬件加速 */
+        .rain-effect-optimized,
+        .raindrop,
+        .snow-effect,
+        .snowflake,
+        .wind-effect,
+        .wind-particle,
+        .fog-effect,
+        .thunder-effect,
+        .sunshine-effect,
+        .dust-effect,
+        .dust-particle,
+        .hail-effect,
+        .hailstone,
+        .clouds-effect {
+            will-change: transform, opacity;
+            transform: translateZ(0);
+            backface-visibility: hidden;
+            perspective: 1000px;
+        }
+
+        /* 移动端优化 */
+        @media (max-width: 768px), (pointer: coarse) {
+            .raindrop:nth-child(n+21),
+            .snowflake:nth-child(n+16),
+            .wind-particle:nth-child(n+11),
+            .dust-particle:nth-child(n+11),
+            .hailstone:nth-child(n+13) {
+                display: none;
+            }
+        }
+
+        /* 极低性能设备优化 */
+        @media (max-width: 480px) and (max-height: 800px) {
+            .raindrop:nth-child(n+11),
+            .snowflake:nth-child(n+9),
+            .wind-particle:nth-child(n+6),
+            .dust-particle:nth-child(n+6),
+            .hailstone:nth-child(n+8) {
+                display: none;
+            }
+        }
+
+        /* 减少动画偏好设置 */
+        @media (prefers-reduced-motion: reduce) {
+            .rain-effect-optimized,
+            .raindrop,
+            .snow-effect,
+            .snowflake,
+            .wind-effect,
+            .wind-particle,
+            .fog-effect,
+            .thunder-effect,
+            .sunshine-effect,
+            .dust-effect,
+            .dust-particle,
+            .hail-effect,
+            .hailstone,
+            .clouds-effect {
+                animation: none !important;
+                display: none;
+            }
+        }
+
+        /* 响应式设计 */
+        @media (max-width: 768px) {
+            .effects-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .header-content {
+                flex-direction: column;
+                gap: 10px;
+            }
+
+            .global-stats {
+                gap: 10px;
+                font-size: 0.8em;
+            }
+
+            .main-container {
+                padding: 15px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <div class="header-content">
+            <div class="title">🌦️ 全面天气特效测试系统</div>
+            <div class="global-controls">
+                <button class="global-btn" onclick="testManager.startAllEffects()">启动所有特效</button>
+                <button class="global-btn danger" onclick="testManager.stopAllEffects()">停止所有特效</button>
+                <button class="global-btn" onclick="testManager.togglePerformanceMode()">切换性能模式</button>
+            </div>
+            <div class="global-stats">
+                <div class="stat-item">
+                    <div class="stat-value" id="globalFps">--</div>
+                    <div>全局FPS</div>
+                </div>
+                <div class="stat-item">
+                    <div class="stat-value" id="globalMemory">--</div>
+                    <div>内存(MB)</div>
+                </div>
+                <div class="stat-item">
+                    <div class="stat-value" id="activeEffects">0</div>
+                    <div>活跃特效</div>
+                </div>
+                <div class="stat-item">
+                    <div class="stat-value" id="performanceLevel">--</div>
+                    <div>性能等级</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="main-container">
+        <div class="effects-grid" id="effectsGrid">
+            <!-- 特效面板将通过JavaScript动态生成 -->
+        </div>
+
+        <div class="comparison-section">
+            <div class="comparison-title">📊 性能对比分析</div>
+            <div class="comparison-grid">
+                <div class="comparison-card">
+                    <div class="comparison-metric" id="avgFps">--</div>
+                    <div class="comparison-label">平均FPS</div>
+                </div>
+                <div class="comparison-card">
+                    <div class="comparison-metric" id="totalElements">0</div>
+                    <div class="comparison-label">总DOM元素</div>
+                </div>
+                <div class="comparison-card">
+                    <div class="comparison-metric" id="memoryUsage">--</div>
+                    <div class="comparison-label">内存占用</div>
+                </div>
+                <div class="comparison-card">
+                    <div class="comparison-metric" id="cpuUsage">--</div>
+                    <div class="comparison-label">CPU使用率</div>
+                </div>
+                <div class="comparison-card">
+                    <div class="comparison-metric" id="performanceScore">--</div>
+                    <div class="comparison-label">性能评分</div>
+                </div>
+                <div class="comparison-card">
+                    <div class="comparison-metric" id="warningCount">0</div>
+                    <div class="comparison-label">性能警告</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // 天气特效配置
+        const WEATHER_EFFECTS = [
+            {
+                id: 'rain',
+                name: '🌧️ 雨滴特效',
+                intensities: ['light', 'moderate', 'heavy'],
+                labels: ['小雨', '中雨', '大雨']
+            },
+            {
+                id: 'snow',
+                name: '❄️ 雪花特效',
+                intensities: ['light', 'moderate', 'heavy'],
+                labels: ['小雪', '中雪', '大雪']
+            },
+            {
+                id: 'thunder',
+                name: '⚡ 雷暴特效',
+                intensities: ['normal'],
+                labels: ['雷暴']
+            },
+            {
+                id: 'fog',
+                name: '🌫️ 雾霾特效',
+                intensities: ['light', 'moderate', 'heavy'],
+                labels: ['轻雾', '中雾', '重雾']
+            },
+            {
+                id: 'wind',
+                name: '💨 风力特效',
+                intensities: ['light', 'moderate', 'strong'],
+                labels: ['微风', '中风', '强风']
+            },
+            {
+                id: 'dust',
+                name: '🏜️ 沙尘特效',
+                intensities: ['normal'],
+                labels: ['沙尘暴']
+            },
+            {
+                id: 'hail',
+                name: '🧊 冰雹特效',
+                intensities: ['normal'],
+                labels: ['冰雹']
+            },
+            {
+                id: 'sunshine',
+                name: '☀️ 阳光特效',
+                intensities: ['normal', 'strong'],
+                labels: ['阳光', '强光']
+            },
+            {
+                id: 'clouds',
+                name: '☁️ 云朵特效',
+                intensities: ['normal'],
+                labels: ['多云']
+            }
+        ];
+
+        class WeatherEffectsTestManager {
+            constructor() {
+                this.effects = new Map();
+                this.performanceLevel = this.detectPerformanceLevel();
+                this.isReducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+                this.globalStats = {
+                    fps: 0,
+                    memory: 0,
+                    activeEffects: 0,
+                    totalElements: 0,
+                    warningCount: 0
+                };
+                this.frameCount = 0;
+                this.lastTime = performance.now();
+
+                this.init();
+            }
+
+            // 检测设备性能等级
+            detectPerformanceLevel() {
+                const isMobile = /Android|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+                const hardwareConcurrency = navigator.hardwareConcurrency || 2;
+                const deviceMemory = navigator.deviceMemory || 2;
+
+                let score = 0;
+                score += isMobile ? 0 : 2;
+                score += hardwareConcurrency >= 4 ? 2 : (hardwareConcurrency >= 2 ? 1 : 0);
+                score += deviceMemory >= 4 ? 2 : (deviceMemory >= 2 ? 1 : 0);
+
+                if (score >= 4) return 'high';
+                if (score >= 2) return 'medium';
+                return 'low';
+            }
+
+            init() {
+                this.createEffectPanels();
+                this.startGlobalMonitoring();
+                this.updateGlobalStats();
+
+                document.getElementById('performanceLevel').textContent = this.performanceLevel.toUpperCase();
+
+                console.log('天气特效测试系统初始化完成');
+                console.log('设备性能等级:', this.performanceLevel);
+                console.log('减少动画偏好:', this.isReducedMotion);
+            }
+
+            // 创建特效面板
+            createEffectPanels() {
+                const grid = document.getElementById('effectsGrid');
+
+                WEATHER_EFFECTS.forEach(effect => {
+                    const panel = this.createEffectPanel(effect);
+                    grid.appendChild(panel);
+
+                    // 初始化特效管理器
+                    this.effects.set(effect.id, {
+                        config: effect,
+                        container: panel.querySelector('.effect-container'),
+                        currentEffect: null,
+                        stats: { fps: 0, elements: 0, memory: 0, warnings: 0 }
+                    });
+                });
+            }
+
+            // 创建单个特效面板
+            createEffectPanel(effect) {
+                const panel = document.createElement('div');
+                panel.className = 'effect-panel';
+                panel.innerHTML = `
+                    <div class="effect-container" id="${effect.id}Container"></div>
+                    <div class="panel-overlay"></div>
+                    <div class="panel-header">
+                        <div class="panel-title">${effect.name}</div>
+                        <div class="panel-controls">
+                            ${effect.intensities.map((intensity, index) =>
+                                `<button class="control-btn" onclick="testManager.startEffect('${effect.id}', '${intensity}')">${effect.labels[index]}</button>`
+                            ).join('')}
+                            <button class="control-btn" onclick="testManager.stopEffect('${effect.id}')">停止</button>
+                        </div>
+                    </div>
+                    <div class="panel-stats">
+                        <div class="panel-stat">
+                            <div class="panel-stat-value" id="${effect.id}Fps">--</div>
+                            <div>FPS</div>
+                        </div>
+                        <div class="panel-stat">
+                            <div class="panel-stat-value" id="${effect.id}Elements">0</div>
+                            <div>元素</div>
+                        </div>
+                        <div class="panel-stat">
+                            <div class="panel-stat-value" id="${effect.id}Memory">--</div>
+                            <div>内存</div>
+                        </div>
+                        <div class="panel-stat">
+                            <div class="panel-stat-value" id="${effect.id}Status">待机</div>
+                            <div>状态</div>
+                        </div>
+                    </div>
+                    <div class="performance-warning" id="${effect.id}Warning">
+                        ⚠️ 性能警告：FPS过低或内存占用过高！
+                    </div>
+                `;
+
+                return panel;
+            }
+        }
+
+            // 启动特效
+            startEffect(effectId, intensity) {
+                if (this.isReducedMotion) {
+                    alert('检测到减少动画偏好设置，特效已禁用');
+                    return;
+                }
+
+                const effect = this.effects.get(effectId);
+                if (!effect) return;
+
+                this.stopEffect(effectId);
+
+                try {
+                    switch (effectId) {
+                        case 'rain':
+                            this.createRainEffect(effect, intensity);
+                            break;
+                        case 'snow':
+                            this.createSnowEffect(effect, intensity);
+                            break;
+                        case 'thunder':
+                            this.createThunderEffect(effect);
+                            break;
+                        case 'fog':
+                            this.createFogEffect(effect, intensity);
+                            break;
+                        case 'wind':
+                            this.createWindEffect(effect, intensity);
+                            break;
+                        case 'dust':
+                            this.createDustEffect(effect);
+                            break;
+                        case 'hail':
+                            this.createHailEffect(effect);
+                            break;
+                        case 'sunshine':
+                            this.createSunshineEffect(effect, intensity);
+                            break;
+                        case 'clouds':
+                            this.createCloudsEffect(effect);
+                            break;
+                    }
+
+                    document.getElementById(`${effectId}Status`).textContent = '运行中';
+                    this.updateActiveEffectsCount();
+                } catch (error) {
+                    console.error(`启动${effectId}特效失败:`, error);
+                    document.getElementById(`${effectId}Status`).textContent = '错误';
+                }
+            }
+
+            // 停止特效
+            stopEffect(effectId) {
+                const effect = this.effects.get(effectId);
+                if (!effect) return;
+
+                effect.container.innerHTML = '';
+                effect.currentEffect = null;
+                effect.stats.elements = 0;
+
+                document.getElementById(`${effectId}Elements`).textContent = '0';
+                document.getElementById(`${effectId}Status`).textContent = '待机';
+                document.getElementById(`${effectId}Warning`).classList.remove('show');
+
+                this.updateActiveEffectsCount();
+            }
+
+            // 启动所有特效
+            startAllEffects() {
+                WEATHER_EFFECTS.forEach(effect => {
+                    const intensity = effect.intensities[Math.floor(Math.random() * effect.intensities.length)];
+                    setTimeout(() => {
+                        this.startEffect(effect.id, intensity);
+                    }, Math.random() * 2000);
+                });
+            }
+
+            // 停止所有特效
+            stopAllEffects() {
+                WEATHER_EFFECTS.forEach(effect => {
+                    this.stopEffect(effect.id);
+                });
+            }
+
+            // 切换性能模式
+            togglePerformanceMode() {
+                const levels = ['low', 'medium', 'high'];
+                const currentIndex = levels.indexOf(this.performanceLevel);
+                this.performanceLevel = levels[(currentIndex + 1) % levels.length];
+
+                document.getElementById('performanceLevel').textContent = this.performanceLevel.toUpperCase();
+
+                // 重新应用所有活跃特效
+                this.effects.forEach((effect, effectId) => {
+                    if (effect.currentEffect) {
+                        const intensity = effect.currentEffect.dataset.intensity || 'normal';
+                        this.startEffect(effectId, intensity);
+                    }
+                });
+            }
+
+            // 更新活跃特效计数
+            updateActiveEffectsCount() {
+                let count = 0;
+                this.effects.forEach(effect => {
+                    if (effect.currentEffect) count++;
+                });
+                this.globalStats.activeEffects = count;
+                document.getElementById('activeEffects').textContent = count;
+            }
+        }
+
+            // 创建雨滴特效
+            createRainEffect(effect, intensity) {
+                const rainDiv = document.createElement('div');
+                rainDiv.className = 'rain-effect-optimized';
+                rainDiv.dataset.intensity = intensity;
+
+                let dropCount;
+                if (intensity === 'light') {
+                    dropCount = this.performanceLevel === 'high' ? 30 : (this.performanceLevel === 'medium' ? 20 : 10);
+                    rainDiv.classList.add('rain-light');
+                } else if (intensity === 'heavy') {
+                    dropCount = this.performanceLevel === 'high' ? 80 : (this.performanceLevel === 'medium' ? 50 : 25);
+                    rainDiv.classList.add('rain-heavy');
+                } else {
+                    dropCount = this.performanceLevel === 'high' ? 50 : (this.performanceLevel === 'medium' ? 35 : 18);
+                    rainDiv.classList.add('rain-moderate');
+                }
+
+                for (let i = 0; i < dropCount; i++) {
+                    const drop = document.createElement('div');
+                    drop.className = 'raindrop';
+                    drop.style.left = Math.random() * 100 + '%';
+                    drop.style.animationDelay = Math.random() * 2 + 's';
+
+                    const baseDuration = intensity === 'heavy' ? 0.5 : intensity === 'light' ? 1.2 : 0.8;
+                    const performanceMultiplier = this.performanceLevel === 'low' ? 1.5 : 1;
+                    drop.style.animationDuration = (baseDuration * performanceMultiplier + Math.random() * 0.3) + 's';
+
+                    rainDiv.appendChild(drop);
+                }
+
+                effect.container.appendChild(rainDiv);
+                effect.currentEffect = rainDiv;
+                effect.stats.elements = dropCount;
+                document.getElementById(`rainElements`).textContent = dropCount;
+            }
+
+            // 创建雪花特效
+            createSnowEffect(effect, intensity) {
+                const snowDiv = document.createElement('div');
+                snowDiv.className = 'snow-effect';
+                snowDiv.dataset.intensity = intensity;
+
+                let snowflakeCount;
+                if (intensity === 'light') {
+                    snowflakeCount = this.performanceLevel === 'high' ? 20 : (this.performanceLevel === 'medium' ? 15 : 8);
+                    snowDiv.classList.add('snow-light');
+                } else if (intensity === 'heavy') {
+                    snowflakeCount = this.performanceLevel === 'high' ? 50 : (this.performanceLevel === 'medium' ? 35 : 20);
+                    snowDiv.classList.add('snow-heavy');
+                } else {
+                    snowflakeCount = this.performanceLevel === 'high' ? 35 : (this.performanceLevel === 'medium' ? 25 : 15);
+                    snowDiv.classList.add('snow-moderate');
+                }
+
+                for (let i = 0; i < snowflakeCount; i++) {
+                    const snowflake = document.createElement('div');
+                    snowflake.className = 'snowflake';
+                    snowflake.textContent = '❄';
+                    snowflake.style.left = Math.random() * 100 + '%';
+                    snowflake.style.animationDelay = Math.random() * 3 + 's';
+                    snowflake.style.animationDuration = (Math.random() * 3 + 2) + 's';
+                    snowDiv.appendChild(snowflake);
+                }
+
+                effect.container.appendChild(snowDiv);
+                effect.currentEffect = snowDiv;
+                effect.stats.elements = snowflakeCount;
+                document.getElementById(`snowElements`).textContent = snowflakeCount;
+            }
+
+            // 创建雷暴特效
+            createThunderEffect(effect) {
+                const thunderDiv = document.createElement('div');
+                thunderDiv.className = 'thunder-effect';
+                thunderDiv.dataset.intensity = 'normal';
+
+                effect.container.appendChild(thunderDiv);
+                effect.currentEffect = thunderDiv;
+                effect.stats.elements = 1;
+                document.getElementById(`thunderElements`).textContent = '1';
+            }
+
+            // 创建雾霾特效
+            createFogEffect(effect, intensity) {
+                const fogDiv = document.createElement('div');
+                fogDiv.className = 'fog-effect';
+                fogDiv.dataset.intensity = intensity;
+
+                if (intensity === 'light') {
+                    fogDiv.classList.add('fog-light');
+                } else if (intensity === 'heavy') {
+                    fogDiv.classList.add('fog-heavy');
+                } else {
+                    fogDiv.classList.add('fog-moderate');
+                }
+
+                effect.container.appendChild(fogDiv);
+                effect.currentEffect = fogDiv;
+                effect.stats.elements = 1;
+                document.getElementById(`fogElements`).textContent = '1';
+            }
+
+            // 创建风力特效
+            createWindEffect(effect, intensity) {
+                const windDiv = document.createElement('div');
+                windDiv.className = 'wind-effect';
+                windDiv.dataset.intensity = intensity;
+
+                let particleCount;
+                if (intensity === 'light') {
+                    particleCount = this.performanceLevel === 'high' ? 15 : (this.performanceLevel === 'medium' ? 10 : 5);
+                    windDiv.classList.add('wind-light');
+                } else if (intensity === 'strong') {
+                    particleCount = this.performanceLevel === 'high' ? 40 : (this.performanceLevel === 'medium' ? 25 : 15);
+                    windDiv.classList.add('wind-strong');
+                } else {
+                    particleCount = this.performanceLevel === 'high' ? 25 : (this.performanceLevel === 'medium' ? 18 : 10);
+                    windDiv.classList.add('wind-moderate');
+                }
+
+                for (let i = 0; i < particleCount; i++) {
+                    const particle = document.createElement('div');
+                    particle.className = 'wind-particle';
+                    particle.style.top = Math.random() * 100 + '%';
+                    particle.style.animationDelay = Math.random() * 3 + 's';
+                    windDiv.appendChild(particle);
+                }
+
+                effect.container.appendChild(windDiv);
+                effect.currentEffect = windDiv;
+                effect.stats.elements = particleCount;
+                document.getElementById(`windElements`).textContent = particleCount;
+            }
+
+            // 创建沙尘特效
+            createDustEffect(effect) {
+                const dustDiv = document.createElement('div');
+                dustDiv.className = 'dust-effect';
+                dustDiv.dataset.intensity = 'normal';
+
+                const particleCount = this.performanceLevel === 'high' ? 30 : (this.performanceLevel === 'medium' ? 20 : 10);
+                for (let i = 0; i < particleCount; i++) {
+                    const particle = document.createElement('div');
+                    particle.className = 'dust-particle';
+                    particle.style.top = Math.random() * 100 + '%';
+                    particle.style.animationDelay = Math.random() * 2 + 's';
+                    dustDiv.appendChild(particle);
+                }
+
+                effect.container.appendChild(dustDiv);
+                effect.currentEffect = dustDiv;
+                effect.stats.elements = particleCount + 1;
+                document.getElementById(`dustElements`).textContent = particleCount + 1;
+            }
+
+            // 创建冰雹特效
+            createHailEffect(effect) {
+                const hailDiv = document.createElement('div');
+                hailDiv.className = 'hail-effect';
+                hailDiv.dataset.intensity = 'normal';
+
+                const hailCount = this.performanceLevel === 'high' ? 25 : (this.performanceLevel === 'medium' ? 18 : 12);
+                for (let i = 0; i < hailCount; i++) {
+                    const hailstone = document.createElement('div');
+                    hailstone.className = 'hailstone';
+                    hailstone.style.left = Math.random() * 100 + '%';
+                    hailstone.style.animationDelay = Math.random() * 2 + 's';
+                    hailstone.style.animationDuration = (Math.random() * 0.5 + 0.5) + 's';
+                    hailDiv.appendChild(hailstone);
+                }
+
+                effect.container.appendChild(hailDiv);
+                effect.currentEffect = hailDiv;
+                effect.stats.elements = hailCount;
+                document.getElementById(`hailElements`).textContent = hailCount;
+            }
+
+            // 创建阳光特效
+            createSunshineEffect(effect, intensity) {
+                const sunDiv = document.createElement('div');
+                sunDiv.className = 'sunshine-effect';
+                sunDiv.dataset.intensity = intensity;
+
+                if (intensity === 'strong') {
+                    sunDiv.classList.add('sunshine-strong');
+                }
+
+                effect.container.appendChild(sunDiv);
+                effect.currentEffect = sunDiv;
+                effect.stats.elements = 1;
+                document.getElementById(`sunshineElements`).textContent = '1';
+            }
+
+            // 创建云朵特效
+            createCloudsEffect(effect) {
+                const cloudsDiv = document.createElement('div');
+                cloudsDiv.className = 'clouds-effect';
+                cloudsDiv.dataset.intensity = 'normal';
+
+                effect.container.appendChild(cloudsDiv);
+                effect.currentEffect = cloudsDiv;
+                effect.stats.elements = 1;
+                document.getElementById(`cloudsElements`).textContent = '1';
+            }
+
+            // 全局性能监控
+            startGlobalMonitoring() {
+                const monitor = () => {
+                    this.frameCount++;
+                    const currentTime = performance.now();
+
+                    if (currentTime - this.lastTime >= 1000) {
+                        const fps = this.frameCount;
+                        this.frameCount = 0;
+                        this.lastTime = currentTime;
+
+                        this.globalStats.fps = fps;
+                        document.getElementById('globalFps').textContent = fps;
+
+                        // 内存使用情况
+                        if (performance.memory) {
+                            const memoryMB = Math.round(performance.memory.usedJSHeapSize / 1024 / 1024);
+                            this.globalStats.memory = memoryMB;
+                            document.getElementById('globalMemory').textContent = memoryMB;
+                        }
+
+                        this.updateComparisonStats();
+                        this.checkPerformanceWarnings();
+                    }
+
+                    requestAnimationFrame(monitor);
+                };
+
+                requestAnimationFrame(monitor);
+            }
+
+            // 更新对比统计
+            updateComparisonStats() {
+                let totalElements = 0;
+                this.effects.forEach(effect => {
+                    totalElements += effect.stats.elements;
+                });
+
+                this.globalStats.totalElements = totalElements;
+                document.getElementById('totalElements').textContent = totalElements;
+                document.getElementById('avgFps').textContent = this.globalStats.fps;
+                document.getElementById('memoryUsage').textContent = this.globalStats.memory + 'MB';
+
+                // 计算性能评分
+                const performanceScore = Math.max(0, Math.min(100,
+                    (this.globalStats.fps / 60) * 50 +
+                    (Math.max(0, 100 - this.globalStats.memory) / 100) * 30 +
+                    (Math.max(0, 50 - this.globalStats.totalElements) / 50) * 20
+                ));
+
+                document.getElementById('performanceScore').textContent = Math.round(performanceScore);
+                document.getElementById('warningCount').textContent = this.globalStats.warningCount;
+            }
+
+            // 检查性能警告
+            checkPerformanceWarnings() {
+                let warningCount = 0;
+
+                this.effects.forEach((effect, effectId) => {
+                    if (effect.currentEffect) {
+                        const warning = document.getElementById(`${effectId}Warning`);
+                        const shouldWarn = this.globalStats.fps < 30 || this.globalStats.memory > 200;
+
+                        if (shouldWarn) {
+                            warning.classList.add('show');
+                            warningCount++;
+                        } else {
+                            warning.classList.remove('show');
+                        }
+
+                        // 更新单个特效的FPS显示
+                        document.getElementById(`${effectId}Fps`).textContent = this.globalStats.fps;
+                        document.getElementById(`${effectId}Memory`).textContent = Math.round(this.globalStats.memory / this.globalStats.activeEffects || 0);
+                    }
+                });
+
+                this.globalStats.warningCount = warningCount;
+            }
+
+            // 更新全局统计
+            updateGlobalStats() {
+                setInterval(() => {
+                    this.updateActiveEffectsCount();
+                }, 1000);
+            }
+        }
+
+        // 初始化测试管理器
+        let testManager;
+        document.addEventListener('DOMContentLoaded', () => {
+            testManager = new WeatherEffectsTestManager();
+        });
+    </script>
+</body>
+</html>
