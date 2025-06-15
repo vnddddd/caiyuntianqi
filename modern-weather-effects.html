@@ -1963,21 +1963,52 @@
 
             hideLoading() {
                 const loading = document.getElementById('loading');
-                gsap.to(loading, {
-                    duration: 0.5,
-                    opacity: 0,
-                    scale: 0.8,
-                    ease: "power2.out",
-                    onComplete: () => {
+                if (!loading) return;
+
+                // 检查GSAP是否可用
+                if (typeof gsap !== 'undefined' && gsap.to) {
+                    gsap.to(loading, {
+                        duration: 0.5,
+                        opacity: 0,
+                        scale: 0.8,
+                        ease: "power2.out",
+                        onComplete: () => {
+                            loading.classList.add('hidden');
+                        }
+                    });
+                } else {
+                    // 降级到CSS过渡
+                    loading.style.transition = 'opacity 0.5s ease, transform 0.5s ease';
+                    loading.style.opacity = '0';
+                    loading.style.transform = 'scale(0.8)';
+                    setTimeout(() => {
                         loading.classList.add('hidden');
-                    }
-                });
+                    }, 500);
+                }
             }
 
             showError(message) {
                 const loading = document.getElementById('loading');
-                loading.querySelector('.loading-text').textContent = message;
-                loading.querySelector('.loading-spinner').style.display = 'none';
+                if (!loading) {
+                    console.error('无法显示错误信息，loading元素不存在:', message);
+                    return;
+                }
+
+                const loadingText = loading.querySelector('.loading-text');
+                const loadingSpinner = loading.querySelector('.loading-spinner');
+
+                if (loadingText) {
+                    loadingText.textContent = message;
+                }
+
+                if (loadingSpinner) {
+                    loadingSpinner.style.display = 'none';
+                }
+
+                // 确保loading界面可见
+                loading.classList.remove('hidden');
+                loading.style.opacity = '1';
+                loading.style.transform = 'scale(1)';
             }
         }
 
@@ -2040,19 +2071,35 @@
             }
 
             updateDisplay() {
-                document.getElementById('fps').textContent = this.fps;
-                document.getElementById('particle-count').textContent = this.particleCount;
-                document.getElementById('active-animations').textContent = this.activeAnimations;
-                document.getElementById('memory-usage').textContent = this.memoryUsage + (this.memoryUsage !== '--' ? ' MB' : '');
-
-                // 根据性能调整显示颜色
+                // 安全地更新DOM元素
                 const fpsElement = document.getElementById('fps');
-                if (this.fps >= 50) {
-                    fpsElement.style.color = '#4caf50';
-                } else if (this.fps >= 30) {
-                    fpsElement.style.color = '#ff9800';
-                } else {
-                    fpsElement.style.color = '#f44336';
+                const particleCountElement = document.getElementById('particle-count');
+                const activeAnimationsElement = document.getElementById('active-animations');
+                const memoryUsageElement = document.getElementById('memory-usage');
+
+                if (fpsElement) {
+                    fpsElement.textContent = this.fps;
+
+                    // 根据性能调整显示颜色
+                    if (this.fps >= 50) {
+                        fpsElement.style.color = '#4caf50';
+                    } else if (this.fps >= 30) {
+                        fpsElement.style.color = '#ff9800';
+                    } else {
+                        fpsElement.style.color = '#f44336';
+                    }
+                }
+
+                if (particleCountElement) {
+                    particleCountElement.textContent = this.particleCount;
+                }
+
+                if (activeAnimationsElement) {
+                    activeAnimationsElement.textContent = this.activeAnimations;
+                }
+
+                if (memoryUsageElement) {
+                    memoryUsageElement.textContent = this.memoryUsage + (this.memoryUsage !== '--' ? ' MB' : '');
                 }
             }
         }
@@ -2072,13 +2119,22 @@
                 weatherSystem.clearAllEffects();
                 weatherSystem.updateActiveButton(null);
 
-                // 重置显示
-                document.getElementById('temperature').textContent = '25°C';
-                document.getElementById('description').textContent = '点击上方按钮体验不同天气特效';
-                document.getElementById('humidity').textContent = '65%';
-                document.getElementById('windSpeed').textContent = '12 km/h';
-                document.getElementById('visibility').textContent = '10 km';
-                document.getElementById('pressure').textContent = '1013 hPa';
+                // 安全地重置显示
+                const elements = {
+                    'temperature': '25°C',
+                    'description': '点击上方按钮体验不同天气特效',
+                    'humidity': '65%',
+                    'windSpeed': '12 km/h',
+                    'visibility': '10 km',
+                    'pressure': '1013 hPa'
+                };
+
+                Object.entries(elements).forEach(([id, text]) => {
+                    const element = document.getElementById(id);
+                    if (element) {
+                        element.textContent = text;
+                    }
+                });
             }
         }
 
@@ -2148,17 +2204,25 @@
 
         // 性能优化：在页面不可见时暂停动画
         document.addEventListener('visibilitychange', () => {
-            if (weatherSystem) {
-                if (document.hidden) {
-                    // 页面隐藏时暂停动画
-                    weatherSystem.gsapTimelines.forEach(timeline => {
-                        timeline.pause();
-                    });
-                } else {
-                    // 页面显示时恢复动画
-                    weatherSystem.gsapTimelines.forEach(timeline => {
-                        timeline.resume();
-                    });
+            if (weatherSystem && weatherSystem.gsapTimelines) {
+                try {
+                    if (document.hidden) {
+                        // 页面隐藏时暂停动画
+                        weatherSystem.gsapTimelines.forEach(timeline => {
+                            if (timeline && typeof timeline.pause === 'function') {
+                                timeline.pause();
+                            }
+                        });
+                    } else {
+                        // 页面显示时恢复动画
+                        weatherSystem.gsapTimelines.forEach(timeline => {
+                            if (timeline && typeof timeline.resume === 'function') {
+                                timeline.resume();
+                            }
+                        });
+                    }
+                } catch (error) {
+                    console.warn('动画暂停/恢复失败:', error);
                 }
             }
         });
