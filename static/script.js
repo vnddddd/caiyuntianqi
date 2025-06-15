@@ -9,6 +9,46 @@ class WeatherEffectsManager {
     this.effectsContainer = document.getElementById('weatherEffects');
     this.currentEffects = [];
     this.animationFrames = [];
+    this.performanceLevel = this.detectPerformanceLevel();
+    this.isReducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  }
+
+  // 检测设备性能等级
+  detectPerformanceLevel() {
+    const canvas = document.createElement('canvas');
+    const gl = canvas.getContext('webgl') || canvas.getContext('experimental-webgl');
+
+    // 基础性能检测
+    const isMobile = /Android|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+    const hardwareConcurrency = navigator.hardwareConcurrency || 2;
+    const deviceMemory = navigator.deviceMemory || 2;
+
+    // GPU检测
+    let gpuTier = 'low';
+    if (gl) {
+      const debugInfo = gl.getExtension('WEBGL_debug_renderer_info');
+      if (debugInfo) {
+        const renderer = gl.getParameter(debugInfo.UNMASKED_RENDERER_WEBGL);
+        if (renderer.includes('Mali') || renderer.includes('Adreno 3') || renderer.includes('PowerVR')) {
+          gpuTier = 'low';
+        } else if (renderer.includes('Adreno 5') || renderer.includes('Adreno 6')) {
+          gpuTier = 'medium';
+        } else {
+          gpuTier = 'high';
+        }
+      }
+    }
+
+    // 综合评分
+    let score = 0;
+    score += isMobile ? 0 : 2;
+    score += hardwareConcurrency >= 4 ? 2 : (hardwareConcurrency >= 2 ? 1 : 0);
+    score += deviceMemory >= 4 ? 2 : (deviceMemory >= 2 ? 1 : 0);
+    score += gpuTier === 'high' ? 2 : (gpuTier === 'medium' ? 1 : 0);
+
+    if (score >= 6) return 'high';
+    if (score >= 3) return 'medium';
+    return 'low';
   }
 
   // 清除所有特效
@@ -22,18 +62,69 @@ class WeatherEffectsManager {
     this.animationFrames = [];
     // 移除背景摇摆效果
     this.effectsContainer.classList.remove('background-sway', 'sway-light', 'sway-moderate', 'sway-strong');
+    // 停止性能监控
+    this.stopPerformanceMonitoring();
+  }
+
+  // 性能监控
+  startPerformanceMonitoring() {
+    if (this.performanceMonitor) return;
+
+    let frameCount = 0;
+    let lastTime = performance.now();
+
+    const monitor = () => {
+      frameCount++;
+      const currentTime = performance.now();
+
+      // 每秒检查一次帧率
+      if (currentTime - lastTime >= 1000) {
+        const fps = frameCount;
+        frameCount = 0;
+        lastTime = currentTime;
+
+        // 如果帧率过低，自动降级特效
+        if (fps < 30 && this.performanceLevel !== 'low') {
+          console.log('检测到性能问题，降级特效复杂度');
+          this.performanceLevel = 'low';
+          this.reapplyCurrentEffects();
+        }
+      }
+
+      this.performanceMonitor = requestAnimationFrame(monitor);
+    };
+
+    this.performanceMonitor = requestAnimationFrame(monitor);
+  }
+
+  stopPerformanceMonitoring() {
+    if (this.performanceMonitor) {
+      cancelAnimationFrame(this.performanceMonitor);
+      this.performanceMonitor = null;
+    }
+  }
+
+  // 重新应用当前特效（用于性能降级）
+  reapplyCurrentEffects() {
+    if (this.lastWeatherData) {
+      this.applyWeatherEffects(this.lastWeatherData);
+    }
   }
 
   // 应用天气特效
   applyWeatherEffects(weatherData) {
     this.clearAllEffects();
+    this.lastWeatherData = weatherData; // 保存数据用于重新应用
 
     const { current } = weatherData;
     const skycon = current.skycon;
     const windSpeed = current.wind_speed || 0;
     const visibility = current.visibility || 10;
 
-    console.log('应用天气特效:', skycon, '风速:', windSpeed, '能见度:', visibility);
+    console.log('应用天气特效:', skycon, '风速:', windSpeed, '能见度:', visibility, '性能等级:', this.performanceLevel);
+
+    // 开始性能监控
+    this.startPerformanceMonitoring();
 
     // 根据天气状况应用特效
     if (skycon.includes('RAIN')) {
@@ -70,17 +161,48 @@ class WeatherEffectsManager {
     }
   }
 
-  // 雨滴特效
+  // 优化后的雨滴特效
   addRainEffect(intensity) {
+    // 如果用户偏好减少动画，则跳过特效
+    if (this.isReducedMotion) {
+      return;
+    }
+
     const rainDiv = document.createElement('div');
-    rainDiv.className = 'rain-effect';
+    rainDiv.className = 'rain-effect-optimized';
+
+    // 根据性能等级调整雨滴数量和复杂度
+    let dropCount, animationClass;
 
     if (intensity.includes('LIGHT')) {
-      rainDiv.classList.add('rain-light');
+      dropCount = this.performanceLevel === 'high' ? 30 : (this.performanceLevel === 'medium' ? 20 : 10);
+      animationClass = 'rain-light';
     } else if (intensity.includes('HEAVY') || intensity.includes('STORM')) {
-      rainDiv.classList.add('rain-heavy');
+      dropCount = this.performanceLevel === 'high' ? 80 : (this.performanceLevel === 'medium' ? 50 : 25);
+      animationClass = 'rain-heavy';
     } else {
-      rainDiv.classList.add('rain-moderate');
+      dropCount = this.performanceLevel === 'high' ? 50 : (this.performanceLevel === 'medium' ? 35 : 18);
+      animationClass = 'rain-moderate';
+    }
+
+    rainDiv.classList.add(animationClass);
+
+    // 创建雨滴元素
+    for (let i = 0; i < dropCount; i++) {
+      const drop = document.createElement('div');
+      drop.className = 'raindrop';
+
+      // 随机位置和延迟
+      drop.style.left = Math.random() * 100 + '%';
+      drop.style.animationDelay = Math.random() * 2 + 's';
+
+      // 根据性能等级调整动画时长
+      const baseDuration = animationClass === 'rain-heavy' ? 0.5 :
+                          animationClass === 'rain-light' ? 1.2 : 0.8;
+      const performanceMultiplier = this.performanceLevel === 'low' ? 1.5 : 1;
+      drop.style.animationDuration = (baseDuration * performanceMultiplier + Math.random() * 0.3) + 's';
+
+      rainDiv.appendChild(drop);
     }
 
     this.effectsContainer.appendChild(rainDiv);

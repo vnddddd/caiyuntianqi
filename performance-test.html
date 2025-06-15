@@ -1,0 +1,362 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>雨滴特效性能测试</title>
+    <style>
+        body {
+            margin: 0;
+            padding: 20px;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: linear-gradient(135deg, #74b9ff 0%, #0984e3 100%);
+            min-height: 100vh;
+            color: white;
+        }
+
+        .test-container {
+            max-width: 800px;
+            margin: 0 auto;
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(10px);
+            border-radius: 20px;
+            padding: 30px;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+        }
+
+        .performance-stats {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+
+        .stat-card {
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 15px;
+            padding: 20px;
+            text-align: center;
+        }
+
+        .stat-value {
+            font-size: 2em;
+            font-weight: bold;
+            margin-bottom: 5px;
+        }
+
+        .stat-label {
+            font-size: 0.9em;
+            opacity: 0.8;
+        }
+
+        .controls {
+            display: flex;
+            gap: 15px;
+            flex-wrap: wrap;
+            margin-bottom: 30px;
+        }
+
+        button {
+            background: rgba(255, 255, 255, 0.2);
+            border: 1px solid rgba(255, 255, 255, 0.3);
+            color: white;
+            padding: 12px 24px;
+            border-radius: 25px;
+            cursor: pointer;
+            font-size: 14px;
+            transition: all 0.3s ease;
+        }
+
+        button:hover {
+            background: rgba(255, 255, 255, 0.3);
+            transform: translateY(-2px);
+        }
+
+        button.active {
+            background: rgba(255, 255, 255, 0.4);
+            box-shadow: 0 4px 15px rgba(255, 255, 255, 0.2);
+        }
+
+        .weather-effects {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            z-index: -1;
+            overflow: hidden;
+        }
+
+        /* 复制优化后的雨滴样式 */
+        .rain-effect-optimized {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            overflow: hidden;
+        }
+
+        .raindrop {
+            position: absolute;
+            width: 2px;
+            height: 12px;
+            background: linear-gradient(to bottom, 
+                rgba(255, 255, 255, 0.9) 0%,
+                rgba(255, 255, 255, 0.7) 30%,
+                rgba(174, 194, 224, 0.5) 70%,
+                rgba(174, 194, 224, 0.3) 100%);
+            border-radius: 0 0 50% 50%;
+            animation: raindropFall linear infinite;
+            transform: translateZ(0);
+            will-change: transform;
+            box-shadow: 0 0 1px rgba(0, 0, 0, 0.1);
+            filter: drop-shadow(0 0 0.5px rgba(0, 0, 0, 0.2));
+        }
+
+        .rain-light .raindrop {
+            opacity: 0.6;
+            width: 1.5px;
+            height: 8px;
+        }
+
+        .rain-moderate .raindrop {
+            opacity: 0.7;
+            width: 2px;
+            height: 12px;
+        }
+
+        .rain-heavy .raindrop {
+            opacity: 0.8;
+            width: 2.5px;
+            height: 16px;
+        }
+
+        @keyframes raindropFall {
+            0% {
+                transform: translateY(-20px) translateZ(0);
+                opacity: 0;
+            }
+            5% {
+                opacity: 1;
+            }
+            95% {
+                opacity: 1;
+            }
+            100% {
+                transform: translateY(calc(100vh + 20px)) translateZ(0);
+                opacity: 0;
+            }
+        }
+
+        .performance-warning {
+            background: rgba(255, 193, 7, 0.2);
+            border: 1px solid rgba(255, 193, 7, 0.5);
+            border-radius: 10px;
+            padding: 15px;
+            margin-top: 20px;
+            display: none;
+        }
+
+        .performance-warning.show {
+            display: block;
+        }
+    </style>
+</head>
+<body>
+    <div class="weather-effects" id="weatherEffects"></div>
+    
+    <div class="test-container">
+        <h1>🌧️ 雨滴特效性能测试</h1>
+        
+        <div class="performance-stats">
+            <div class="stat-card">
+                <div class="stat-value" id="fps">--</div>
+                <div class="stat-label">FPS (帧率)</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-value" id="dropCount">0</div>
+                <div class="stat-label">雨滴数量</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-value" id="performanceLevel">--</div>
+                <div class="stat-label">性能等级</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-value" id="memoryUsage">--</div>
+                <div class="stat-label">内存使用 (MB)</div>
+            </div>
+        </div>
+
+        <div class="controls">
+            <button onclick="startRain('LIGHT_RAIN')">小雨</button>
+            <button onclick="startRain('RAIN')">中雨</button>
+            <button onclick="startRain('HEAVY_RAIN')">大雨</button>
+            <button onclick="stopRain()">停止</button>
+            <button onclick="togglePerformanceMode()">切换性能模式</button>
+        </div>
+
+        <div class="performance-warning" id="performanceWarning">
+            ⚠️ 检测到性能问题！帧率低于30FPS，建议降低特效复杂度。
+        </div>
+
+        <div style="margin-top: 30px;">
+            <h3>优化说明：</h3>
+            <ul>
+                <li>✅ 使用真实雨滴形状替代线条效果</li>
+                <li>✅ 根据设备性能自动调整雨滴数量</li>
+                <li>✅ 启用硬件加速和GPU优化</li>
+                <li>✅ 实时性能监控和自动降级</li>
+                <li>✅ 移动设备特殊优化</li>
+                <li>✅ 支持减少动画偏好设置</li>
+            </ul>
+        </div>
+    </div>
+
+    <script>
+        class PerformanceTestManager {
+            constructor() {
+                this.effectsContainer = document.getElementById('weatherEffects');
+                this.performanceLevel = this.detectPerformanceLevel();
+                this.isReducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+                this.currentEffect = null;
+                this.startMonitoring();
+                
+                document.getElementById('performanceLevel').textContent = this.performanceLevel.toUpperCase();
+            }
+
+            detectPerformanceLevel() {
+                const isMobile = /Android|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+                const hardwareConcurrency = navigator.hardwareConcurrency || 2;
+                const deviceMemory = navigator.deviceMemory || 2;
+                
+                let score = 0;
+                score += isMobile ? 0 : 2;
+                score += hardwareConcurrency >= 4 ? 2 : (hardwareConcurrency >= 2 ? 1 : 0);
+                score += deviceMemory >= 4 ? 2 : (deviceMemory >= 2 ? 1 : 0);
+                
+                if (score >= 4) return 'high';
+                if (score >= 2) return 'medium';
+                return 'low';
+            }
+
+            startRain(intensity) {
+                this.clearEffects();
+                
+                if (this.isReducedMotion) {
+                    alert('检测到减少动画偏好设置，特效已禁用');
+                    return;
+                }
+
+                const rainDiv = document.createElement('div');
+                rainDiv.className = 'rain-effect-optimized';
+
+                let dropCount, animationClass;
+                
+                if (intensity.includes('LIGHT')) {
+                    dropCount = this.performanceLevel === 'high' ? 30 : (this.performanceLevel === 'medium' ? 20 : 10);
+                    animationClass = 'rain-light';
+                } else if (intensity.includes('HEAVY')) {
+                    dropCount = this.performanceLevel === 'high' ? 80 : (this.performanceLevel === 'medium' ? 50 : 25);
+                    animationClass = 'rain-heavy';
+                } else {
+                    dropCount = this.performanceLevel === 'high' ? 50 : (this.performanceLevel === 'medium' ? 35 : 18);
+                    animationClass = 'rain-moderate';
+                }
+
+                rainDiv.classList.add(animationClass);
+
+                for (let i = 0; i < dropCount; i++) {
+                    const drop = document.createElement('div');
+                    drop.className = 'raindrop';
+                    
+                    drop.style.left = Math.random() * 100 + '%';
+                    drop.style.animationDelay = Math.random() * 2 + 's';
+                    
+                    const baseDuration = animationClass === 'rain-heavy' ? 0.5 : 
+                                        animationClass === 'rain-light' ? 1.2 : 0.8;
+                    const performanceMultiplier = this.performanceLevel === 'low' ? 1.5 : 1;
+                    drop.style.animationDuration = (baseDuration * performanceMultiplier + Math.random() * 0.3) + 's';
+                    
+                    rainDiv.appendChild(drop);
+                }
+
+                this.effectsContainer.appendChild(rainDiv);
+                this.currentEffect = rainDiv;
+                
+                document.getElementById('dropCount').textContent = dropCount;
+            }
+
+            clearEffects() {
+                this.effectsContainer.innerHTML = '';
+                this.currentEffect = null;
+                document.getElementById('dropCount').textContent = '0';
+            }
+
+            startMonitoring() {
+                let frameCount = 0;
+                let lastTime = performance.now();
+                
+                const monitor = () => {
+                    frameCount++;
+                    const currentTime = performance.now();
+                    
+                    if (currentTime - lastTime >= 1000) {
+                        const fps = frameCount;
+                        frameCount = 0;
+                        lastTime = currentTime;
+                        
+                        document.getElementById('fps').textContent = fps;
+                        
+                        // 内存使用情况
+                        if (performance.memory) {
+                            const memoryMB = Math.round(performance.memory.usedJSHeapSize / 1024 / 1024);
+                            document.getElementById('memoryUsage').textContent = memoryMB;
+                        }
+                        
+                        // 性能警告
+                        const warning = document.getElementById('performanceWarning');
+                        if (fps < 30 && this.currentEffect) {
+                            warning.classList.add('show');
+                        } else {
+                            warning.classList.remove('show');
+                        }
+                    }
+                    
+                    requestAnimationFrame(monitor);
+                };
+                
+                requestAnimationFrame(monitor);
+            }
+
+            togglePerformanceMode() {
+                const levels = ['low', 'medium', 'high'];
+                const currentIndex = levels.indexOf(this.performanceLevel);
+                this.performanceLevel = levels[(currentIndex + 1) % levels.length];
+                document.getElementById('performanceLevel').textContent = this.performanceLevel.toUpperCase();
+                
+                // 如果有当前特效，重新应用
+                if (this.currentEffect) {
+                    const intensity = this.currentEffect.classList.contains('rain-light') ? 'LIGHT_RAIN' :
+                                     this.currentEffect.classList.contains('rain-heavy') ? 'HEAVY_RAIN' : 'RAIN';
+                    this.startRain(intensity);
+                }
+            }
+        }
+
+        const testManager = new PerformanceTestManager();
+
+        function startRain(intensity) {
+            testManager.startRain(intensity);
+        }
+
+        function stopRain() {
+            testManager.clearEffects();
+        }
+
+        function togglePerformanceMode() {
+            testManager.togglePerformanceMode();
+        }
+    </script>
+</body>
+</html>

@@ -122,37 +122,70 @@ body.time-night {
   overflow: hidden;
 }
 
-/* 雨滴效果 */
-.rain-effect {
+/* 优化后的雨滴效果 */
+.rain-effect-optimized {
   position: absolute;
   width: 100%;
   height: 100%;
-  background: linear-gradient(180deg, transparent 0%, rgba(255,255,255,0.1) 50%, transparent 100%);
-  background-size: 2px 20px;
-  animation: rainFall 0.5s linear infinite;
+  pointer-events: none;
+  overflow: hidden;
 }
 
-.rain-light {
-  opacity: 0.3;
-  background-size: 1px 15px;
-  animation-duration: 0.8s;
+/* 真实雨滴样式 */
+.raindrop {
+  position: absolute;
+  width: 2px;
+  height: 12px;
+  background: linear-gradient(to bottom,
+    rgba(255, 255, 255, 0.9) 0%,
+    rgba(255, 255, 255, 0.7) 30%,
+    rgba(174, 194, 224, 0.5) 70%,
+    rgba(174, 194, 224, 0.3) 100%);
+  border-radius: 0 0 50% 50%;
+  animation: raindropFall linear infinite;
+  transform: translateZ(0); /* 硬件加速 */
+  will-change: transform;
+  /* 添加微妙的阴影以增强可见性 */
+  box-shadow: 0 0 1px rgba(0, 0, 0, 0.1);
+  /* 确保在不同背景下都可见 */
+  filter: drop-shadow(0 0 0.5px rgba(0, 0, 0, 0.2));
 }
 
-.rain-moderate {
-  opacity: 0.5;
-  background-size: 2px 25px;
-  animation-duration: 0.4s;
+/* 不同强度的雨滴样式 */
+.rain-light .raindrop {
+  opacity: 0.6;
+  width: 1.5px;
+  height: 8px;
 }
 
-.rain-heavy {
+.rain-moderate .raindrop {
   opacity: 0.7;
-  background-size: 3px 35px;
-  animation-duration: 0.2s;
+  width: 2px;
+  height: 12px;
 }
 
-@keyframes rainFall {
-  0% { transform: translateY(-100vh); }
-  100% { transform: translateY(100vh); }
+.rain-heavy .raindrop {
+  opacity: 0.8;
+  width: 2.5px;
+  height: 16px;
+}
+
+/* 优化的雨滴下落动画 */
+@keyframes raindropFall {
+  0% {
+    transform: translateY(-20px) translateZ(0);
+    opacity: 0;
+  }
+  5% {
+    opacity: 1;
+  }
+  95% {
+    opacity: 1;
+  }
+  100% {
+    transform: translateY(calc(100vh + 20px)) translateZ(0);
+    opacity: 0;
+  }
 }
 
 /* 雪花效果 */
@@ -419,7 +452,8 @@ body.time-night {
 
 /* 性能优化 - 启用硬件加速 */
 .weather-effects,
-.rain-effect,
+.rain-effect-optimized,
+.raindrop,
 .snow-effect,
 .wind-effect,
 .fog-effect,
@@ -430,6 +464,54 @@ body.time-night {
 .clouds-effect {
   will-change: transform, opacity;
   transform: translateZ(0);
+  backface-visibility: hidden;
+  perspective: 1000px;
+}
+
+/* 低性能设备优化 */
+@media (max-width: 768px), (pointer: coarse) {
+  .rain-effect-optimized .raindrop:nth-child(n+21) {
+    display: none; /* 移动设备限制雨滴数量 */
+  }
+
+  .raindrop {
+    animation-timing-function: ease-out; /* 使用更简单的缓动函数 */
+  }
+}
+
+/* 极低性能设备优化 */
+@media (max-width: 480px) and (max-height: 800px) {
+  .rain-effect-optimized .raindrop:nth-child(n+11) {
+    display: none; /* 小屏设备进一步限制 */
+  }
+}
+
+/* 减少动画偏好设置 */
+@media (prefers-reduced-motion: reduce) {
+  .rain-effect-optimized,
+  .raindrop {
+    animation: none !important;
+    display: none;
+  }
+}
+
+/* 白天和夜晚背景下的雨滴适配 */
+.time-day .raindrop {
+  background: linear-gradient(to bottom,
+    rgba(255, 255, 255, 0.9) 0%,
+    rgba(255, 255, 255, 0.7) 30%,
+    rgba(174, 194, 224, 0.5) 70%,
+    rgba(174, 194, 224, 0.3) 100%);
+  filter: drop-shadow(0 0 0.5px rgba(0, 0, 0, 0.3));
+}
+
+.time-night .raindrop {
+  background: linear-gradient(to bottom,
+    rgba(220, 220, 255, 0.9) 0%,
+    rgba(200, 200, 255, 0.7) 30%,
+    rgba(174, 194, 224, 0.5) 70%,
+    rgba(174, 194, 224, 0.3) 100%);
+  filter: drop-shadow(0 0 0.5px rgba(255, 255, 255, 0.2));
 }
 
 /* 容器布局 */
