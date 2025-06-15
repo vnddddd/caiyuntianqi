@@ -571,9 +571,12 @@ body.time-night {
 .current-location-display {
   margin-bottom: 1rem;
   padding: 0.75rem;
-  background: var(--bg-card);
-  border-radius: 6px;
-  border: 1px solid var(--border-color);
+  background: var(--glass-opacity-light);
+  backdrop-filter: var(--glass-blur-light);
+  -webkit-backdrop-filter: var(--glass-blur-light);
+  border: 1px solid var(--glass-border-light);
+  border-radius: var(--glass-radius-small);
+  transition: var(--glass-transition-fast);
 }
 
 .current-location-display span {
@@ -1339,7 +1342,7 @@ body.time-night {
   color: #2196F3;
 }
 
-/* 桌面端水平布局 */
+/* 桌面端水平布局 - 保持液态玻璃效果 */
 @media (min-width: 768px) {
   .daily-item {
     flex-direction: row;
@@ -1347,9 +1350,11 @@ body.time-night {
     justify-content: space-between;
     gap: 2rem;
     padding: 1.5rem 2rem;
-    background: rgba(255, 255, 255, 0.95);
-    border-radius: 12px;
-    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    background: var(--glass-opacity-medium);
+    backdrop-filter: var(--glass-blur-medium);
+    -webkit-backdrop-filter: var(--glass-blur-medium);
+    border: 1px solid var(--glass-border-medium);
+    border-radius: var(--glass-radius-medium);
     margin-bottom: 1rem;
   }
 
@@ -1504,10 +1509,12 @@ body.time-night {
     justify-content: space-between !important;
     gap: 1rem !important;
     padding: 1.25rem !important;
-    background: rgba(255, 255, 255, 0.9) !important;
-    border-radius: 16px !important;
+    background: var(--glass-opacity-medium) !important;
+    backdrop-filter: var(--glass-blur-medium) !important;
+    -webkit-backdrop-filter: var(--glass-blur-medium) !important;
+    border: 1px solid var(--glass-border-medium) !important;
+    border-radius: var(--glass-radius-medium) !important;
     margin-bottom: 1rem !important;
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1) !important;
     text-align: left !important;
   }
 
