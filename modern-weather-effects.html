@@ -330,6 +330,58 @@
         .hidden {
             display: none;
         }
+
+        /* 降级模式样式 */
+        .fallback-notice {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            background: rgba(255, 193, 7, 0.95);
+            color: #333;
+            padding: 15px 20px;
+            border-radius: 8px;
+            font-size: 14px;
+            z-index: 10000;
+            backdrop-filter: blur(10px);
+            box-shadow: 0 4px 16px rgba(0, 0, 0, 0.2);
+            transition: opacity 0.3s ease;
+            max-width: 300px;
+        }
+
+        .fallback-content {
+            display: flex;
+            flex-direction: column;
+            gap: 5px;
+        }
+
+        .fallback-content span {
+            font-weight: bold;
+            font-size: 16px;
+        }
+
+        .fallback-content small {
+            opacity: 0.8;
+            font-size: 12px;
+        }
+
+        /* 错误消息样式 */
+        .error-message {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: rgba(244, 67, 54, 0.95);
+            color: white;
+            padding: 20px 30px;
+            border-radius: 10px;
+            font-size: 16px;
+            text-align: center;
+            z-index: 10000;
+            backdrop-filter: blur(10px);
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+            max-width: 500px;
+            line-height: 1.5;
+        }
     </style>
 </head>
 <body>
@@ -417,10 +469,92 @@
         <div class="effect-status">内存使用: <span id="memory-usage">--</span></div>
     </div>
 
-    <!-- 引入外部库 -->
-    <script src="https://cdn.jsdelivr.net/npm/tsparticles@2.12.0/tsparticles.bundle.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/lottie-web/5.12.2/lottie.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/gsap.min.js"></script>
+    <!-- 引入外部库 - 使用多个CDN源确保可靠性 -->
+    <script>
+        // 库加载状态
+        window.libraryLoadStatus = {
+            tsParticles: false,
+            lottie: false,
+            gsap: false,
+            loadStartTime: Date.now()
+        };
+
+        // 加载库的函数
+        function loadScript(src, fallbackSrc, checkFunction, name) {
+            return new Promise((resolve, reject) => {
+                const script = document.createElement('script');
+                script.src = src;
+                script.onload = () => {
+                    if (checkFunction()) {
+                        window.libraryLoadStatus[name] = true;
+                        console.log(`${name} 加载成功 (主源)`);
+                        resolve();
+                    } else {
+                        console.warn(`${name} 主源加载失败，尝试备用源`);
+                        loadFallback();
+                    }
+                };
+                script.onerror = () => {
+                    console.warn(`${name} 主源加载失败，尝试备用源`);
+                    loadFallback();
+                };
+
+                function loadFallback() {
+                    const fallbackScript = document.createElement('script');
+                    fallbackScript.src = fallbackSrc;
+                    fallbackScript.onload = () => {
+                        if (checkFunction()) {
+                            window.libraryLoadStatus[name] = true;
+                            console.log(`${name} 加载成功 (备用源)`);
+                            resolve();
+                        } else {
+                            console.error(`${name} 所有源都加载失败`);
+                            reject(new Error(`Failed to load ${name}`));
+                        }
+                    };
+                    fallbackScript.onerror = () => {
+                        console.error(`${name} 所有源都加载失败`);
+                        reject(new Error(`Failed to load ${name}`));
+                    };
+                    document.head.appendChild(fallbackScript);
+                }
+
+                document.head.appendChild(script);
+            });
+        }
+
+        // 并行加载所有库
+        Promise.all([
+            loadScript(
+                'https://cdn.jsdelivr.net/npm/tsparticles@2.12.0/tsparticles.bundle.min.js',
+                'https://unpkg.com/tsparticles@2.12.0/tsparticles.bundle.min.js',
+                () => window.tsParticles,
+                'tsParticles'
+            ),
+            loadScript(
+                'https://cdnjs.cloudflare.com/ajax/libs/lottie-web/5.12.2/lottie.min.js',
+                'https://unpkg.com/lottie-web@5.12.2/build/player/lottie.min.js',
+                () => window.lottie,
+                'lottie'
+            ),
+            loadScript(
+                'https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/gsap.min.js',
+                'https://unpkg.com/gsap@3.12.2/dist/gsap.min.js',
+                () => window.gsap,
+                'gsap'
+            )
+        ]).then(() => {
+            console.log('所有库加载完成');
+            window.librariesLoaded = true;
+            // 触发自定义事件
+            window.dispatchEvent(new CustomEvent('librariesLoaded'));
+        }).catch(error => {
+            console.error('库加载失败:', error);
+            window.librariesLoadError = error;
+            // 触发错误事件
+            window.dispatchEvent(new CustomEvent('librariesLoadError', { detail: error }));
+        });
+    </script>
 
     <script>
         // 闪电生成器
@@ -710,11 +844,18 @@
 
             async init() {
                 try {
+                    // 显示详细的加载状态
+                    this.updateLoadingStatus('正在加载外部库...');
+
                     // 等待库加载完成
                     await this.waitForLibraries();
 
+                    this.updateLoadingStatus('正在初始化粒子系统...');
+
                     // 初始化tsParticles
                     await this.initParticles();
+
+                    this.updateLoadingStatus('正在初始化动画系统...');
 
                     // 初始化Lottie动画
                     this.initLottieAnimations();
@@ -722,30 +863,148 @@
                     // 初始化GSAP
                     this.initGSAP();
 
+                    this.updateLoadingStatus('启动性能监控...');
+
                     // 启动性能监控
                     this.performanceMonitor.start();
 
-                    // 隐藏加载动画
-                    this.hideLoading();
+                    this.updateLoadingStatus('初始化完成！');
+
+                    // 短暂延迟后隐藏加载提示
+                    setTimeout(() => {
+                        this.hideLoading();
+                    }, 500);
 
                     console.log('现代化天气特效系统初始化完成');
                 } catch (error) {
                     console.error('初始化失败:', error);
-                    this.showError('加载失败，请刷新页面重试');
+
+                    // 显示详细的错误信息
+                    let errorMessage = '加载失败：';
+                    if (error.message.includes('超时')) {
+                        errorMessage += '网络连接超时，请检查网络连接后刷新页面重试';
+                    } else if (error.message.includes('tsParticles')) {
+                        errorMessage += '粒子系统加载失败，请刷新页面重试';
+                    } else if (error.message.includes('lottie')) {
+                        errorMessage += '动画系统加载失败，请刷新页面重试';
+                    } else if (error.message.includes('gsap')) {
+                        errorMessage += '动画引擎加载失败，请刷新页面重试';
+                    } else {
+                        errorMessage += error.message || '未知错误，请刷新页面重试';
+                    }
+
+                    this.showError(errorMessage);
+
+                    // 启用降级模式
+                    this.enableFallbackMode();
                 }
             }
 
+            updateLoadingStatus(message) {
+                const loadingText = document.querySelector('.loading-text');
+                if (loadingText) {
+                    loadingText.textContent = message;
+                }
+            }
+
+            enableFallbackMode() {
+                console.log('启用降级模式 - 使用纯CSS动画');
+                this.fallbackMode = true;
+
+                // 隐藏加载界面
+                setTimeout(() => {
+                    this.hideLoading();
+
+                    // 显示降级模式提示
+                    const fallbackNotice = document.createElement('div');
+                    fallbackNotice.className = 'fallback-notice';
+                    fallbackNotice.innerHTML = `
+                        <div class="fallback-content">
+                            <span>⚠️ 降级模式</span>
+                            <small>外部库加载失败，使用基础动画效果</small>
+                        </div>
+                    `;
+                    document.body.appendChild(fallbackNotice);
+
+                    // 3秒后自动隐藏提示
+                    setTimeout(() => {
+                        fallbackNotice.style.opacity = '0';
+                        setTimeout(() => {
+                            if (fallbackNotice.parentNode) {
+                                fallbackNotice.parentNode.removeChild(fallbackNotice);
+                            }
+                        }, 300);
+                    }, 3000);
+                }, 1000);
+            }
+
             async waitForLibraries() {
-                // 等待所有库加载完成
-                return new Promise((resolve) => {
+                // 等待所有库加载完成，带超时和错误处理
+                return new Promise((resolve, reject) => {
+                    const timeout = 15000; // 15秒超时
+                    const startTime = Date.now();
+
+                    // 如果库已经加载完成
+                    if (window.librariesLoaded) {
+                        resolve();
+                        return;
+                    }
+
+                    // 如果库加载失败
+                    if (window.librariesLoadError) {
+                        reject(window.librariesLoadError);
+                        return;
+                    }
+
+                    // 监听库加载完成事件
+                    const onLibrariesLoaded = () => {
+                        window.removeEventListener('librariesLoaded', onLibrariesLoaded);
+                        window.removeEventListener('librariesLoadError', onLibrariesLoadError);
+                        clearTimeout(timeoutId);
+                        resolve();
+                    };
+
+                    // 监听库加载错误事件
+                    const onLibrariesLoadError = (event) => {
+                        window.removeEventListener('librariesLoaded', onLibrariesLoaded);
+                        window.removeEventListener('librariesLoadError', onLibrariesLoadError);
+                        clearTimeout(timeoutId);
+                        reject(event.detail);
+                    };
+
+                    // 设置超时
+                    const timeoutId = setTimeout(() => {
+                        window.removeEventListener('librariesLoaded', onLibrariesLoaded);
+                        window.removeEventListener('librariesLoadError', onLibrariesLoadError);
+
+                        // 检查哪些库没有加载
+                        const missing = [];
+                        if (!window.tsParticles) missing.push('tsParticles');
+                        if (!window.lottie) missing.push('lottie');
+                        if (!window.gsap) missing.push('gsap');
+
+                        const error = new Error(`库加载超时 (${timeout}ms)。未加载的库: ${missing.join(', ')}`);
+                        reject(error);
+                    }, timeout);
+
+                    // 添加事件监听器
+                    window.addEventListener('librariesLoaded', onLibrariesLoaded);
+                    window.addEventListener('librariesLoadError', onLibrariesLoadError);
+
+                    // 定期检查库状态（备用方案）
                     const checkLibraries = () => {
                         if (window.tsParticles && window.lottie && window.gsap) {
+                            window.removeEventListener('librariesLoaded', onLibrariesLoaded);
+                            window.removeEventListener('librariesLoadError', onLibrariesLoadError);
+                            clearTimeout(timeoutId);
                             resolve();
-                        } else {
-                            setTimeout(checkLibraries, 100);
+                        } else if (Date.now() - startTime < timeout) {
+                            setTimeout(checkLibraries, 200);
                         }
                     };
-                    checkLibraries();
+
+                    // 开始检查
+                    setTimeout(checkLibraries, 100);
                 });
             }
 
