@@ -333,27 +333,27 @@ body.time-night {
   100% { transform: translateX(100%); }
 }
 
-/* 背景摇摆效果（用于风力） */
-.background-sway {
+/* 背景摇摆效果（用于风力） - 只影响特效容器 */
+.weather-effects.background-sway {
   animation: backgroundSway ease-in-out infinite;
 }
 
-.sway-light {
+.weather-effects.sway-light {
   animation-duration: 4s;
 }
 
-.sway-moderate {
+.weather-effects.sway-moderate {
   animation-duration: 2s;
 }
 
-.sway-strong {
+.weather-effects.sway-strong {
   animation-duration: 1s;
 }
 
 @keyframes backgroundSway {
   0%, 100% { transform: translateX(0) rotate(0deg); }
-  25% { transform: translateX(2px) rotate(0.5deg); }
-  75% { transform: translateX(-2px) rotate(-0.5deg); }
+  25% { transform: translateX(1px) rotate(0.2deg); }
+  75% { transform: translateX(-1px) rotate(-0.2deg); }
 }
 
 /* 性能优化 - 启用硬件加速 */

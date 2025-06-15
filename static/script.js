@@ -21,7 +21,7 @@ class WeatherEffectsManager {
     this.animationFrames.forEach(frame => cancelAnimationFrame(frame));
     this.animationFrames = [];
     // 移除背景摇摆效果
-    document.body.classList.remove('background-sway', 'sway-light', 'sway-moderate', 'sway-strong');
+    this.effectsContainer.classList.remove('background-sway', 'sway-light', 'sway-moderate', 'sway-strong');
   }
 
   // 应用天气特效
@@ -224,7 +224,7 @@ class WeatherEffectsManager {
 
   // 背景摇摆特效
   addBackgroundSway(intensity) {
-    document.body.classList.add('background-sway', `sway-${intensity}`);
+    this.effectsContainer.classList.add('background-sway', `sway-${intensity}`);
   }
 }
 
