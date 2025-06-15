@@ -57,7 +57,7 @@ body.time-night {
   width: 100%;
   height: 100%;
   pointer-events: none;
-  z-index: 1;
+  z-index: -1;
   overflow: hidden;
 }
 
@@ -638,6 +638,8 @@ body.time-night {
 .main-content {
   flex: 1;
   padding: 3rem 0 2rem 0;
+  position: relative;
+  z-index: 1;
 }
 
 /* 加载状态 */
