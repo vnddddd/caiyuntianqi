@@ -50,10 +50,10 @@
   --glass-transition-fast: all 0.2s cubic-bezier(0.25, 0.46, 0.45, 0.94);
   --glass-transition-slow: all 0.6s cubic-bezier(0.25, 0.46, 0.45, 0.94);
 
-  /* 文字对比度增强 */
-  --glass-text-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
-  --glass-text-primary: #1a1a1a;
-  --glass-text-secondary: #4a4a4a;
+  /* 文字对比度增强 - 适配深色背景 */
+  --glass-text-shadow: 0 1px 2px rgba(0, 0, 0, 0.3);
+  --glass-text-primary: #ffffff;
+  --glass-text-secondary: #e0e0e0;
 
   /* 动画关键帧 */
   --glass-glow: 0 0 20px rgba(255, 255, 255, 0.3);
@@ -458,7 +458,8 @@ body.time-night {
   transition: var(--transition);
   font-size: 1.5rem;
   font-weight: 600;
-  color: var(--text-primary);
+  color: white; /* 改为白色，在深色背景下更明显 */
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.3); /* 添加文字阴影增强可读性 */
 }
 
 .location-name-btn:hover {
@@ -1701,22 +1702,27 @@ body.time-night {
   box-shadow: var(--glass-shadow-light);
 }
 
-/* 桌面端沉浸式布局优化 */
+/* 桌面端沉浸式布局优化 - 使用液态玻璃效果 */
 @media (min-width: 1024px) {
   .weather-tips-card {
-    background: rgba(255, 255, 255, 0.85);
-    backdrop-filter: blur(15px);
-    border: 1px solid rgba(255, 255, 255, 0.3);
+    background: var(--glass-opacity-medium);
+    backdrop-filter: var(--glass-blur-medium);
+    -webkit-backdrop-filter: var(--glass-blur-medium);
+    border: 1px solid var(--glass-border-medium);
   }
 
   .weather-tip-item {
-    background: rgba(255, 255, 255, 0.7);
-    backdrop-filter: blur(8px);
-    border: 1px solid rgba(255, 255, 255, 0.2);
+    background: var(--glass-opacity-light);
+    backdrop-filter: var(--glass-blur-light);
+    -webkit-backdrop-filter: var(--glass-blur-light);
+    border: 1px solid var(--glass-border-light);
   }
 
   .weather-tip-item:hover {
-    background: rgba(255, 255, 255, 0.9);
+    background: var(--glass-opacity-medium);
+    backdrop-filter: var(--glass-blur-medium);
+    -webkit-backdrop-filter: var(--glass-blur-medium);
+    border-color: var(--glass-border-medium);
   }
 }
 
