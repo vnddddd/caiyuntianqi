@@ -6,14 +6,17 @@
     <title>天气 - 实时天气查看</title>
     <meta name="description" content="基于彩云天气API的响应式天气查看网站，支持实时天气、预报信息查询">
     <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🌤️</text></svg>">
-    <link rel="stylesheet" href="/static/styles.css?v=7">
+    <link rel="stylesheet" href="/static/styles.css?v=8">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
 </head>
 <body>
     <div class="app-container">
-
+        <!-- 天气动态特效容器 -->
+        <div class="weather-effects" id="weatherEffects">
+            <!-- 动态特效将在这里生成 -->
+        </div>
 
         <!-- 主要内容区域 -->
         <main class="main-content">
@@ -205,6 +208,6 @@
         </main>
     </div>
 
-    <script src="/static/script.js?v=5"></script>
+    <script src="/static/script.js?v=8"></script>
 </body>
 </html>

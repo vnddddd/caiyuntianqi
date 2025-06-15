@@ -3,6 +3,231 @@
  * 处理位置获取、天气数据展示、用户界面更新
  */
 
+// 天气特效管理器
+class WeatherEffectsManager {
+  constructor() {
+    this.effectsContainer = document.getElementById('weatherEffects');
+    this.currentEffects = [];
+    this.animationFrames = [];
+  }
+
+  // 清除所有特效
+  clearAllEffects() {
+    if (this.effectsContainer) {
+      this.effectsContainer.innerHTML = '';
+    }
+    this.currentEffects = [];
+    // 清除动画帧
+    this.animationFrames.forEach(frame => cancelAnimationFrame(frame));
+    this.animationFrames = [];
+    // 移除背景摇摆效果
+    document.body.classList.remove('background-sway', 'sway-light', 'sway-moderate', 'sway-strong');
+  }
+
+  // 应用天气特效
+  applyWeatherEffects(weatherData) {
+    this.clearAllEffects();
+
+    const { current } = weatherData;
+    const skycon = current.skycon;
+    const windSpeed = current.wind_speed || 0;
+    const visibility = current.visibility || 10;
+
+    console.log('应用天气特效:', skycon, '风速:', windSpeed, '能见度:', visibility);
+
+    // 根据天气状况应用特效
+    if (skycon.includes('RAIN')) {
+      this.addRainEffect(skycon);
+    } else if (skycon.includes('SNOW')) {
+      this.addSnowEffect(skycon);
+    } else if (skycon.includes('STORM')) {
+      this.addThunderEffect();
+      this.addRainEffect('HEAVY_RAIN');
+    } else if (skycon.includes('HAIL')) {
+      this.addHailEffect();
+    } else if (skycon.includes('HAZE') || visibility < 5) {
+      this.addFogEffect(visibility);
+    } else if (skycon.includes('DUST') || skycon.includes('SAND') || skycon.includes('WIND')) {
+      this.addDustEffect();
+    } else if (skycon.includes('CLEAR_DAY')) {
+      this.addSunshineEffect();
+    } else if (skycon.includes('CLOUDY')) {
+      this.addCloudsEffect();
+    }
+
+    // 风力特效
+    if (windSpeed > 10) {
+      this.addWindEffect(windSpeed);
+    }
+
+    // 背景摇摆效果（基于风速）
+    if (windSpeed > 20) {
+      this.addBackgroundSway('strong');
+    } else if (windSpeed > 10) {
+      this.addBackgroundSway('moderate');
+    } else if (windSpeed > 5) {
+      this.addBackgroundSway('light');
+    }
+  }
+
+  // 雨滴特效
+  addRainEffect(intensity) {
+    const rainDiv = document.createElement('div');
+    rainDiv.className = 'rain-effect';
+
+    if (intensity.includes('LIGHT')) {
+      rainDiv.classList.add('rain-light');
+    } else if (intensity.includes('HEAVY') || intensity.includes('STORM')) {
+      rainDiv.classList.add('rain-heavy');
+    } else {
+      rainDiv.classList.add('rain-moderate');
+    }
+
+    this.effectsContainer.appendChild(rainDiv);
+    this.currentEffects.push('rain');
+  }
+
+  // 雪花特效
+  addSnowEffect(intensity) {
+    const snowDiv = document.createElement('div');
+    snowDiv.className = 'snow-effect';
+
+    if (intensity.includes('LIGHT')) {
+      snowDiv.classList.add('snow-light');
+    } else if (intensity.includes('HEAVY') || intensity.includes('STORM')) {
+      snowDiv.classList.add('snow-heavy');
+    } else {
+      snowDiv.classList.add('snow-moderate');
+    }
+
+    // 创建雪花
+    const snowflakeCount = intensity.includes('HEAVY') ? 50 : intensity.includes('LIGHT') ? 20 : 35;
+    for (let i = 0; i < snowflakeCount; i++) {
+      const snowflake = document.createElement('div');
+      snowflake.className = 'snowflake';
+      snowflake.textContent = '❄';
+      snowflake.style.left = Math.random() * 100 + '%';
+      snowflake.style.animationDelay = Math.random() * 3 + 's';
+      snowflake.style.animationDuration = (Math.random() * 3 + 2) + 's';
+      snowDiv.appendChild(snowflake);
+    }
+
+    this.effectsContainer.appendChild(snowDiv);
+    this.currentEffects.push('snow');
+  }
+
+  // 雷暴特效
+  addThunderEffect() {
+    const thunderDiv = document.createElement('div');
+    thunderDiv.className = 'thunder-effect';
+    this.effectsContainer.appendChild(thunderDiv);
+    this.currentEffects.push('thunder');
+  }
+
+  // 阳光特效
+  addSunshineEffect() {
+    const sunDiv = document.createElement('div');
+    sunDiv.className = 'sunshine-effect';
+    this.effectsContainer.appendChild(sunDiv);
+    this.currentEffects.push('sunshine');
+  }
+
+  // 云层特效
+  addCloudsEffect() {
+    const cloudsDiv = document.createElement('div');
+    cloudsDiv.className = 'clouds-effect';
+    this.effectsContainer.appendChild(cloudsDiv);
+    this.currentEffects.push('clouds');
+  }
+
+  // 雾霾特效
+  addFogEffect(visibility) {
+    const fogDiv = document.createElement('div');
+    fogDiv.className = 'fog-effect';
+
+    if (visibility < 1) {
+      fogDiv.classList.add('fog-heavy');
+    } else if (visibility < 3) {
+      fogDiv.classList.add('fog-moderate');
+    } else {
+      fogDiv.classList.add('fog-light');
+    }
+
+    this.effectsContainer.appendChild(fogDiv);
+    this.currentEffects.push('fog');
+  }
+
+  // 沙尘特效
+  addDustEffect() {
+    const dustDiv = document.createElement('div');
+    dustDiv.className = 'dust-effect';
+
+    // 添加沙尘粒子
+    for (let i = 0; i < 30; i++) {
+      const particle = document.createElement('div');
+      particle.className = 'dust-particle';
+      particle.style.top = Math.random() * 100 + '%';
+      particle.style.animationDelay = Math.random() * 2 + 's';
+      particle.style.animationDuration = (Math.random() * 2 + 1) + 's';
+      dustDiv.appendChild(particle);
+    }
+
+    this.effectsContainer.appendChild(dustDiv);
+    this.currentEffects.push('dust');
+  }
+
+  // 冰雹特效
+  addHailEffect() {
+    const hailDiv = document.createElement('div');
+    hailDiv.className = 'hail-effect';
+
+    // 创建冰雹
+    for (let i = 0; i < 25; i++) {
+      const hailstone = document.createElement('div');
+      hailstone.className = 'hailstone';
+      hailstone.style.left = Math.random() * 100 + '%';
+      hailstone.style.animationDelay = Math.random() * 2 + 's';
+      hailstone.style.animationDuration = (Math.random() * 0.5 + 0.5) + 's';
+      hailDiv.appendChild(hailstone);
+    }
+
+    this.effectsContainer.appendChild(hailDiv);
+    this.currentEffects.push('hail');
+  }
+
+  // 风力特效
+  addWindEffect(windSpeed) {
+    const windDiv = document.createElement('div');
+    windDiv.className = 'wind-effect';
+
+    if (windSpeed > 30) {
+      windDiv.classList.add('wind-strong');
+    } else if (windSpeed > 15) {
+      windDiv.classList.add('wind-moderate');
+    } else {
+      windDiv.classList.add('wind-light');
+    }
+
+    // 创建风力粒子
+    const particleCount = Math.min(Math.floor(windSpeed / 2), 40);
+    for (let i = 0; i < particleCount; i++) {
+      const particle = document.createElement('div');
+      particle.className = 'wind-particle';
+      particle.style.top = Math.random() * 100 + '%';
+      particle.style.animationDelay = Math.random() * 3 + 's';
+      windDiv.appendChild(particle);
+    }
+
+    this.effectsContainer.appendChild(windDiv);
+    this.currentEffects.push('wind');
+  }
+
+  // 背景摇摆特效
+  addBackgroundSway(intensity) {
+    document.body.classList.add('background-sway', `sway-${intensity}`);
+  }
+}
+
 class WeatherApp {
   constructor() {
     this.currentLocation = null;
@@ -12,6 +237,7 @@ class WeatherApp {
     this.isLoading = false;
     this.favoriteLocations = this.loadFavoriteLocations();
     this.defaultLocation = this.loadDefaultLocation();
+    this.weatherEffects = new WeatherEffectsManager();
     this.init();
   }
 
@@ -512,6 +738,9 @@ class WeatherApp {
 
     // 更新基于时间的背景
     this.updateTimeBasedBackground();
+
+    // 应用天气特效
+    this.weatherEffects.applyWeatherEffects(this.weatherData);
   }
 
   // 根据当前时间更新背景（白天/夜晚）
