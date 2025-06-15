@@ -639,18 +639,7 @@ async function handler(req: Request, info: Deno.ServeHandlerInfo): Promise<Respo
     }
   }
 
-  // 背景图片文件 - 使用serveDir处理
-  if (pathname === "/白天.png" || pathname === "/晚上.webp") {
-    try {
-      return await serveDir(req, {
-        fsRoot: ".",
-        urlRoot: "",
-      });
-    } catch (error) {
-      console.error("图片文件服务失败:", error);
-      return new Response("图片未找到", { status: 404 });
-    }
-  }
+
 
   // 其他静态资源
   if (pathname.startsWith("/static/")) {
