@@ -55,23 +55,27 @@
         }
 
         .controls {
-            display: flex;
-            gap: 10px;
-            flex-wrap: wrap;
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(110px, 1fr));
+            gap: 8px;
+            max-width: 900px;
+            margin: 0 auto;
         }
 
         .control-btn {
             background: rgba(255, 255, 255, 0.1);
             border: 1px solid rgba(255, 255, 255, 0.2);
             color: white;
-            padding: 10px 20px;
-            border-radius: 25px;
+            padding: 8px 12px;
+            border-radius: 20px;
             cursor: pointer;
-            font-size: 14px;
+            font-size: 13px;
             transition: all 0.3s ease;
             backdrop-filter: blur(10px);
             position: relative;
             overflow: hidden;
+            white-space: nowrap;
+            text-align: center;
         }
 
         .control-btn:hover {
@@ -182,6 +186,52 @@
             opacity: 1;
         }
 
+        /* 闪电效果容器 */
+        .lightning-container {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            z-index: 5;
+        }
+
+        .lightning-svg {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            opacity: 0;
+        }
+
+        .lightning-path {
+            stroke: #ffffff;
+            stroke-width: 3;
+            fill: none;
+            filter: drop-shadow(0 0 10px #4facfe) drop-shadow(0 0 20px #ffffff);
+        }
+
+        /* 云朵容器 */
+        .cloud-container {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            z-index: 2;
+        }
+
+        .cloud-svg {
+            position: absolute;
+            opacity: 0.6;
+        }
+
+        .cloud-path {
+            fill: #90a4ae;
+            filter: blur(2px);
+        }
+
         /* 背景动画容器 */
         .background-animation {
             position: fixed;
@@ -225,7 +275,9 @@
             }
 
             .controls {
-                justify-content: center;
+                grid-template-columns: repeat(auto-fit, minmax(90px, 1fr));
+                gap: 6px;
+                max-width: 100%;
             }
 
             .current-weather {
@@ -238,8 +290,9 @@
             }
 
             .control-btn {
-                padding: 8px 16px;
-                font-size: 12px;
+                padding: 6px 10px;
+                font-size: 11px;
+                border-radius: 15px;
             }
         }
 
@@ -300,6 +353,10 @@
                 <button class="control-btn" onclick="setWeather('thunder')">⛈️ 雷暴</button>
                 <button class="control-btn" onclick="setWeather('fog')">🌫️ 雾霾</button>
                 <button class="control-btn" onclick="setWeather('wind')">💨 大风</button>
+                <button class="control-btn" onclick="setWeather('dust')">🌪️ 沙尘</button>
+                <button class="control-btn" onclick="setWeather('hail')">🧊 冰雹</button>
+                <button class="control-btn" onclick="setWeather('drizzle')">🌦️ 毛毛雨</button>
+                <button class="control-btn" onclick="setWeather('cloudy')">☁️ 多云</button>
                 <button class="control-btn" onclick="clearEffects()">🚫 清除</button>
             </div>
         </div>
@@ -312,11 +369,17 @@
     <div class="weather-effects">
         <!-- 粒子效果 -->
         <div id="particles-container"></div>
-        
+
         <!-- Lottie动画容器 -->
         <div class="lottie-container" id="lightning-animation"></div>
         <div class="lottie-container" id="rainbow-animation"></div>
         <div class="lottie-container" id="clouds-animation"></div>
+
+        <!-- 闪电效果容器 -->
+        <div class="lightning-container" id="lightning-container"></div>
+
+        <!-- 云朵效果容器 -->
+        <div class="cloud-container" id="cloud-container"></div>
     </div>
 
     <!-- 主要内容 -->
@@ -360,6 +423,250 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/gsap.min.js"></script>
 
     <script>
+        // 闪电生成器
+        class LightningGenerator {
+            constructor() {
+                this.container = document.getElementById('lightning-container');
+                this.lightnings = [];
+            }
+
+            generateLightning() {
+                const svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+                svg.className = 'lightning-svg';
+
+                const path = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+                path.className = 'lightning-path';
+
+                // 生成闪电路径
+                const pathData = this.generateLightningPath();
+                path.setAttribute('d', pathData);
+
+                svg.appendChild(path);
+                this.container.appendChild(svg);
+
+                // 闪电动画
+                this.animateLightning(svg, path);
+
+                // 屏幕震动效果
+                this.screenShake();
+
+                // 清理
+                setTimeout(() => {
+                    if (svg.parentNode) {
+                        svg.parentNode.removeChild(svg);
+                    }
+                }, 500);
+            }
+
+            generateLightningPath() {
+                const width = window.innerWidth;
+                const height = window.innerHeight;
+
+                // 起始点（云层位置）
+                const startX = Math.random() * width;
+                const startY = height * 0.1;
+
+                // 终点
+                const endX = startX + (Math.random() - 0.5) * 200;
+                const endY = height * 0.8;
+
+                let path = `M ${startX} ${startY}`;
+
+                // 生成分叉路径
+                const segments = 8 + Math.floor(Math.random() * 4);
+                let currentX = startX;
+                let currentY = startY;
+
+                for (let i = 1; i <= segments; i++) {
+                    const progress = i / segments;
+                    const targetX = startX + (endX - startX) * progress;
+                    const targetY = startY + (endY - startY) * progress;
+
+                    // 添加随机偏移
+                    const offsetX = (Math.random() - 0.5) * 60;
+                    const offsetY = (Math.random() - 0.5) * 20;
+
+                    currentX = targetX + offsetX;
+                    currentY = targetY + offsetY;
+
+                    path += ` L ${currentX} ${currentY}`;
+
+                    // 随机生成分支
+                    if (Math.random() < 0.3 && i > 2) {
+                        const branchLength = 3 + Math.floor(Math.random() * 3);
+                        let branchX = currentX;
+                        let branchY = currentY;
+
+                        for (let j = 1; j <= branchLength; j++) {
+                            branchX += (Math.random() - 0.5) * 40;
+                            branchY += Math.random() * 30;
+                            path += ` L ${branchX} ${branchY}`;
+                        }
+
+                        path += ` M ${currentX} ${currentY}`;
+                    }
+                }
+
+                return path;
+            }
+
+            animateLightning(svg, path) {
+                // 闪烁效果
+                const timeline = [
+                    { opacity: 0, strokeWidth: 1 },
+                    { opacity: 1, strokeWidth: 4 },
+                    { opacity: 0.8, strokeWidth: 3 },
+                    { opacity: 1, strokeWidth: 5 },
+                    { opacity: 0, strokeWidth: 1 }
+                ];
+
+                let step = 0;
+                const animate = () => {
+                    if (step < timeline.length) {
+                        const frame = timeline[step];
+                        svg.style.opacity = frame.opacity;
+                        path.style.strokeWidth = frame.strokeWidth;
+                        step++;
+                        setTimeout(animate, 50 + Math.random() * 50);
+                    }
+                };
+
+                animate();
+            }
+
+            screenShake() {
+                const body = document.body;
+                body.style.transform = 'translate(2px, 1px)';
+
+                setTimeout(() => {
+                    body.style.transform = 'translate(-1px, -2px)';
+                }, 50);
+
+                setTimeout(() => {
+                    body.style.transform = 'translate(1px, 2px)';
+                }, 100);
+
+                setTimeout(() => {
+                    body.style.transform = 'translate(0, 0)';
+                }, 150);
+            }
+        }
+
+        // 云朵生成器
+        class CloudGenerator {
+            constructor() {
+                this.container = document.getElementById('cloud-container');
+                this.clouds = [];
+            }
+
+            generateCloud() {
+                const svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+                svg.className = 'cloud-svg';
+
+                const width = 120 + Math.random() * 80;
+                const height = 60 + Math.random() * 40;
+                const x = Math.random() * (window.innerWidth - width);
+                const y = Math.random() * (window.innerHeight * 0.4);
+
+                svg.style.left = x + 'px';
+                svg.style.top = y + 'px';
+                svg.style.width = width + 'px';
+                svg.style.height = height + 'px';
+                svg.setAttribute('viewBox', `0 0 ${width} ${height}`);
+
+                const path = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+                path.className = 'cloud-path';
+
+                // 生成云朵形状
+                const cloudPath = this.generateCloudPath(width, height);
+                path.setAttribute('d', cloudPath);
+
+                svg.appendChild(path);
+                this.container.appendChild(svg);
+
+                // 云朵飘动动画
+                this.animateCloud(svg, x, y);
+
+                this.clouds.push(svg);
+
+                // 清理旧云朵
+                if (this.clouds.length > 8) {
+                    const oldCloud = this.clouds.shift();
+                    if (oldCloud.parentNode) {
+                        oldCloud.parentNode.removeChild(oldCloud);
+                    }
+                }
+            }
+
+            generateCloudPath(width, height) {
+                const centerX = width / 2;
+                const centerY = height / 2;
+
+                // 生成多个圆形组成云朵
+                let path = '';
+                const circles = 5 + Math.floor(Math.random() * 3);
+
+                for (let i = 0; i < circles; i++) {
+                    const angle = (i / circles) * Math.PI * 2;
+                    const radius = 15 + Math.random() * 20;
+                    const offsetX = Math.cos(angle) * (width * 0.2);
+                    const offsetY = Math.sin(angle) * (height * 0.2);
+
+                    const cx = centerX + offsetX;
+                    const cy = centerY + offsetY;
+
+                    if (i === 0) {
+                        path = `M ${cx - radius} ${cy} `;
+                        path += `A ${radius} ${radius} 0 1 1 ${cx + radius} ${cy} `;
+                        path += `A ${radius} ${radius} 0 1 1 ${cx - radius} ${cy} `;
+                    } else {
+                        path += `M ${cx - radius} ${cy} `;
+                        path += `A ${radius} ${radius} 0 1 1 ${cx + radius} ${cy} `;
+                        path += `A ${radius} ${radius} 0 1 1 ${cx - radius} ${cy} `;
+                    }
+                }
+
+                return path;
+            }
+
+            animateCloud(svg, startX, startY) {
+                const duration = 20000 + Math.random() * 10000;
+                const endX = startX + 200 + Math.random() * 300;
+                const startTime = Date.now();
+
+                const animate = () => {
+                    const elapsed = Date.now() - startTime;
+                    const progress = elapsed / duration;
+
+                    if (progress < 1) {
+                        const currentX = startX + (endX - startX) * progress;
+                        const currentY = startY + Math.sin(progress * Math.PI * 2) * 10;
+
+                        svg.style.left = currentX + 'px';
+                        svg.style.top = currentY + 'px';
+                        svg.style.opacity = 0.6 * (1 - progress * 0.5);
+
+                        requestAnimationFrame(animate);
+                    } else {
+                        if (svg.parentNode) {
+                            svg.parentNode.removeChild(svg);
+                        }
+                    }
+                };
+
+                requestAnimationFrame(animate);
+            }
+
+            clear() {
+                this.clouds.forEach(cloud => {
+                    if (cloud.parentNode) {
+                        cloud.parentNode.removeChild(cloud);
+                    }
+                });
+                this.clouds = [];
+            }
+        }
+
         // 现代化天气特效系统
         class ModernWeatherEffects {
             constructor() {
@@ -368,8 +675,37 @@
                 this.lottieAnimations = new Map();
                 this.gsapTimelines = new Map();
                 this.performanceMonitor = new PerformanceMonitor();
+                this.isLowEndDevice = this.detectLowEndDevice();
+                this.isTransitioning = false;
+                this.lightningGenerator = null;
+                this.cloudGenerator = null;
 
                 this.init();
+            }
+
+            // 检测低端设备
+            detectLowEndDevice() {
+                const canvas = document.createElement('canvas');
+                const gl = canvas.getContext('webgl') || canvas.getContext('experimental-webgl');
+
+                if (!gl) return true;
+
+                const debugInfo = gl.getExtension('WEBGL_debug_renderer_info');
+                const renderer = debugInfo ? gl.getParameter(debugInfo.UNMASKED_RENDERER_WEBGL) : '';
+
+                // 检测低端GPU
+                const lowEndGPUs = ['intel', 'integrated', 'software', 'llvmpipe'];
+                const isLowEndGPU = lowEndGPUs.some(gpu => renderer.toLowerCase().includes(gpu));
+
+                // 检测内存
+                const memory = navigator.deviceMemory || 4;
+                const isLowMemory = memory < 4;
+
+                // 检测CPU核心数
+                const cores = navigator.hardwareConcurrency || 4;
+                const isLowCPU = cores < 4;
+
+                return isLowEndGPU || isLowMemory || isLowCPU;
             }
 
             async init() {
@@ -472,46 +808,80 @@
 
             // 设置天气效果
             async setWeather(type) {
-                // 清除当前效果
-                this.clearAllEffects();
-
-                // 更新UI状态
-                this.updateActiveButton(type);
-                this.updateWeatherDisplay(type);
-
-                // 应用新效果
-                switch (type) {
-                    case 'rain':
-                        await this.createRainEffect();
-                        break;
-                    case 'snow':
-                        await this.createSnowEffect();
-                        break;
-                    case 'thunder':
-                        await this.createThunderEffect();
-                        break;
-                    case 'fog':
-                        await this.createFogEffect();
-                        break;
-                    case 'wind':
-                        await this.createWindEffect();
-                        break;
-                    case 'clear':
-                        await this.createClearEffect();
-                        break;
+                // 防止重复调用
+                if (this.isTransitioning || this.currentWeather === type) {
+                    return;
                 }
 
-                this.currentWeather = type;
+                this.isTransitioning = true;
 
-                // 使用GSAP创建过渡动画
-                this.animateTransition();
+                try {
+                    // 清除当前效果
+                    await this.clearAllEffects();
+
+                    // 更新UI状态
+                    this.updateActiveButton(type);
+                    this.updateWeatherDisplay(type);
+
+                    // 应用新效果
+                    switch (type) {
+                        case 'rain':
+                            await this.createRainEffect();
+                            break;
+                        case 'snow':
+                            await this.createSnowEffect();
+                            break;
+                        case 'thunder':
+                            await this.createThunderEffect();
+                            break;
+                        case 'fog':
+                            await this.createFogEffect();
+                            break;
+                        case 'wind':
+                            await this.createWindEffect();
+                            break;
+                        case 'clear':
+                            await this.createClearEffect();
+                            break;
+                        case 'dust':
+                            await this.createDustEffect();
+                            break;
+                        case 'hail':
+                            await this.createHailEffect();
+                            break;
+                        case 'drizzle':
+                            await this.createDrizzleEffect();
+                            break;
+                        case 'cloudy':
+                            await this.createCloudyEffect();
+                            break;
+                        default:
+                            console.warn('未知的天气类型:', type);
+                            return;
+                    }
+
+                    this.currentWeather = type;
+
+                    // 使用GSAP创建过渡动画
+                    this.animateTransition();
+
+                } catch (error) {
+                    console.error('设置天气效果失败:', error);
+                    this.showError('天气效果加载失败，请重试');
+                } finally {
+                    this.isTransitioning = false;
+                }
             }
 
             async createRainEffect() {
+                // 根据设备性能调整粒子数量
+                const particleCount = this.isLowEndDevice ? 150 : 300;
+                const speed = this.isLowEndDevice ? 12 : 15;
+
                 // 使用tsParticles创建雨滴效果
                 await this.particlesEngine.load("particles-container", {
                     particles: {
-                        number: { value: 300 },
+                        number: { value: particleCount },
                         color: { value: "#ffffff" },
                         shape: { type: "circle" },
                         opacity: {
@@ -524,7 +894,7 @@
                         },
                         move: {
                             enable: true,
-                            speed: 15,
+                            speed: speed,
                             direction: "bottom",
                             straight: true,
                             outModes: {
@@ -534,20 +904,26 @@
                     },
                     background: {
                         color: "transparent"
-                    }
+                    },
+                    detectRetina: true,
+                    fpsLimit: this.isLowEndDevice ? 30 : 60
                 });
 
                 // 改变背景色调
                 this.changeBackgroundTone('#1a237e', '#283593');
 
-                console.log('雨滴效果已创建');
+                console.log(`雨滴效果已创建 (${particleCount}个粒子)`);
             }
 
             async createSnowEffect() {
+                // 根据设备性能调整粒子数量
+                const particleCount = this.isLowEndDevice ? 80 : 150;
+                const speed = this.isLowEndDevice ? 2 : 3;
+
                 // 使用tsParticles创建雪花效果
                 await this.particlesEngine.load("particles-container", {
                     particles: {
-                        number: { value: 150 },
+                        number: { value: particleCount },
                         color: { value: "#ffffff" },
                         shape: {
                             type: "circle",
@@ -567,7 +943,7 @@
                         },
                         move: {
                             enable: true,
-                            speed: 3,
+                            speed: speed,
                             direction: "bottom",
                             random: true,
                             straight: false,
@@ -580,52 +956,110 @@
                                 rotateY: 1200
                             }
                         }
-                    }
+                    },
+                    detectRetina: true,
+                    fpsLimit: this.isLowEndDevice ? 30 : 60
                 });
 
                 // 改变背景色调
                 this.changeBackgroundTone('#37474f', '#546e7a');
 
-                console.log('雪花效果已创建');
+                console.log(`雪花效果已创建 (${particleCount}个粒子)`);
             }
 
             async createThunderEffect() {
-                // 创建雷暴云效果
+                // 根据设备性能调整粒子数量
+                const particleCount = this.isLowEndDevice ? 30 : 50;
+
+                // 创建雷暴云效果 - 使用更真实的云朵形状
                 await this.particlesEngine.load("particles-container", {
                     particles: {
-                        number: { value: 50 },
-                        color: { value: "#666666" },
-                        shape: { type: "circle" },
+                        number: { value: particleCount },
+                        color: { value: ["#2c2c2c", "#404040", "#555555"] },
+                        shape: {
+                            type: "circle"
+                        },
                         opacity: {
-                            value: 0.3,
-                            random: true
+                            value: 0.7,
+                            random: true,
+                            animation: {
+                                enable: true,
+                                speed: 0.3,
+                                minimumValue: 0.3,
+                                sync: false
+                            }
                         },
                         size: {
-                            value: 20,
-                            random: true
+                            value: 35,
+                            random: true,
+                            animation: {
+                                enable: true,
+                                speed: 0.5,
+                                minimumValue: 20,
+                                sync: false
+                            }
                         },
                         move: {
                             enable: true,
-                            speed: 1,
+                            speed: 0.8,
                             direction: "none",
                             random: true,
-                            straight: false
+                            straight: false,
+                            outModes: {
+                                default: "bounce"
+                            }
                         }
-                    }
+                    },
+                    detectRetina: true,
+                    fpsLimit: this.isLowEndDevice ? 30 : 60
                 });
 
-                // 创建闪电效果
-                this.createLightningFlash();
+                // 创建真实的闪电效果
+                this.createRealisticLightning();
 
                 // 改变背景色调
                 this.changeBackgroundTone('#1a1a1a', '#333333');
 
-                console.log('雷暴效果已创建');
+                console.log(`雷暴效果已创建 (${particleCount}个粒子)`);
+            }
+
+            createRealisticLightning() {
+                // 清除之前的闪电动画
+                if (this.gsapTimelines.has('lightning')) {
+                    this.gsapTimelines.get('lightning').kill();
+                    this.gsapTimelines.delete('lightning');
+                }
+
+                // 创建闪电生成器
+                this.lightningGenerator = new LightningGenerator();
+
+                // 定期生成闪电
+                const generateLightning = () => {
+                    if (this.currentWeather === 'thunder') {
+                        this.lightningGenerator.generateLightning();
+
+                        // 随机间隔生成下一道闪电
+                        const nextDelay = 2000 + Math.random() * 6000; // 2-8秒随机间隔
+                        setTimeout(generateLightning, nextDelay);
+                    }
+                };
+
+                // 开始生成闪电
+                setTimeout(generateLightning, 1000);
             }
 
             createLightningFlash() {
+                // 清除之前的闪电动画
+                if (this.gsapTimelines.has('lightning')) {
+                    this.gsapTimelines.get('lightning').kill();
+                    this.gsapTimelines.delete('lightning');
+                }
+
                 // 使用GSAP创建闪电闪烁效果
-                const lightningTimeline = gsap.timeline({ repeat: -1, repeatDelay: 3 });
+                const lightningTimeline = gsap.timeline({
+                    repeat: -1,
+                    repeatDelay: this.isLowEndDevice ? 4 : 3
+                });
 
                 lightningTimeline
                     .to('body', {
@@ -653,10 +1087,14 @@
             }
 
             async createFogEffect() {
+                // 根据设备性能调整粒子数量
+                const particleCount = this.isLowEndDevice ? 50 : 80;
+                const animationSpeed = this.isLowEndDevice ? 0.5 : 1;
+
                 // 创建雾霾粒子效果
                 await this.particlesEngine.load("particles-container", {
                     particles: {
-                        number: { value: 80 },
+                        number: { value: particleCount },
                         color: { value: "#cccccc" },
                         shape: { type: "circle" },
                         opacity: {
@@ -664,7 +1102,7 @@
                             random: true,
                             animation: {
                                 enable: true,
-                                speed: 1,
+                                speed: animationSpeed,
                                 minimumValue: 0.1,
                                 sync: false
                             }
@@ -680,20 +1118,26 @@
                             random: true,
                             straight: false
                         }
-                    }
+                    },
+                    detectRetina: true,
+                    fpsLimit: this.isLowEndDevice ? 30 : 60
                 });
 
                 // 改变背景色调
                 this.changeBackgroundTone('#424242', '#616161');
 
-                console.log('雾霾效果已创建');
+                console.log(`雾霾效果已创建 (${particleCount}个粒子)`);
             }
 
             async createWindEffect() {
+                // 根据设备性能调整粒子数量
+                const particleCount = this.isLowEndDevice ? 120 : 200;
+                const speed = this.isLowEndDevice ? 15 : 20;
+
                 // 创建风力粒子效果
                 await this.particlesEngine.load("particles-container", {
                     particles: {
-                        number: { value: 200 },
+                        number: { value: particleCount },
                         color: { value: "#ffffff" },
                         shape: { type: "circle" },
                         opacity: {
@@ -706,7 +1150,7 @@
                         },
                         move: {
                             enable: true,
-                            speed: 20,
+                            speed: speed,
                             direction: "right",
                             random: false,
                             straight: true,
@@ -714,7 +1158,9 @@
                                 default: "out"
                             }
                         }
-                    }
+                    },
+                    detectRetina: true,
+                    fpsLimit: this.isLowEndDevice ? 30 : 60
                 });
 
                 // 创建摇摆效果
@@ -723,16 +1169,28 @@
                 // 改变背景色调
                 this.changeBackgroundTone('#1565c0', '#1976d2');
 
-                console.log('风力效果已创建');
+                console.log(`风力效果已创建 (${particleCount}个粒子)`);
             }
 
             createSwayEffect() {
+                // 清除之前的摇摆动画
+                if (this.gsapTimelines.has('sway')) {
+                    this.gsapTimelines.get('sway').kill();
+                    this.gsapTimelines.delete('sway');
+                }
+
                 // 使用GSAP创建摇摆动画
-                const swayTimeline = gsap.timeline({ repeat: -1, yoyo: true });
+                const swayTimeline = gsap.timeline({
+                    repeat: -1,
+                    yoyo: true
+                });
+
+                const intensity = this.isLowEndDevice ? 3 : 5;
+                const duration = this.isLowEndDevice ? 2.5 : 2;
 
                 swayTimeline.to('.main-container', {
-                    duration: 2,
-                    x: 5,
+                    duration: duration,
+                    x: intensity,
                     rotation: 0.5,
                     ease: "power2.inOut"
                 });
@@ -741,10 +1199,14 @@
             }
 
             async createClearEffect() {
+                // 根据设备性能调整粒子数量
+                const particleCount = this.isLowEndDevice ? 30 : 50;
+                const animationSpeed = this.isLowEndDevice ? 1.5 : 2;
+
                 // 创建阳光粒子效果
                 await this.particlesEngine.load("particles-container", {
                     particles: {
-                        number: { value: 50 },
+                        number: { value: particleCount },
                         color: { value: "#ffeb3b" },
                         shape: { type: "circle" },
                         opacity: {
@@ -752,7 +1214,7 @@
                             random: true,
                             animation: {
                                 enable: true,
-                                speed: 2,
+                                speed: animationSpeed,
                                 minimumValue: 0.3,
                                 sync: false
                             }
@@ -768,13 +1230,235 @@
                             random: true,
                             straight: false
                         }
-                    }
+                    },
+                    detectRetina: true,
+                    fpsLimit: this.isLowEndDevice ? 30 : 60
                 });
 
                 // 改变背景色调
                 this.changeBackgroundTone('#1976d2', '#42a5f5');
 
-                console.log('晴天效果已创建');
+                console.log(`晴天效果已创建 (${particleCount}个粒子)`);
+            }
+
+            async createDustEffect() {
+                // 根据设备性能调整粒子数量
+                const particleCount = this.isLowEndDevice ? 100 : 180;
+                const speed = this.isLowEndDevice ? 8 : 12;
+
+                // 创建沙尘暴效果
+                await this.particlesEngine.load("particles-container", {
+                    particles: {
+                        number: { value: particleCount },
+                        color: { value: "#d4a574" },
+                        shape: { type: "circle" },
+                        opacity: {
+                            value: 0.7,
+                            random: true
+                        },
+                        size: {
+                            value: 3,
+                            random: true
+                        },
+                        move: {
+                            enable: true,
+                            speed: speed,
+                            direction: "right",
+                            random: true,
+                            straight: false,
+                            outModes: {
+                                default: "out"
+                            }
+                        }
+                    },
+                    detectRetina: true,
+                    fpsLimit: this.isLowEndDevice ? 30 : 60
+                });
+
+                // 改变背景色调
+                this.changeBackgroundTone('#8d6e63', '#a1887f');
+
+                console.log(`沙尘效果已创建 (${particleCount}个粒子)`);
+            }
+
+            async createHailEffect() {
+                // 根据设备性能调整粒子数量 - 减少粒子数量以提高流畅度
+                const particleCount = this.isLowEndDevice ? 50 : 80;
+                const speed = this.isLowEndDevice ? 15 : 20;
+
+                // 创建优化的冰雹效果
+                await this.particlesEngine.load("particles-container", {
+                    particles: {
+                        number: {
+                            value: particleCount,
+                            density: {
+                                enable: true,
+                                area: 800
+                            }
+                        },
+                        color: {
+                            value: ["#e3f2fd", "#ffffff", "#f0f8ff"]
+                        },
+                        shape: {
+                            type: "circle"
+                        },
+                        opacity: {
+                            value: 0.8,
+                            random: {
+                                enable: true,
+                                minimumValue: 0.6
+                            }
+                        },
+                        size: {
+                            value: 5,
+                            random: {
+                                enable: true,
+                                minimumValue: 3
+                            },
+                            animation: {
+                                enable: true,
+                                speed: 2,
+                                minimumValue: 3,
+                                sync: false
+                            }
+                        },
+                        move: {
+                            enable: true,
+                            speed: {
+                                min: speed * 0.8,
+                                max: speed * 1.2
+                            },
+                            direction: "bottom",
+                            straight: false,
+                            random: {
+                                enable: true,
+                                minimumValue: 0.1
+                            },
+                            outModes: {
+                                default: "out",
+                                bottom: "out",
+                                left: "out",
+                                right: "out",
+                                top: "none"
+                            },
+                            attract: {
+                                enable: false
+                            },
+                            gravity: {
+                                enable: true,
+                                acceleration: 9.81,
+                                maxSpeed: speed
+                            }
+                        },
+                        rotate: {
+                            value: 0,
+                            random: true,
+                            direction: "random",
+                            animation: {
+                                enable: true,
+                                speed: 5,
+                                sync: false
+                            }
+                        }
+                    },
+                    detectRetina: true,
+                    fpsLimit: this.isLowEndDevice ? 30 : 60,
+                    smooth: true
+                });
+
+                // 改变背景色调
+                this.changeBackgroundTone('#263238', '#37474f');
+
+                console.log(`冰雹效果已创建 (${particleCount}个粒子)`);
+            }
+
+            async createDrizzleEffect() {
+                // 根据设备性能调整粒子数量
+                const particleCount = this.isLowEndDevice ? 100 : 150;
+                const speed = this.isLowEndDevice ? 8 : 10;
+
+                // 创建毛毛雨效果
+                await this.particlesEngine.load("particles-container", {
+                    particles: {
+                        number: { value: particleCount },
+                        color: { value: "#b3e5fc" },
+                        shape: { type: "circle" },
+                        opacity: {
+                            value: 0.4,
+                            random: true
+                        },
+                        size: {
+                            value: 1,
+                            random: true
+                        },
+                        move: {
+                            enable: true,
+                            speed: speed,
+                            direction: "bottom",
+                            straight: true,
+                            outModes: {
+                                default: "out"
+                            }
+                        }
+                    },
+                    detectRetina: true,
+                    fpsLimit: this.isLowEndDevice ? 30 : 60
+                });
+
+                // 改变背景色调
+                this.changeBackgroundTone('#455a64', '#607d8b');
+
+                console.log(`毛毛雨效果已创建 (${particleCount}个粒子)`);
+            }
+
+            async createCloudyEffect() {
+                // 清除粒子效果，使用SVG云朵
+                await this.particlesEngine.load("particles-container", {
+                    particles: {
+                        number: { value: 0 }
+                    }
+                });
+
+                // 创建云朵生成器
+                this.cloudGenerator = new CloudGenerator();
+
+                // 生成初始云朵
+                const cloudCount = this.isLowEndDevice ? 4 : 6;
+                for (let i = 0; i < cloudCount; i++) {
+                    setTimeout(() => {
+                        this.cloudGenerator.generateCloud();
+                    }, i * 1000);
+                }
+
+                // 定期生成新云朵
+                const generateNewCloud = () => {
+                    if (this.currentWeather === 'cloudy') {
+                        this.cloudGenerator.generateCloud();
+
+                        // 随机间隔生成下一朵云
+                        const nextDelay = 8000 + Math.random() * 12000; // 8-20秒随机间隔
+                        setTimeout(generateNewCloud, nextDelay);
+                    }
+                };
+
+                // 开始生成云朵
+                setTimeout(generateNewCloud, 5000);
+                        move: {
+                            enable: true,
+                            speed: 0.8,
+                            direction: "right",
+                            random: false,
+                            straight: false
+                        }
+                    },
+                    detectRetina: true,
+                    fpsLimit: this.isLowEndDevice ? 30 : 60
+                });
+
+                // 改变背景色调
+                this.changeBackgroundTone('#546e7a', '#78909c');
+
+                console.log(`多云效果已创建 (${particleCount}个粒子)`);
             }
 
             changeBackgroundTone(color1, color2) {
@@ -807,28 +1491,55 @@
                 }, "-=0.5");
             }
 
-            clearAllEffects() {
-                // 清除所有粒子效果
-                if (this.particlesEngine) {
-                    this.particlesEngine.load("particles-container", {
-                        particles: {
-                            number: { value: 0 }
+            async clearAllEffects() {
+                try {
+                    // 清除所有粒子效果
+                    if (this.particlesEngine) {
+                        await this.particlesEngine.load("particles-container", {
+                            particles: {
+                                number: { value: 0 }
+                            }
+                        });
+                    }
+
+                    // 清除闪电效果
+                    if (this.lightningGenerator) {
+                        const lightningContainer = document.getElementById('lightning-container');
+                        if (lightningContainer) {
+                            lightningContainer.innerHTML = '';
+                        }
+                    }
+
+                    // 清除云朵效果
+                    if (this.cloudGenerator) {
+                        this.cloudGenerator.clear();
+                        const cloudContainer = document.getElementById('cloud-container');
+                        if (cloudContainer) {
+                            cloudContainer.innerHTML = '';
+                        }
+                    }
+
+                    // 停止所有GSAP动画
+                    this.gsapTimelines.forEach((timeline, key) => {
+                        try {
+                            timeline.kill();
+                        } catch (error) {
+                            console.warn(`清除动画 ${key} 时出错:`, error);
                         }
                     });
+                    this.gsapTimelines.clear();
+
+                    // 重置背景
+                    this.changeBackgroundTone('#1e3c72', '#2a5298');
+
+                    // 重置容器位置
+                    gsap.set('.main-container', { x: 0, rotation: 0 });
+                    gsap.set('body', { backgroundColor: 'transparent', transform: 'translate(0, 0)' });
+
+                    console.log('所有效果已清除');
+                } catch (error) {
+                    console.error('清除效果时出错:', error);
                 }
-
-                // 停止所有GSAP动画
-                this.gsapTimelines.forEach((timeline, key) => {
-                    timeline.kill();
-                });
-                this.gsapTimelines.clear();
-
-                // 重置背景
-                this.changeBackgroundTone('#1e3c72', '#2a5298');
-
-                // 重置容器位置
-                gsap.set('.main-container', { x: 0, rotation: 0 });
-                gsap.set('body', { backgroundColor: 'transparent' });
             }
 
             updateActiveButton(activeType) {
@@ -843,7 +1554,11 @@
                     'snow': '❄️ 雪天',
                     'thunder': '⛈️ 雷暴',
                     'fog': '🌫️ 雾霾',
-                    'wind': '💨 大风'
+                    'wind': '💨 大风',
+                    'dust': '🌪️ 沙尘',
+                    'hail': '🧊 冰雹',
+                    'drizzle': '🌦️ 毛毛雨',
+                    'cloudy': '☁️ 多云'
                 };
 
                 const targetText = weatherTypes[activeType];
@@ -905,6 +1620,38 @@
                         wind: '35 km/h',
                         visibility: '12 km',
                         pressure: '1018 hPa'
+                    },
+                    'dust': {
+                        temp: '32°C',
+                        desc: '沙尘暴来袭，请减少外出',
+                        humidity: '25%',
+                        wind: '40 km/h',
+                        visibility: '0.5 km',
+                        pressure: '1010 hPa'
+                    },
+                    'hail': {
+                        temp: '8°C',
+                        desc: '冰雹天气，请注意安全',
+                        humidity: '80%',
+                        wind: '20 km/h',
+                        visibility: '3 km',
+                        pressure: '1002 hPa'
+                    },
+                    'drizzle': {
+                        temp: '16°C',
+                        desc: '细雨绵绵，空气清新',
+                        humidity: '78%',
+                        wind: '8 km/h',
+                        visibility: '8 km',
+                        pressure: '1016 hPa'
+                    },
+                    'cloudy': {
+                        temp: '23°C',
+                        desc: '多云天气，适宜出行',
+                        humidity: '55%',
+                        wind: '10 km/h',
+                        visibility: '15 km',
+                        pressure: '1019 hPa'
                     }
                 };
 
