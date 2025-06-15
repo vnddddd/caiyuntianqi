@@ -757,8 +757,9 @@
                 this.isTransitioning = false;
                 this.lightningGenerator = null;
                 this.cloudGenerator = null;
+                this.isInitialized = false;
 
-                this.init();
+                // 不在构造函数中调用异步init方法
             }
 
             // 检测低端设备
@@ -813,6 +814,9 @@
                     this.performanceMonitor.start();
 
                     this.updateLoadingStatus('初始化完成！');
+
+                    // 标记初始化完成
+                    this.isInitialized = true;
 
                     // 短暂延迟后隐藏加载提示
                     setTimeout(() => {
@@ -2028,9 +2032,24 @@
         }
 
         // 简化的初始化逻辑
-        function initializeWeatherSystem() {
-            console.log('开始初始化现代化天气特效系统...');
-            weatherSystem = new ModernWeatherEffects();
+        async function initializeWeatherSystem() {
+            try {
+                console.log('开始初始化现代化天气特效系统...');
+                weatherSystem = new ModernWeatherEffects();
+
+                console.log('开始异步初始化...');
+                await weatherSystem.init();
+
+                console.log('✅ 天气特效系统初始化完成！');
+            } catch (error) {
+                console.error('❌ 天气特效系统初始化失败:', error);
+
+                // 显示错误信息
+                const loadingText = document.querySelector('.loading-text');
+                if (loadingText) {
+                    loadingText.textContent = '初始化失败: ' + error.message;
+                }
+            }
         }
 
         // 页面加载完成后开始初始化
