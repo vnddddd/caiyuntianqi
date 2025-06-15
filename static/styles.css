@@ -535,8 +535,8 @@ body.time-night {
   color: var(--glass-text-secondary);
   padding: 0;
   border-radius: 50%;
-  width: 2.5rem;
-  height: 2.5rem;
+  width: 2.1875rem; /* 35px，更精致的尺寸 */
+  height: 2.1875rem; /* 35px，更精致的尺寸 */
   display: flex;
   align-items: center;
   justify-content: center;
