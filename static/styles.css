@@ -1243,8 +1243,9 @@ body.time-night {
 .daily-weekday {
   font-weight: 600;
   margin-bottom: 0.25rem;
-  color: var(--glass-text-primary);
-  text-shadow: var(--glass-text-shadow);
+  color: var(--glass-text-secondary); /* 使用次要文字颜色保持视觉层级 */
+  text-shadow: 0 1px 3px rgba(0, 0, 0, 0.4), var(--glass-text-shadow); /* 增强阴影 */
+  opacity: 0.9; /* 轻微降低透明度，次于主要日期信息 */
 }
 
 .daily-date-text {
@@ -1599,9 +1600,11 @@ body.time-night {
 
   .daily-weekday {
     font-size: 0.9rem !important;
-    font-weight: 500 !important;
-    color: #666 !important;
+    font-weight: 600 !important; /* 增加字重提升可读性 */
+    color: var(--glass-text-secondary) !important; /* 使用液态玻璃次要文字颜色 */
+    text-shadow: 0 1px 3px rgba(0, 0, 0, 0.5), var(--glass-text-shadow) !important; /* 增强阴影 */
     line-height: 1.2 !important;
+    opacity: 0.85; /* 轻微降低透明度保持视觉层级 */
   }
 
   /* 右侧：天气信息和温度 */
