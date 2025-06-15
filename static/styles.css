@@ -533,8 +533,13 @@ body.time-night {
   font-size: 1.5rem;
   cursor: pointer;
   color: var(--glass-text-secondary);
-  padding: 0.25rem;
-  border-radius: var(--glass-radius-small);
+  padding: 0.5rem;
+  border-radius: 50%; /* 改为圆形，更符合液态玻璃设计 */
+  width: 2.5rem;
+  height: 2.5rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
   transition: var(--glass-transition-fast);
 }
 
@@ -604,20 +609,26 @@ body.time-night {
   justify-content: center;
   gap: 0.5rem;
   padding: 0.75rem 1rem;
-  background: var(--bg-card);
-  border: 1px solid var(--border-color);
-  border-radius: 6px;
-  color: var(--text-secondary);
+  background: var(--glass-opacity-light);
+  backdrop-filter: var(--glass-blur-light);
+  -webkit-backdrop-filter: var(--glass-blur-light);
+  border: 1px solid var(--glass-border-light);
+  border-radius: var(--glass-radius-small);
+  color: var(--glass-text-primary);
   font-size: 0.875rem;
   cursor: pointer;
-  transition: all 0.2s ease;
+  transition: var(--glass-transition-fast);
+  text-shadow: var(--glass-text-shadow);
 }
 
 .location-action-buttons .location-action-btn:hover {
   background: var(--primary-color);
+  backdrop-filter: var(--glass-blur-medium);
+  -webkit-backdrop-filter: var(--glass-blur-medium);
   color: white;
   border-color: var(--primary-color);
   transform: translateY(-1px);
+  box-shadow: var(--glass-shadow-light);
 }
 
 .location-action-buttons .location-action-btn.active {
@@ -660,6 +671,25 @@ body.time-night {
   background: var(--glass-opacity-medium);
   border-color: var(--primary-color);
   box-shadow: 0 0 0 3px rgba(74, 144, 226, 0.1);
+}
+
+/* 搜索框占位符文字样式 - 提高对比度 */
+.search-container input::placeholder {
+  color: rgba(255, 255, 255, 0.7); /* 白色半透明，确保在液态玻璃背景上清晰可见 */
+  opacity: 1; /* 确保在所有浏览器中显示 */
+}
+
+.search-container input::-webkit-input-placeholder {
+  color: rgba(255, 255, 255, 0.7);
+}
+
+.search-container input::-moz-placeholder {
+  color: rgba(255, 255, 255, 0.7);
+  opacity: 1;
+}
+
+.search-container input:-ms-input-placeholder {
+  color: rgba(255, 255, 255, 0.7);
 }
 
 .search-btn {
