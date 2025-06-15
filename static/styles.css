@@ -530,7 +530,7 @@ body.time-night {
   backdrop-filter: var(--glass-blur-light);
   -webkit-backdrop-filter: var(--glass-blur-light);
   border: 1px solid var(--glass-border-light);
-  font-size: 1.4rem; /* 恢复合适的字体大小，确保×符号清晰可见 */
+  font-size: 1.35rem; /* 约21.6px，符合黄金比例(35px × 0.618) */
   cursor: pointer;
   color: var(--glass-text-secondary);
   padding: 0;
