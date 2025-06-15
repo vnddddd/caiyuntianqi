@@ -918,7 +918,7 @@ body.time-night {
 .current-weather-header {
   display: flex;
   justify-content: space-between;
-  align-items: flex-start;
+  align-items: center; /* 改为center确保垂直居中对齐 */
   margin-bottom: 1.5rem;
 }
 
@@ -1190,7 +1190,7 @@ body.time-night {
   font-weight: 600;
   font-size: 1rem;
   color: var(--glass-text-primary);
-  text-shadow: var(--glass-text-shadow);
+  text-shadow: 0 1px 3px rgba(0, 0, 0, 0.5), var(--glass-text-shadow); /* 增强文字阴影 */
 }
 
 .daily-weather {
@@ -1208,8 +1208,9 @@ body.time-night {
 
 .daily-desc {
   font-size: 0.875rem;
-  color: var(--glass-text-secondary);
-  text-shadow: var(--glass-text-shadow);
+  color: var(--glass-text-primary); /* 改为主要文字颜色提升对比度 */
+  text-shadow: 0 1px 3px rgba(0, 0, 0, 0.5), var(--glass-text-shadow); /* 增强文字阴影 */
+  font-weight: 500; /* 增加字重提升可读性 */
 }
 
 .daily-temp {
@@ -1218,9 +1219,10 @@ body.time-night {
 }
 
 .daily-temp-range {
-  font-weight: 600;
+  font-weight: 700; /* 增加字重 */
   color: var(--glass-text-primary);
-  text-shadow: var(--glass-text-shadow);
+  text-shadow: 0 1px 3px rgba(0, 0, 0, 0.6), var(--glass-text-shadow); /* 增强温度数字阴影 */
+  font-size: 1rem; /* 确保温度数字足够大 */
 }
 
 .daily-date {
@@ -1410,8 +1412,9 @@ body.time-night {
 
   .daily-relative-day {
     font-size: 1.2rem;
-    font-weight: 600;
-    color: #333;
+    font-weight: 700; /* 增加字重 */
+    color: var(--glass-text-primary); /* 使用液态玻璃主要文字颜色 */
+    text-shadow: 0 1px 4px rgba(0, 0, 0, 0.6), var(--glass-text-shadow); /* 增强阴影 */
     margin-bottom: 0;
   }
 
@@ -1441,14 +1444,16 @@ body.time-night {
 
   .daily-desc {
     font-size: 1.1rem;
-    color: #555;
-    font-weight: 500;
+    color: var(--glass-text-primary); /* 使用液态玻璃主要文字颜色 */
+    font-weight: 600; /* 增加字重 */
+    text-shadow: 0 1px 4px rgba(0, 0, 0, 0.6), var(--glass-text-shadow); /* 增强阴影 */
   }
 
   .daily-temp-range {
     font-size: 1.2rem;
-    font-weight: 600;
-    color: #333;
+    font-weight: 700; /* 增加字重 */
+    color: var(--glass-text-primary); /* 使用液态玻璃主要文字颜色 */
+    text-shadow: 0 1px 4px rgba(0, 0, 0, 0.7), var(--glass-text-shadow); /* 增强温度阴影 */
     margin-left: 1rem;
   }
 
@@ -1456,8 +1461,9 @@ body.time-night {
   .daily-item::after {
     content: attr(data-weekday);
     font-size: 1.1rem;
-    font-weight: 500;
-    color: #666;
+    font-weight: 600; /* 增加字重 */
+    color: var(--glass-text-secondary); /* 使用液态玻璃次要文字颜色 */
+    text-shadow: 0 1px 3px rgba(0, 0, 0, 0.5), var(--glass-text-shadow); /* 增强阴影 */
     min-width: 60px;
     text-align: right;
   }
@@ -1574,7 +1580,8 @@ body.time-night {
   .daily-relative-day {
     font-size: 1.2rem !important;
     font-weight: 700 !important;
-    color: #333 !important;
+    color: var(--glass-text-primary) !important; /* 使用液态玻璃主要文字颜色 */
+    text-shadow: 0 1px 4px rgba(0, 0, 0, 0.6), var(--glass-text-shadow) !important; /* 增强阴影 */
     line-height: 1.2 !important;
     margin-bottom: 0 !important;
   }
@@ -1611,14 +1618,16 @@ body.time-night {
 
   .daily-desc {
     font-size: 1rem !important;
-    color: #555 !important;
-    font-weight: 500 !important;
+    color: var(--glass-text-primary) !important; /* 使用液态玻璃主要文字颜色 */
+    font-weight: 600 !important; /* 增加字重 */
+    text-shadow: 0 1px 4px rgba(0, 0, 0, 0.6), var(--glass-text-shadow) !important; /* 增强阴影 */
   }
 
   .daily-temp-range {
     font-size: 1.1rem !important;
     font-weight: 700 !important;
-    color: #333 !important;
+    color: var(--glass-text-primary) !important; /* 使用液态玻璃主要文字颜色 */
+    text-shadow: 0 1px 4px rgba(0, 0, 0, 0.7), var(--glass-text-shadow) !important; /* 增强温度阴影 */
     text-align: right !important;
     min-width: 80px !important;
   }
