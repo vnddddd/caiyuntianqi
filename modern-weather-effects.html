@@ -985,72 +985,43 @@
             }
 
             async waitForLibraries() {
-                // 等待所有库加载完成，带超时和错误处理
+                // 简化的库等待逻辑，直接检查库是否存在
                 return new Promise((resolve, reject) => {
                     const timeout = 15000; // 15秒超时
                     const startTime = Date.now();
+                    const checkInterval = 200; // 200ms检查一次
 
-                    // 如果库已经加载完成
-                    if (window.librariesLoaded) {
-                        resolve();
-                        return;
-                    }
-
-                    // 如果库加载失败
-                    if (window.librariesLoadError) {
-                        reject(window.librariesLoadError);
-                        return;
-                    }
-
-                    // 监听库加载完成事件
-                    const onLibrariesLoaded = () => {
-                        window.removeEventListener('librariesLoaded', onLibrariesLoaded);
-                        window.removeEventListener('librariesLoadError', onLibrariesLoadError);
-                        clearTimeout(timeoutId);
-                        resolve();
-                    };
-
-                    // 监听库加载错误事件
-                    const onLibrariesLoadError = (event) => {
-                        window.removeEventListener('librariesLoaded', onLibrariesLoaded);
-                        window.removeEventListener('librariesLoadError', onLibrariesLoadError);
-                        clearTimeout(timeoutId);
-                        reject(event.detail);
-                    };
-
-                    // 设置超时
-                    const timeoutId = setTimeout(() => {
-                        window.removeEventListener('librariesLoaded', onLibrariesLoaded);
-                        window.removeEventListener('librariesLoadError', onLibrariesLoadError);
-
-                        // 检查哪些库没有加载
-                        const missing = [];
-                        if (!window.tsParticles) missing.push('tsParticles');
-                        if (!window.lottie) missing.push('lottie');
-                        if (!window.gsap) missing.push('gsap');
-
-                        const error = new Error(`库加载超时 (${timeout}ms)。未加载的库: ${missing.join(', ')}`);
-                        reject(error);
-                    }, timeout);
-
-                    // 添加事件监听器
-                    window.addEventListener('librariesLoaded', onLibrariesLoaded);
-                    window.addEventListener('librariesLoadError', onLibrariesLoadError);
-
-                    // 定期检查库状态（备用方案）
                     const checkLibraries = () => {
+                        const elapsed = Date.now() - startTime;
+
+                        // 检查所有库是否都已加载
                         if (window.tsParticles && window.lottie && window.gsap) {
-                            window.removeEventListener('librariesLoaded', onLibrariesLoaded);
-                            window.removeEventListener('librariesLoadError', onLibrariesLoadError);
-                            clearTimeout(timeoutId);
+                            console.log('✅ 所有库检查完成，可以初始化');
                             resolve();
-                        } else if (Date.now() - startTime < timeout) {
-                            setTimeout(checkLibraries, 200);
+                            return;
                         }
+
+                        // 检查是否超时
+                        if (elapsed >= timeout) {
+                            const missing = [];
+                            if (!window.tsParticles) missing.push('tsParticles');
+                            if (!window.lottie) missing.push('lottie');
+                            if (!window.gsap) missing.push('gsap');
+
+                            const error = new Error(`库加载超时 (${timeout}ms)。未加载的库: ${missing.join(', ')}`);
+                            console.error('❌ 库加载超时:', error.message);
+                            reject(error);
+                            return;
+                        }
+
+                        // 继续检查
+                        console.log(`⏳ 等待库加载... (${Math.round(elapsed/1000)}s/${timeout/1000}s)`);
+                        setTimeout(checkLibraries, checkInterval);
                     };
 
                     // 开始检查
-                    setTimeout(checkLibraries, 100);
+                    console.log('🔍 开始检查库加载状态...');
+                    checkLibraries();
                 });
             }
 
