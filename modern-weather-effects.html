@@ -382,6 +382,32 @@
             max-width: 500px;
             line-height: 1.5;
         }
+
+        .error-message h3 {
+            margin: 0 0 15px 0;
+            font-size: 20px;
+        }
+
+        .error-message p {
+            margin: 10px 0;
+        }
+
+        .error-message button {
+            background: #ffffff;
+            color: #f44336;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 14px;
+            margin-top: 15px;
+            transition: all 0.3s ease;
+        }
+
+        .error-message button:hover {
+            background: #f5f5f5;
+            transform: translateY(-1px);
+        }
     </style>
 </head>
 <body>
@@ -2056,11 +2082,52 @@
             }
         }
 
-        // 页面加载完成后初始化
-        document.addEventListener('DOMContentLoaded', () => {
+        // 等待库加载完成后初始化
+        function initializeWeatherSystem() {
             console.log('开始初始化现代化天气特效系统...');
             weatherSystem = new ModernWeatherEffects();
+        }
+
+        // 监听库加载完成事件
+        window.addEventListener('librariesLoaded', () => {
+            console.log('库加载完成，开始初始化天气系统...');
+            if (document.readyState === 'loading') {
+                document.addEventListener('DOMContentLoaded', initializeWeatherSystem);
+            } else {
+                initializeWeatherSystem();
+            }
         });
+
+        // 监听库加载失败事件
+        window.addEventListener('librariesLoadError', (event) => {
+            console.error('库加载失败，无法初始化天气系统:', event.detail);
+            // 显示错误信息
+            const errorDiv = document.createElement('div');
+            errorDiv.className = 'error-message';
+            errorDiv.innerHTML = `
+                <h3>初始化失败</h3>
+                <p>外部库加载失败，无法启动天气特效系统</p>
+                <p>错误信息: ${event.detail.message}</p>
+                <button onclick="location.reload()">重新加载页面</button>
+            `;
+            document.body.appendChild(errorDiv);
+
+            // 隐藏加载动画
+            const loading = document.getElementById('loading');
+            if (loading) {
+                loading.classList.add('hidden');
+            }
+        });
+
+        // 如果库已经加载完成（页面刷新等情况）
+        if (window.librariesLoaded) {
+            console.log('库已经加载完成，直接初始化...');
+            if (document.readyState === 'loading') {
+                document.addEventListener('DOMContentLoaded', initializeWeatherSystem);
+            } else {
+                initializeWeatherSystem();
+            }
+        }
 
         // 窗口大小改变时的处理
         window.addEventListener('resize', () => {
