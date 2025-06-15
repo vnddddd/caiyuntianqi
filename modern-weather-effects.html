@@ -508,40 +508,55 @@
         // 加载库的函数
         function loadScript(src, fallbackSrc, checkFunction, name) {
             return new Promise((resolve, reject) => {
+                console.log(`开始加载 ${name} 从 ${src}`);
+
                 const script = document.createElement('script');
                 script.src = src;
+
                 script.onload = () => {
-                    if (checkFunction()) {
-                        window.libraryLoadStatus[name] = true;
-                        console.log(`${name} 加载成功 (主源)`);
-                        resolve();
-                    } else {
-                        console.warn(`${name} 主源加载失败，尝试备用源`);
-                        loadFallback();
-                    }
+                    console.log(`${name} 脚本加载完成，检查对象...`);
+                    // 添加延迟确保对象完全初始化
+                    setTimeout(() => {
+                        if (checkFunction()) {
+                            window.libraryLoadStatus[name] = true;
+                            console.log(`${name} 加载成功 (主源)`);
+                            resolve();
+                        } else {
+                            console.warn(`${name} 主源加载失败，尝试备用源`);
+                            loadFallback();
+                        }
+                    }, 100);
                 };
-                script.onerror = () => {
-                    console.warn(`${name} 主源加载失败，尝试备用源`);
+
+                script.onerror = (error) => {
+                    console.warn(`${name} 主源加载失败: ${error.message || '网络错误'}`);
                     loadFallback();
                 };
 
                 function loadFallback() {
+                    console.log(`尝试从备用源加载 ${name}: ${fallbackSrc}`);
                     const fallbackScript = document.createElement('script');
                     fallbackScript.src = fallbackSrc;
+
                     fallbackScript.onload = () => {
-                        if (checkFunction()) {
-                            window.libraryLoadStatus[name] = true;
-                            console.log(`${name} 加载成功 (备用源)`);
-                            resolve();
-                        } else {
-                            console.error(`${name} 所有源都加载失败`);
-                            reject(new Error(`Failed to load ${name}`));
-                        }
+                        console.log(`${name} 备用源脚本加载完成，检查对象...`);
+                        setTimeout(() => {
+                            if (checkFunction()) {
+                                window.libraryLoadStatus[name] = true;
+                                console.log(`${name} 加载成功 (备用源)`);
+                                resolve();
+                            } else {
+                                console.error(`${name} 所有源都加载失败`);
+                                reject(new Error(`Failed to load ${name}`));
+                            }
+                        }, 100);
                     };
-                    fallbackScript.onerror = () => {
-                        console.error(`${name} 所有源都加载失败`);
+
+                    fallbackScript.onerror = (error) => {
+                        console.error(`${name} 备用源也加载失败: ${error.message || '网络错误'}`);
                         reject(new Error(`Failed to load ${name}`));
                     };
+
                     document.head.appendChild(fallbackScript);
                 }
 
@@ -549,36 +564,41 @@
             });
         }
 
-        // 并行加载所有库
-        Promise.all([
-            loadScript(
-                'https://cdn.jsdelivr.net/npm/tsparticles@2.12.0/tsparticles.bundle.min.js',
-                'https://unpkg.com/tsparticles@2.12.0/tsparticles.bundle.min.js',
-                () => window.tsParticles,
-                'tsParticles'
-            ),
-            loadScript(
-                'https://cdnjs.cloudflare.com/ajax/libs/lottie-web/5.12.2/lottie.min.js',
-                'https://unpkg.com/lottie-web@5.12.2/build/player/lottie.min.js',
-                () => window.lottie,
-                'lottie'
-            ),
-            loadScript(
-                'https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/gsap.min.js',
-                'https://unpkg.com/gsap@3.12.2/dist/gsap.min.js',
-                () => window.gsap,
-                'gsap'
-            )
-        ]).then(() => {
-            console.log('所有库加载完成');
-            window.librariesLoaded = true;
-            // 触发自定义事件
-            window.dispatchEvent(new CustomEvent('librariesLoaded'));
-        }).catch(error => {
-            console.error('库加载失败:', error);
-            window.librariesLoadError = error;
-            // 触发错误事件
-            window.dispatchEvent(new CustomEvent('librariesLoadError', { detail: error }));
+        // 页面加载完成后开始加载库
+        document.addEventListener('DOMContentLoaded', () => {
+            console.log('页面DOM加载完成，开始加载外部库...');
+
+            // 并行加载所有库
+            Promise.all([
+                loadScript(
+                    'https://cdn.jsdelivr.net/npm/tsparticles@2.12.0/tsparticles.bundle.min.js',
+                    'https://unpkg.com/tsparticles@2.12.0/tsparticles.bundle.min.js',
+                    () => window.tsParticles,
+                    'tsParticles'
+                ),
+                loadScript(
+                    'https://cdnjs.cloudflare.com/ajax/libs/lottie-web/5.12.2/lottie.min.js',
+                    'https://unpkg.com/lottie-web@5.12.2/build/player/lottie.min.js',
+                    () => window.lottie,
+                    'lottie'
+                ),
+                loadScript(
+                    'https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/gsap.min.js',
+                    'https://unpkg.com/gsap@3.12.2/dist/gsap.min.js',
+                    () => window.gsap,
+                    'gsap'
+                )
+            ]).then(() => {
+                console.log('🎉 所有库加载完成！');
+                window.librariesLoaded = true;
+                // 触发自定义事件
+                window.dispatchEvent(new CustomEvent('librariesLoaded'));
+            }).catch(error => {
+                console.error('❌ 库加载失败:', error);
+                window.librariesLoadError = error;
+                // 触发错误事件
+                window.dispatchEvent(new CustomEvent('librariesLoadError', { detail: error }));
+            });
         });
     </script>
 
