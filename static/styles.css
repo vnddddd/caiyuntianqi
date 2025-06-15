@@ -530,21 +530,21 @@ body.time-night {
   backdrop-filter: var(--glass-blur-light);
   -webkit-backdrop-filter: var(--glass-blur-light);
   border: 1px solid var(--glass-border-light);
-  font-size: 1.25rem; /* 稍微减小字体，确保在圆形按钮中的最佳比例 */
+  font-size: 1.4rem; /* 恢复合适的字体大小，确保×符号清晰可见 */
   cursor: pointer;
   color: var(--glass-text-secondary);
-  padding: 0; /* 移除padding，避免影响居中 */
-  border-radius: 50%; /* 圆形按钮 */
+  padding: 0;
+  border-radius: 50%;
   width: 2.5rem;
   height: 2.5rem;
   display: flex;
   align-items: center;
   justify-content: center;
   transition: var(--glass-transition-fast);
-  line-height: 1; /* 确保垂直居中，移除行高影响 */
-  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; /* 使用系统字体确保符号居中 */
-  font-weight: 300; /* 较细的字重，更优雅 */
-  text-align: center; /* 确保水平居中 */
+  line-height: 1;
+  font-weight: 500; /* 适中的字重，确保×符号清晰可见 */
+  /* 微调位置确保完美居中 */
+  position: relative;
 }
 
 .close-btn:hover {
