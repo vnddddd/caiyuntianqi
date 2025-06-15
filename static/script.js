@@ -256,8 +256,7 @@ class WeatherApp {
     const closeModalBtn = document.getElementById('closeModalBtn');
     const searchBtn = document.getElementById('searchBtn');
     const locationSearch = document.getElementById('locationSearch');
-    const favoriteBtn = document.getElementById('favoriteBtn');
-    const setDefaultBtn = document.getElementById('setDefaultBtn');
+    // 注意：favoriteBtn 和 setDefaultBtn 在当前HTML中不存在，已移除引用
 
     currentLocationBtn?.addEventListener('click', () => this.showLocationModal());
     retryBtn?.addEventListener('click', () => this.getCurrentLocation());
@@ -1090,15 +1089,19 @@ class WeatherApp {
     if (modalFavoriteBtn) {
       modalFavoriteBtn.classList.toggle('active', isFavorited);
       modalFavoriteBtn.title = isFavorited ? '取消收藏' : '收藏此位置';
-      modalFavoriteBtn.querySelector('.favorite-icon').textContent = isFavorited ? '⭐' : '☆';
-      modalFavoriteBtn.querySelector('.action-text').textContent = isFavorited ? '取消收藏' : '收藏';
+      const favoriteIcon = modalFavoriteBtn.querySelector('.favorite-icon');
+      const favoriteText = modalFavoriteBtn.querySelector('.action-text');
+      if (favoriteIcon) favoriteIcon.textContent = isFavorited ? '⭐' : '☆';
+      if (favoriteText) favoriteText.textContent = isFavorited ? '取消收藏' : '收藏';
     }
 
     if (modalSetDefaultBtn) {
       modalSetDefaultBtn.classList.toggle('default', isDefault);
       modalSetDefaultBtn.title = isDefault ? '取消默认位置' : '设为默认位置';
-      modalSetDefaultBtn.querySelector('.default-icon').textContent = isDefault ? '📍' : '📌';
-      modalSetDefaultBtn.querySelector('.action-text').textContent = isDefault ? '取消默认' : '设为默认';
+      const defaultIcon = modalSetDefaultBtn.querySelector('.default-icon');
+      const defaultText = modalSetDefaultBtn.querySelector('.action-text');
+      if (defaultIcon) defaultIcon.textContent = isDefault ? '📍' : '📌';
+      if (defaultText) defaultText.textContent = isDefault ? '取消默认' : '设为默认';
     }
   }
 
@@ -1112,7 +1115,7 @@ class WeatherApp {
     const favoriteLocations = document.getElementById('favoriteLocations');
     const favoriteList = document.getElementById('favoriteList');
 
-    if (!favoriteList) return;
+    if (!favoriteList || !favoriteLocations) return;
 
     if (this.favoriteLocations.length === 0) {
       favoriteLocations.style.display = 'none';
