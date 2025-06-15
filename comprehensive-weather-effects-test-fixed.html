@@ -381,49 +381,313 @@
             }
         }
 
-        /* 雷暴特效 */
+        /* 雷暴特效 - 真实闪电 */
         .thunder-effect {
             position: absolute;
             width: 100%;
             height: 100%;
-            background: rgba(255, 255, 255, 0);
-            animation: thunderFlash 3s infinite;
+            pointer-events: none;
+            overflow: hidden;
         }
 
-        @keyframes thunderFlash {
-            0%, 90%, 100% { background: rgba(255, 255, 255, 0); }
-            91%, 93% { background: rgba(255, 255, 255, 0.8); }
-            92% { background: rgba(255, 255, 255, 0.3); }
+        /* 闪电容器 */
+        .lightning-container {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            opacity: 0;
         }
 
-        /* 雾霾特效 */
+        /* 主闪电 */
+        .lightning-main {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+        }
+
+        /* 分支闪电 */
+        .lightning-branch {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            opacity: 0.7;
+        }
+
+        /* 闪电路径样式 */
+        .lightning-path {
+            fill: none;
+            stroke: #ffffff;
+            stroke-width: 3;
+            stroke-linecap: round;
+            stroke-linejoin: round;
+            filter: drop-shadow(0 0 8px #87ceeb) drop-shadow(0 0 15px #4169e1);
+            opacity: 0;
+        }
+
+        .lightning-branch .lightning-path {
+            stroke-width: 1.5;
+            filter: drop-shadow(0 0 4px #87ceeb) drop-shadow(0 0 8px #4169e1);
+        }
+
+        /* 闪电动画 */
+        .lightning-strike {
+            animation: lightningStrike 0.3s ease-out;
+        }
+
+        @keyframes lightningStrike {
+            0% {
+                opacity: 0;
+                stroke-dasharray: 1000;
+                stroke-dashoffset: 1000;
+            }
+            10% {
+                opacity: 1;
+                stroke-dashoffset: 0;
+            }
+            20% {
+                opacity: 0.8;
+            }
+            30% {
+                opacity: 1;
+            }
+            40% {
+                opacity: 0.6;
+            }
+            50% {
+                opacity: 0.9;
+            }
+            100% {
+                opacity: 0;
+                stroke-dashoffset: 0;
+            }
+        }
+
+        /* 闪电背景闪烁 */
+        .lightning-flash {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            background: radial-gradient(ellipse at center,
+                rgba(255, 255, 255, 0.3) 0%,
+                rgba(135, 206, 235, 0.2) 30%,
+                rgba(65, 105, 225, 0.1) 60%,
+                transparent 100%);
+            opacity: 0;
+            animation: lightningFlash 0.3s ease-out;
+        }
+
+        @keyframes lightningFlash {
+            0%, 100% { opacity: 0; }
+            15% { opacity: 0.8; }
+            30% { opacity: 0.4; }
+            45% { opacity: 0.9; }
+            60% { opacity: 0.3; }
+            75% { opacity: 0.6; }
+        }
+
+        /* 雷暴云层效果 */
+        .thunder-clouds {
+            position: absolute;
+            width: 100%;
+            height: 40%;
+            top: 0;
+            background: linear-gradient(to bottom,
+                rgba(47, 79, 79, 0.8) 0%,
+                rgba(47, 79, 79, 0.6) 50%,
+                rgba(47, 79, 79, 0.3) 80%,
+                transparent 100%);
+            animation: thunderClouds 4s ease-in-out infinite;
+        }
+
+        @keyframes thunderClouds {
+            0%, 100% {
+                opacity: 0.6;
+                transform: translateX(0);
+            }
+            50% {
+                opacity: 0.9;
+                transform: translateX(2px);
+            }
+        }
+
+        /* 雾霾特效 - 多层真实雾气 */
         .fog-effect {
             position: absolute;
             width: 100%;
             height: 100%;
+            overflow: hidden;
+        }
+
+        /* 雾气层 */
+        .fog-layer {
+            position: absolute;
+            width: 120%;
+            height: 120%;
+            border-radius: 50%;
+            filter: blur(20px);
+            opacity: 0.6;
+        }
+
+        .fog-layer-1 {
+            background: radial-gradient(ellipse at center,
+                rgba(220, 220, 220, 0.8) 0%,
+                rgba(200, 200, 200, 0.6) 30%,
+                rgba(180, 180, 180, 0.4) 60%,
+                transparent 100%);
+            animation: fogDrift1 15s ease-in-out infinite;
+            transform: translate(-10%, -10%);
+        }
+
+        .fog-layer-2 {
+            background: radial-gradient(ellipse at 60% 40%,
+                rgba(210, 210, 210, 0.7) 0%,
+                rgba(190, 190, 190, 0.5) 40%,
+                rgba(170, 170, 170, 0.3) 70%,
+                transparent 100%);
+            animation: fogDrift2 20s ease-in-out infinite reverse;
+            transform: translate(-5%, -5%);
+        }
+
+        .fog-layer-3 {
+            background: radial-gradient(ellipse at 30% 70%,
+                rgba(200, 200, 200, 0.6) 0%,
+                rgba(180, 180, 180, 0.4) 50%,
+                rgba(160, 160, 160, 0.2) 80%,
+                transparent 100%);
+            animation: fogDrift3 25s ease-in-out infinite;
+            transform: translate(-15%, -15%);
+        }
+
+        /* 雾气流动动画 */
+        @keyframes fogDrift1 {
+            0%, 100% {
+                transform: translate(-10%, -10%) rotate(0deg) scale(1);
+                opacity: 0.6;
+            }
+            25% {
+                transform: translate(-5%, -15%) rotate(2deg) scale(1.1);
+                opacity: 0.8;
+            }
+            50% {
+                transform: translate(0%, -10%) rotate(0deg) scale(1.05);
+                opacity: 0.7;
+            }
+            75% {
+                transform: translate(-8%, -5%) rotate(-1deg) scale(0.95);
+                opacity: 0.9;
+            }
+        }
+
+        @keyframes fogDrift2 {
+            0%, 100% {
+                transform: translate(-5%, -5%) rotate(0deg) scale(1);
+                opacity: 0.5;
+            }
+            33% {
+                transform: translate(2%, -8%) rotate(-1deg) scale(1.08);
+                opacity: 0.7;
+            }
+            66% {
+                transform: translate(-2%, -2%) rotate(1deg) scale(0.98);
+                opacity: 0.6;
+            }
+        }
+
+        @keyframes fogDrift3 {
+            0%, 100% {
+                transform: translate(-15%, -15%) rotate(0deg) scale(1);
+                opacity: 0.4;
+            }
+            40% {
+                transform: translate(-10%, -20%) rotate(1.5deg) scale(1.12);
+                opacity: 0.6;
+            }
+            80% {
+                transform: translate(-18%, -12%) rotate(-0.5deg) scale(0.92);
+                opacity: 0.5;
+            }
+        }
+
+        /* 不同强度的雾霾效果 */
+        .fog-light .fog-layer {
+            opacity: 0.4;
+            filter: blur(15px);
+        }
+
+        .fog-light .fog-layer-1 {
+            background: radial-gradient(ellipse at center,
+                rgba(240, 240, 240, 0.6) 0%,
+                rgba(220, 220, 220, 0.4) 30%,
+                rgba(200, 200, 200, 0.2) 60%,
+                transparent 100%);
+        }
+
+        .fog-moderate .fog-layer {
+            opacity: 0.6;
+            filter: blur(25px);
+        }
+
+        .fog-moderate .fog-layer-1 {
+            background: radial-gradient(ellipse at center,
+                rgba(200, 200, 200, 0.8) 0%,
+                rgba(180, 180, 180, 0.6) 30%,
+                rgba(160, 160, 160, 0.4) 60%,
+                transparent 100%);
+        }
+
+        .fog-heavy .fog-layer {
+            opacity: 0.8;
+            filter: blur(35px);
+        }
+
+        .fog-heavy .fog-layer-1 {
+            background: radial-gradient(ellipse at center,
+                rgba(160, 160, 140, 0.9) 0%,
+                rgba(140, 140, 120, 0.7) 30%,
+                rgba(120, 120, 100, 0.5) 60%,
+                transparent 100%);
+        }
+
+        .fog-heavy .fog-layer-2 {
+            background: radial-gradient(ellipse at 60% 40%,
+                rgba(150, 150, 130, 0.8) 0%,
+                rgba(130, 130, 110, 0.6) 40%,
+                rgba(110, 110, 90, 0.4) 70%,
+                transparent 100%);
+        }
+
+        /* 雾霾粒子效果 */
+        .fog-particles {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+        }
+
+        .fog-particle {
+            position: absolute;
+            width: 3px;
+            height: 3px;
             background: rgba(200, 200, 200, 0.3);
-            backdrop-filter: blur(2px);
-            animation: fogWave 8s ease-in-out infinite;
+            border-radius: 50%;
+            animation: fogParticleFloat linear infinite;
+            filter: blur(1px);
         }
 
-        .fog-light {
-            background: rgba(200, 200, 200, 0.2);
-            backdrop-filter: blur(1px);
-        }
-
-        .fog-moderate {
-            background: rgba(180, 180, 180, 0.4);
-            backdrop-filter: blur(3px);
-        }
-
-        .fog-heavy {
-            background: rgba(160, 160, 160, 0.6);
-            backdrop-filter: blur(5px);
-        }
-
-        @keyframes fogWave {
-            0%, 100% { opacity: 0.8; }
-            50% { opacity: 1; }
+        @keyframes fogParticleFloat {
+            0% {
+                transform: translateY(100vh) translateX(0) scale(0.5);
+                opacity: 0;
+            }
+            10% {
+                opacity: 0.6;
+            }
+            90% {
+                opacity: 0.6;
+            }
+            100% {
+                transform: translateY(-20px) translateX(20px) scale(1.2);
+                opacity: 0;
+            }
         }
 
         /* 风力特效 */
@@ -476,43 +740,214 @@
             }
         }
 
-        /* 沙尘特效 */
+        /* 沙尘暴特效 - 增强版 */
         .dust-effect {
             position: absolute;
             width: 100%;
             height: 100%;
-            background: rgba(139, 69, 19, 0.3);
-            animation: dustStorm 2s ease-in-out infinite;
+            overflow: hidden;
+        }
+
+        /* 沙尘暴背景层 */
+        .dust-storm-bg {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(45deg,
+                rgba(139, 69, 19, 0.4) 0%,
+                rgba(160, 82, 45, 0.5) 25%,
+                rgba(210, 180, 140, 0.6) 50%,
+                rgba(139, 69, 19, 0.4) 75%,
+                rgba(101, 67, 33, 0.3) 100%);
+            animation: dustStormBg 3s ease-in-out infinite;
+            filter: blur(1px);
+        }
+
+        @keyframes dustStormBg {
+            0%, 100% {
+                opacity: 0.6;
+                transform: translateX(0) scale(1);
+            }
+            25% {
+                opacity: 0.8;
+                transform: translateX(2px) scale(1.02);
+            }
+            50% {
+                opacity: 0.9;
+                transform: translateX(-1px) scale(1.01);
+            }
+            75% {
+                opacity: 0.7;
+                transform: translateX(1px) scale(1.03);
+            }
+        }
+
+        /* 沙尘云团 */
+        .dust-cloud {
+            position: absolute;
+            border-radius: 50%;
+            filter: blur(8px);
+            animation: dustCloudRoll linear infinite;
+        }
+
+        .dust-cloud-1 {
+            width: 200px;
+            height: 100px;
+            background: radial-gradient(ellipse,
+                rgba(139, 69, 19, 0.8) 0%,
+                rgba(160, 82, 45, 0.6) 40%,
+                rgba(210, 180, 140, 0.4) 70%,
+                transparent 100%);
+            top: 20%;
+            animation-duration: 8s;
+        }
+
+        .dust-cloud-2 {
+            width: 150px;
+            height: 80px;
+            background: radial-gradient(ellipse,
+                rgba(160, 82, 45, 0.7) 0%,
+                rgba(210, 180, 140, 0.5) 50%,
+                rgba(139, 69, 19, 0.3) 80%,
+                transparent 100%);
+            top: 40%;
+            animation-duration: 12s;
+            animation-delay: -2s;
+        }
+
+        .dust-cloud-3 {
+            width: 180px;
+            height: 90px;
+            background: radial-gradient(ellipse,
+                rgba(210, 180, 140, 0.6) 0%,
+                rgba(139, 69, 19, 0.4) 60%,
+                rgba(101, 67, 33, 0.2) 90%,
+                transparent 100%);
+            top: 60%;
+            animation-duration: 10s;
+            animation-delay: -4s;
+        }
+
+        @keyframes dustCloudRoll {
+            0% {
+                transform: translateX(-250px) rotate(0deg) scaleY(1);
+                opacity: 0;
+            }
+            10% {
+                opacity: 0.8;
+            }
+            50% {
+                transform: translateX(50vw) rotate(180deg) scaleY(1.2);
+                opacity: 1;
+            }
+            90% {
+                opacity: 0.8;
+            }
+            100% {
+                transform: translateX(calc(100vw + 250px)) rotate(360deg) scaleY(0.8);
+                opacity: 0;
+            }
+        }
+
+        /* 沙粒效果 */
+        .dust-particles {
+            position: absolute;
+            width: 100%;
+            height: 100%;
         }
 
         .dust-particle {
             position: absolute;
+            border-radius: 50%;
+            animation: dustParticleFly linear infinite;
+        }
+
+        .dust-particle-small {
             width: 1px;
             height: 1px;
-            background: rgba(139, 69, 19, 0.6);
-            animation: dustBlow 1.5s linear infinite;
+            background: rgba(139, 69, 19, 0.8);
+            box-shadow: 0 0 1px rgba(139, 69, 19, 0.6);
         }
 
-        @keyframes dustStorm {
-            0%, 100% { opacity: 0.6; }
-            50% { opacity: 0.9; }
+        .dust-particle-medium {
+            width: 2px;
+            height: 2px;
+            background: rgba(160, 82, 45, 0.7);
+            box-shadow: 0 0 2px rgba(160, 82, 45, 0.5);
         }
 
-        @keyframes dustBlow {
+        .dust-particle-large {
+            width: 3px;
+            height: 3px;
+            background: rgba(210, 180, 140, 0.6);
+            box-shadow: 0 0 3px rgba(210, 180, 140, 0.4);
+        }
+
+        @keyframes dustParticleFly {
             0% {
-                transform: translateX(-100vw) translateY(0);
+                transform: translateX(-20px) translateY(0) rotate(0deg);
                 opacity: 0;
             }
-            10% {
+            5% {
                 opacity: 1;
             }
-            90% {
+            95% {
                 opacity: 1;
             }
             100% {
-                transform: translateX(100vw) translateY(-10px);
+                transform: translateX(calc(100vw + 20px)) translateY(-30px) rotate(720deg);
                 opacity: 0;
             }
+        }
+
+        /* 沙尘旋涡效果 */
+        .dust-vortex {
+            position: absolute;
+            width: 100px;
+            height: 100px;
+            border-radius: 50%;
+            background: conic-gradient(
+                transparent 0deg,
+                rgba(139, 69, 19, 0.3) 90deg,
+                rgba(160, 82, 45, 0.4) 180deg,
+                rgba(210, 180, 140, 0.3) 270deg,
+                transparent 360deg
+            );
+            animation: dustVortexSpin 2s linear infinite;
+            filter: blur(2px);
+        }
+
+        @keyframes dustVortexSpin {
+            0% {
+                transform: rotate(0deg) scale(0.8);
+                opacity: 0.6;
+            }
+            50% {
+                transform: rotate(180deg) scale(1.2);
+                opacity: 0.9;
+            }
+            100% {
+                transform: rotate(360deg) scale(0.8);
+                opacity: 0.6;
+            }
+        }
+
+        /* 遮天蔽日效果 */
+        .dust-darkness {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(to bottom,
+                rgba(101, 67, 33, 0.3) 0%,
+                rgba(139, 69, 19, 0.4) 30%,
+                rgba(160, 82, 45, 0.5) 60%,
+                rgba(101, 67, 33, 0.3) 100%);
+            animation: dustDarkness 4s ease-in-out infinite;
+        }
+
+        @keyframes dustDarkness {
+            0%, 100% { opacity: 0.4; }
+            50% { opacity: 0.7; }
         }
 
         /* 冰雹特效 */
@@ -549,51 +984,449 @@
             }
         }
 
-        /* 阳光特效 */
+        /* 阳光特效 - 真实光束效果 */
         .sunshine-effect {
             position: absolute;
             width: 100%;
             height: 100%;
-            background: radial-gradient(circle at 50% 30%,
-                rgba(255, 255, 0, 0.3) 0%,
-                rgba(255, 255, 0, 0.1) 40%,
-                transparent 70%);
-            animation: sunshineGlow 4s ease-in-out infinite;
+            overflow: hidden;
         }
 
-        .sunshine-strong {
-            background: radial-gradient(circle at 50% 30%,
-                rgba(255, 255, 0, 0.5) 0%,
-                rgba(255, 255, 0, 0.2) 40%,
-                transparent 70%);
+        /* 太阳位置 */
+        .sun-position {
+            position: absolute;
+            width: 80px;
+            height: 80px;
+            border-radius: 50%;
+            background: radial-gradient(circle,
+                rgba(255, 255, 255, 0.9) 0%,
+                rgba(255, 255, 200, 0.8) 20%,
+                rgba(255, 255, 100, 0.6) 40%,
+                rgba(255, 200, 50, 0.4) 60%,
+                transparent 100%);
+            filter: blur(2px);
+            animation: sunPulse 3s ease-in-out infinite;
         }
 
-        @keyframes sunshineGlow {
-            0%, 100% { opacity: 0.8; }
-            50% { opacity: 1; }
+        @keyframes sunPulse {
+            0%, 100% {
+                transform: scale(1);
+                opacity: 0.8;
+            }
+            50% {
+                transform: scale(1.1);
+                opacity: 1;
+            }
         }
 
-        /* 云朵特效 */
+        /* 阳光光束 */
+        .sunbeam {
+            position: absolute;
+            background: linear-gradient(to bottom,
+                rgba(255, 255, 255, 0.6) 0%,
+                rgba(255, 255, 200, 0.4) 30%,
+                rgba(255, 255, 100, 0.3) 60%,
+                rgba(255, 200, 50, 0.2) 80%,
+                transparent 100%);
+            filter: blur(1px);
+            animation: sunbeamShine linear infinite;
+            transform-origin: top center;
+        }
+
+        .sunbeam-1 {
+            width: 8px;
+            height: 40%;
+            left: 45%;
+            top: 15%;
+            animation-duration: 4s;
+            animation-delay: 0s;
+        }
+
+        .sunbeam-2 {
+            width: 12px;
+            height: 50%;
+            left: 55%;
+            top: 10%;
+            animation-duration: 5s;
+            animation-delay: -1s;
+        }
+
+        .sunbeam-3 {
+            width: 6px;
+            height: 35%;
+            left: 35%;
+            top: 20%;
+            animation-duration: 6s;
+            animation-delay: -2s;
+        }
+
+        .sunbeam-4 {
+            width: 10px;
+            height: 45%;
+            left: 65%;
+            top: 12%;
+            animation-duration: 4.5s;
+            animation-delay: -0.5s;
+        }
+
+        @keyframes sunbeamShine {
+            0%, 100% {
+                opacity: 0.3;
+                transform: scaleY(1) rotate(0deg);
+            }
+            25% {
+                opacity: 0.6;
+                transform: scaleY(1.1) rotate(1deg);
+            }
+            50% {
+                opacity: 0.8;
+                transform: scaleY(1.2) rotate(0deg);
+            }
+            75% {
+                opacity: 0.5;
+                transform: scaleY(1.05) rotate(-1deg);
+            }
+        }
+
+        /* 光晕效果 */
+        .sun-halo {
+            position: absolute;
+            border-radius: 50%;
+            animation: sunHaloGlow ease-in-out infinite;
+        }
+
+        .sun-halo-1 {
+            width: 150px;
+            height: 150px;
+            background: radial-gradient(circle,
+                transparent 40%,
+                rgba(255, 255, 200, 0.3) 50%,
+                rgba(255, 255, 100, 0.2) 70%,
+                transparent 100%);
+            animation-duration: 3s;
+        }
+
+        .sun-halo-2 {
+            width: 200px;
+            height: 200px;
+            background: radial-gradient(circle,
+                transparent 50%,
+                rgba(255, 255, 150, 0.2) 60%,
+                rgba(255, 200, 100, 0.1) 80%,
+                transparent 100%);
+            animation-duration: 4s;
+            animation-delay: -1s;
+        }
+
+        @keyframes sunHaloGlow {
+            0%, 100% {
+                opacity: 0.4;
+                transform: scale(1) rotate(0deg);
+            }
+            50% {
+                opacity: 0.7;
+                transform: scale(1.1) rotate(180deg);
+            }
+        }
+
+        /* 光斑效果 */
+        .sun-sparkle {
+            position: absolute;
+            width: 4px;
+            height: 4px;
+            background: rgba(255, 255, 255, 0.8);
+            border-radius: 50%;
+            animation: sunSparkle linear infinite;
+            filter: blur(0.5px);
+        }
+
+        @keyframes sunSparkle {
+            0%, 100% {
+                opacity: 0;
+                transform: scale(0.5);
+            }
+            50% {
+                opacity: 1;
+                transform: scale(1.5);
+            }
+        }
+
+        /* 散射效果 */
+        .sun-scatter {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            background: radial-gradient(ellipse at 50% 15%,
+                rgba(255, 255, 200, 0.2) 0%,
+                rgba(255, 255, 150, 0.1) 30%,
+                rgba(255, 200, 100, 0.05) 60%,
+                transparent 100%);
+            animation: sunScatter 6s ease-in-out infinite;
+        }
+
+        @keyframes sunScatter {
+            0%, 100% {
+                opacity: 0.6;
+                transform: scale(1);
+            }
+            33% {
+                opacity: 0.8;
+                transform: scale(1.05);
+            }
+            66% {
+                opacity: 0.7;
+                transform: scale(1.02);
+            }
+        }
+
+        /* 强阳光效果 */
+        .sunshine-strong .sun-position {
+            width: 100px;
+            height: 100px;
+            background: radial-gradient(circle,
+                rgba(255, 255, 255, 1) 0%,
+                rgba(255, 255, 150, 0.9) 20%,
+                rgba(255, 255, 50, 0.7) 40%,
+                rgba(255, 150, 0, 0.5) 60%,
+                transparent 100%);
+        }
+
+        .sunshine-strong .sunbeam {
+            background: linear-gradient(to bottom,
+                rgba(255, 255, 255, 0.8) 0%,
+                rgba(255, 255, 150, 0.6) 30%,
+                rgba(255, 255, 50, 0.4) 60%,
+                rgba(255, 150, 0, 0.3) 80%,
+                transparent 100%);
+        }
+
+        .sunshine-strong .sun-scatter {
+            background: radial-gradient(ellipse at 50% 15%,
+                rgba(255, 255, 150, 0.3) 0%,
+                rgba(255, 255, 100, 0.2) 30%,
+                rgba(255, 200, 50, 0.1) 60%,
+                transparent 100%);
+        }
+
+        /* 云朵特效 - 真实3D云朵 */
         .clouds-effect {
             position: absolute;
             width: 100%;
             height: 100%;
-            background: linear-gradient(90deg,
-                transparent 0%,
-                rgba(255, 255, 255, 0.3) 25%,
-                rgba(255, 255, 255, 0.5) 50%,
-                rgba(255, 255, 255, 0.3) 75%,
-                transparent 100%);
-            animation: cloudsMove 8s linear infinite;
+            overflow: hidden;
         }
 
-        @keyframes cloudsMove {
+        /* 云层容器 */
+        .cloud-layer {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+        }
+
+        /* 高云层 */
+        .cloud-layer-high {
+            top: 5%;
+            height: 25%;
+            opacity: 0.6;
+        }
+
+        /* 中云层 */
+        .cloud-layer-mid {
+            top: 20%;
+            height: 30%;
+            opacity: 0.8;
+        }
+
+        /* 低云层 */
+        .cloud-layer-low {
+            top: 35%;
+            height: 35%;
+            opacity: 0.9;
+        }
+
+        /* 单个云朵 */
+        .cloud {
+            position: absolute;
+            border-radius: 50px;
+            filter: blur(2px);
+            animation: cloudDrift linear infinite;
+        }
+
+        /* 云朵形状变体 */
+        .cloud-shape-1 {
+            background: radial-gradient(ellipse at 30% 50%,
+                rgba(255, 255, 255, 0.9) 0%,
+                rgba(240, 240, 240, 0.7) 40%,
+                rgba(220, 220, 220, 0.5) 70%,
+                transparent 100%);
+            width: 120px;
+            height: 60px;
+            border-radius: 60px 60px 40px 40px;
+        }
+
+        .cloud-shape-2 {
+            background: radial-gradient(ellipse at 60% 40%,
+                rgba(255, 255, 255, 0.8) 0%,
+                rgba(235, 235, 235, 0.6) 50%,
+                rgba(210, 210, 210, 0.4) 80%,
+                transparent 100%);
+            width: 100px;
+            height: 50px;
+            border-radius: 50px 70px 30px 60px;
+        }
+
+        .cloud-shape-3 {
+            background: radial-gradient(ellipse at 40% 60%,
+                rgba(255, 255, 255, 0.85) 0%,
+                rgba(245, 245, 245, 0.65) 45%,
+                rgba(225, 225, 225, 0.45) 75%,
+                transparent 100%);
+            width: 140px;
+            height: 70px;
+            border-radius: 70px 50px 60px 80px;
+        }
+
+        .cloud-shape-4 {
+            background: radial-gradient(ellipse at 50% 30%,
+                rgba(255, 255, 255, 0.75) 0%,
+                rgba(230, 230, 230, 0.55) 55%,
+                rgba(200, 200, 200, 0.35) 85%,
+                transparent 100%);
+            width: 80px;
+            height: 40px;
+            border-radius: 40px 60px 50px 30px;
+        }
+
+        /* 云朵飘移动画 */
+        @keyframes cloudDrift {
             0% {
-                transform: translateX(-100%);
+                transform: translateX(-200px) scale(0.8) rotate(0deg);
+                opacity: 0;
+            }
+            10% {
+                opacity: 1;
+            }
+            50% {
+                transform: translateX(50vw) scale(1) rotate(2deg);
+            }
+            90% {
+                opacity: 1;
             }
             100% {
-                transform: translateX(100%);
+                transform: translateX(calc(100vw + 200px)) scale(1.1) rotate(5deg);
+                opacity: 0;
             }
+        }
+
+        /* 云朵变形动画 */
+        .cloud-morph {
+            animation: cloudMorph ease-in-out infinite;
+        }
+
+        @keyframes cloudMorph {
+            0%, 100% {
+                border-radius: 60px 60px 40px 40px;
+                transform: scaleX(1) scaleY(1);
+            }
+            25% {
+                border-radius: 70px 50px 50px 60px;
+                transform: scaleX(1.05) scaleY(0.95);
+            }
+            50% {
+                border-radius: 50px 70px 60px 30px;
+                transform: scaleX(0.95) scaleY(1.1);
+            }
+            75% {
+                border-radius: 80px 40px 30px 70px;
+                transform: scaleX(1.1) scaleY(0.9);
+            }
+        }
+
+        /* 云朵阴影效果 */
+        .cloud-shadow {
+            position: absolute;
+            background: linear-gradient(to bottom,
+                transparent 0%,
+                rgba(0, 0, 0, 0.1) 50%,
+                rgba(0, 0, 0, 0.2) 100%);
+            border-radius: inherit;
+            filter: blur(4px);
+            transform: translateY(10px) scaleY(0.3);
+            opacity: 0.5;
+        }
+
+        /* 云朵边缘光晕 */
+        .cloud-glow {
+            position: absolute;
+            background: inherit;
+            border-radius: inherit;
+            filter: blur(8px);
+            transform: scale(1.2);
+            opacity: 0.3;
+            z-index: -1;
+        }
+
+        /* 不同天气类型的云朵 */
+        .clouds-sunny .cloud {
+            background: radial-gradient(ellipse,
+                rgba(255, 255, 255, 0.9) 0%,
+                rgba(250, 250, 250, 0.7) 40%,
+                rgba(240, 240, 240, 0.5) 70%,
+                transparent 100%);
+        }
+
+        .clouds-overcast .cloud {
+            background: radial-gradient(ellipse,
+                rgba(200, 200, 200, 0.9) 0%,
+                rgba(180, 180, 180, 0.7) 40%,
+                rgba(160, 160, 160, 0.5) 70%,
+                transparent 100%);
+            filter: blur(3px);
+        }
+
+        .clouds-stormy .cloud {
+            background: radial-gradient(ellipse,
+                rgba(120, 120, 120, 0.9) 0%,
+                rgba(100, 100, 100, 0.7) 40%,
+                rgba(80, 80, 80, 0.5) 70%,
+                transparent 100%);
+            filter: blur(1px);
+        }
+
+        /* 云朵体积感 */
+        .cloud-3d {
+            position: relative;
+        }
+
+        .cloud-3d::before {
+            content: '';
+            position: absolute;
+            top: -5px;
+            left: -5px;
+            right: -5px;
+            bottom: -5px;
+            background: linear-gradient(135deg,
+                rgba(255, 255, 255, 0.3) 0%,
+                transparent 50%,
+                rgba(0, 0, 0, 0.1) 100%);
+            border-radius: inherit;
+            filter: blur(2px);
+            z-index: -1;
+        }
+
+        .cloud-3d::after {
+            content: '';
+            position: absolute;
+            top: 2px;
+            left: 2px;
+            right: 2px;
+            bottom: 2px;
+            background: linear-gradient(315deg,
+                rgba(255, 255, 255, 0.6) 0%,
+                transparent 50%,
+                rgba(0, 0, 0, 0.05) 100%);
+            border-radius: inherit;
+            filter: blur(1px);
         }
 
         /* 性能优化 - 硬件加速 */
@@ -1054,10 +1887,123 @@
                 thunderDiv.className = 'thunder-effect';
                 thunderDiv.dataset.intensity = 'normal';
 
+                // 创建雷暴云层
+                const thunderClouds = document.createElement('div');
+                thunderClouds.className = 'thunder-clouds';
+                thunderDiv.appendChild(thunderClouds);
+
+                // 创建闪电容器
+                const lightningContainer = document.createElement('div');
+                lightningContainer.className = 'lightning-container';
+                thunderDiv.appendChild(lightningContainer);
+
+                // 创建闪电背景闪烁
+                const lightningFlash = document.createElement('div');
+                lightningFlash.className = 'lightning-flash';
+                thunderDiv.appendChild(lightningFlash);
+
                 effect.container.appendChild(thunderDiv);
                 effect.currentEffect = thunderDiv;
-                effect.stats.elements = 1;
-                document.getElementById(`thunderElements`).textContent = '1';
+                effect.stats.elements = 3; // 云层 + 闪电容器 + 背景闪烁
+
+                // 开始闪电动画循环
+                this.startLightningAnimation(lightningContainer, lightningFlash);
+
+                document.getElementById(`thunderElements`).textContent = '3';
+            }
+
+            // 开始闪电动画循环
+            startLightningAnimation(container, flashElement) {
+                const createLightning = () => {
+                    // 清除之前的闪电
+                    container.innerHTML = '';
+
+                    // 创建主闪电
+                    const mainLightning = this.createLightningBolt(container, true);
+
+                    // 创建分支闪电（随机数量）
+                    const branchCount = Math.floor(Math.random() * 3) + 1;
+                    for (let i = 0; i < branchCount; i++) {
+                        setTimeout(() => {
+                            this.createLightningBolt(container, false);
+                        }, Math.random() * 100);
+                    }
+
+                    // 触发背景闪烁
+                    flashElement.style.animation = 'none';
+                    setTimeout(() => {
+                        flashElement.style.animation = 'lightningFlash 0.3s ease-out';
+                    }, 10);
+
+                    // 随机间隔后创建下一次闪电
+                    const nextDelay = Math.random() * 4000 + 2000; // 2-6秒间隔
+                    setTimeout(createLightning, nextDelay);
+                };
+
+                // 开始第一次闪电
+                setTimeout(createLightning, Math.random() * 2000);
+            }
+
+            // 创建单个闪电
+            createLightningBolt(container, isMain = true) {
+                const svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+                svg.className = isMain ? 'lightning-main' : 'lightning-branch';
+                svg.setAttribute('viewBox', '0 0 100 100');
+                svg.style.position = 'absolute';
+                svg.style.width = '100%';
+                svg.style.height = '100%';
+
+                const path = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+                path.className = 'lightning-path';
+
+                // 生成闪电路径
+                const pathData = this.generateLightningPath(isMain);
+                path.setAttribute('d', pathData);
+
+                svg.appendChild(path);
+                container.appendChild(svg);
+
+                // 触发动画
+                setTimeout(() => {
+                    path.classList.add('lightning-strike');
+                }, 10);
+
+                return svg;
+            }
+
+            // 生成闪电路径
+            generateLightningPath(isMain = true) {
+                const startX = Math.random() * 40 + 30; // 30-70% 横向位置
+                const startY = isMain ? 5 : Math.random() * 20 + 10; // 主闪电从顶部开始
+                const endY = isMain ? 95 : Math.random() * 30 + 60; // 主闪电到底部
+
+                let pathData = `M ${startX} ${startY}`;
+                let currentX = startX;
+                let currentY = startY;
+
+                // 生成锯齿状路径
+                const segments = isMain ? 8 : 4;
+                const segmentHeight = (endY - startY) / segments;
+
+                for (let i = 1; i <= segments; i++) {
+                    const targetY = startY + segmentHeight * i;
+                    const zigzag = (Math.random() - 0.5) * (isMain ? 15 : 8);
+                    const newX = Math.max(5, Math.min(95, currentX + zigzag));
+
+                    // 添加一些随机的弯曲
+                    if (Math.random() > 0.7) {
+                        const midY = currentY + segmentHeight * 0.5;
+                        const midX = currentX + (Math.random() - 0.5) * 5;
+                        pathData += ` Q ${midX} ${midY} ${newX} ${targetY}`;
+                    } else {
+                        pathData += ` L ${newX} ${targetY}`;
+                    }
+
+                    currentX = newX;
+                    currentY = targetY;
+                }
+
+                return pathData;
             }
 
             // 创建雾霾特效
@@ -1074,10 +2020,41 @@
                     fogDiv.classList.add('fog-moderate');
                 }
 
+                // 创建多层雾气
+                const layer1 = document.createElement('div');
+                layer1.className = 'fog-layer fog-layer-1';
+                fogDiv.appendChild(layer1);
+
+                const layer2 = document.createElement('div');
+                layer2.className = 'fog-layer fog-layer-2';
+                fogDiv.appendChild(layer2);
+
+                const layer3 = document.createElement('div');
+                layer3.className = 'fog-layer fog-layer-3';
+                fogDiv.appendChild(layer3);
+
+                // 添加雾霾粒子效果（仅在高性能模式下）
+                if (this.performanceLevel === 'high') {
+                    const particlesContainer = document.createElement('div');
+                    particlesContainer.className = 'fog-particles';
+
+                    const particleCount = intensity === 'heavy' ? 15 : intensity === 'light' ? 5 : 10;
+                    for (let i = 0; i < particleCount; i++) {
+                        const particle = document.createElement('div');
+                        particle.className = 'fog-particle';
+                        particle.style.left = Math.random() * 100 + '%';
+                        particle.style.animationDelay = Math.random() * 10 + 's';
+                        particle.style.animationDuration = (Math.random() * 20 + 15) + 's';
+                        particlesContainer.appendChild(particle);
+                    }
+
+                    fogDiv.appendChild(particlesContainer);
+                }
+
                 effect.container.appendChild(fogDiv);
                 effect.currentEffect = fogDiv;
-                effect.stats.elements = 1;
-                document.getElementById(`fogElements`).textContent = '1';
+                effect.stats.elements = 3 + (this.performanceLevel === 'high' ? (intensity === 'heavy' ? 15 : intensity === 'light' ? 5 : 10) : 0);
+                document.getElementById(`fogElements`).textContent = effect.stats.elements;
             }
 
             // 创建风力特效
@@ -1118,19 +2095,70 @@
                 dustDiv.className = 'dust-effect';
                 dustDiv.dataset.intensity = 'normal';
 
-                const particleCount = this.performanceLevel === 'high' ? 30 : (this.performanceLevel === 'medium' ? 20 : 10);
+                // 创建沙尘暴背景
+                const dustBg = document.createElement('div');
+                dustBg.className = 'dust-storm-bg';
+                dustDiv.appendChild(dustBg);
+
+                // 创建遮天蔽日效果
+                const dustDarkness = document.createElement('div');
+                dustDarkness.className = 'dust-darkness';
+                dustDiv.appendChild(dustDarkness);
+
+                // 创建沙尘云团
+                for (let i = 1; i <= 3; i++) {
+                    const cloud = document.createElement('div');
+                    cloud.className = `dust-cloud dust-cloud-${i}`;
+                    cloud.style.left = Math.random() * -200 + 'px';
+                    dustDiv.appendChild(cloud);
+                }
+
+                // 创建沙尘旋涡（仅高性能模式）
+                if (this.performanceLevel === 'high') {
+                    const vortexCount = 2;
+                    for (let i = 0; i < vortexCount; i++) {
+                        const vortex = document.createElement('div');
+                        vortex.className = 'dust-vortex';
+                        vortex.style.left = Math.random() * 80 + 10 + '%';
+                        vortex.style.top = Math.random() * 60 + 20 + '%';
+                        vortex.style.animationDelay = Math.random() * 2 + 's';
+                        dustDiv.appendChild(vortex);
+                    }
+                }
+
+                // 创建沙粒容器
+                const particlesContainer = document.createElement('div');
+                particlesContainer.className = 'dust-particles';
+                dustDiv.appendChild(particlesContainer);
+
+                // 创建不同大小的沙粒
+                const particleCount = this.performanceLevel === 'high' ? 60 : (this.performanceLevel === 'medium' ? 40 : 20);
                 for (let i = 0; i < particleCount; i++) {
                     const particle = document.createElement('div');
-                    particle.className = 'dust-particle';
+
+                    // 随机选择沙粒大小
+                    const sizeType = Math.random();
+                    if (sizeType < 0.6) {
+                        particle.className = 'dust-particle dust-particle-small';
+                    } else if (sizeType < 0.9) {
+                        particle.className = 'dust-particle dust-particle-medium';
+                    } else {
+                        particle.className = 'dust-particle dust-particle-large';
+                    }
+
                     particle.style.top = Math.random() * 100 + '%';
-                    particle.style.animationDelay = Math.random() * 2 + 's';
-                    dustDiv.appendChild(particle);
+                    particle.style.animationDelay = Math.random() * 3 + 's';
+                    particle.style.animationDuration = (Math.random() * 2 + 1.5) + 's';
+                    particlesContainer.appendChild(particle);
                 }
 
                 effect.container.appendChild(dustDiv);
                 effect.currentEffect = dustDiv;
-                effect.stats.elements = particleCount + 1;
-                document.getElementById(`dustElements`).textContent = particleCount + 1;
+
+                // 计算总元素数：背景 + 遮蔽 + 3个云团 + 旋涡(高性能) + 沙粒
+                const totalElements = 2 + 3 + (this.performanceLevel === 'high' ? 2 : 0) + particleCount;
+                effect.stats.elements = totalElements;
+                document.getElementById(`dustElements`).textContent = totalElements;
             }
 
             // 创建冰雹特效
@@ -1165,10 +2193,85 @@
                     sunDiv.classList.add('sunshine-strong');
                 }
 
+                // 根据时间确定太阳位置
+                const now = new Date();
+                const hour = now.getHours();
+                let sunLeft, sunTop;
+
+                if (hour >= 6 && hour < 12) {
+                    // 上午：太阳在东边
+                    sunLeft = 20 + (hour - 6) * 5; // 20% - 50%
+                    sunTop = 30 - (hour - 6) * 2; // 30% - 18%
+                } else if (hour >= 12 && hour < 18) {
+                    // 下午：太阳在西边
+                    sunLeft = 50 + (hour - 12) * 5; // 50% - 80%
+                    sunTop = 18 + (hour - 12) * 2; // 18% - 30%
+                } else {
+                    // 默认位置（中午）
+                    sunLeft = 50;
+                    sunTop = 15;
+                }
+
+                // 创建太阳位置
+                const sunPosition = document.createElement('div');
+                sunPosition.className = 'sun-position';
+                sunPosition.style.left = sunLeft + '%';
+                sunPosition.style.top = sunTop + '%';
+                sunDiv.appendChild(sunPosition);
+
+                // 创建散射效果
+                const sunScatter = document.createElement('div');
+                sunScatter.className = 'sun-scatter';
+                sunDiv.appendChild(sunScatter);
+
+                // 创建光晕效果
+                const halo1 = document.createElement('div');
+                halo1.className = 'sun-halo sun-halo-1';
+                halo1.style.left = (sunLeft - 7.5) + '%'; // 居中光晕
+                halo1.style.top = (sunTop - 7.5) + '%';
+                sunDiv.appendChild(halo1);
+
+                const halo2 = document.createElement('div');
+                halo2.className = 'sun-halo sun-halo-2';
+                halo2.style.left = (sunLeft - 10) + '%'; // 居中光晕
+                halo2.style.top = (sunTop - 10) + '%';
+                sunDiv.appendChild(halo2);
+
+                // 创建阳光光束
+                const beamCount = this.performanceLevel === 'high' ? 4 : (this.performanceLevel === 'medium' ? 3 : 2);
+                for (let i = 1; i <= beamCount; i++) {
+                    const beam = document.createElement('div');
+                    beam.className = `sunbeam sunbeam-${i}`;
+
+                    // 调整光束位置相对于太阳
+                    const beamOffset = (i - 2.5) * 5; // 分散光束
+                    beam.style.left = (sunLeft + beamOffset) + '%';
+                    beam.style.top = sunTop + '%';
+
+                    sunDiv.appendChild(beam);
+                }
+
+                // 创建光斑效果（仅高性能模式）
+                if (this.performanceLevel === 'high') {
+                    const sparkleCount = intensity === 'strong' ? 8 : 5;
+                    for (let i = 0; i < sparkleCount; i++) {
+                        const sparkle = document.createElement('div');
+                        sparkle.className = 'sun-sparkle';
+                        sparkle.style.left = (sunLeft + (Math.random() - 0.5) * 20) + '%';
+                        sparkle.style.top = (sunTop + (Math.random() - 0.5) * 20) + '%';
+                        sparkle.style.animationDelay = Math.random() * 3 + 's';
+                        sparkle.style.animationDuration = (Math.random() * 2 + 2) + 's';
+                        sunDiv.appendChild(sparkle);
+                    }
+                }
+
                 effect.container.appendChild(sunDiv);
                 effect.currentEffect = sunDiv;
-                effect.stats.elements = 1;
-                document.getElementById(`sunshineElements`).textContent = '1';
+
+                // 计算总元素数：太阳 + 散射 + 光晕 + 光束 + 光斑(高性能)
+                const totalElements = 1 + 1 + 2 + beamCount + (this.performanceLevel === 'high' ? (intensity === 'strong' ? 8 : 5) : 0);
+                effect.stats.elements = totalElements;
+                document.getElementById(`sunshineElements`).textContent = totalElements;
             }
 
             // 创建云朵特效
@@ -1177,10 +2280,81 @@
                 cloudsDiv.className = 'clouds-effect';
                 cloudsDiv.dataset.intensity = 'normal';
 
+                // 根据时间确定云朵类型
+                const now = new Date();
+                const hour = now.getHours();
+                let cloudType = 'sunny';
+
+                if (hour >= 6 && hour < 18) {
+                    cloudType = 'sunny';
+                } else {
+                    cloudType = 'overcast';
+                }
+
+                cloudsDiv.classList.add(`clouds-${cloudType}`);
+
+                // 创建多层云朵
+                const layers = ['high', 'mid', 'low'];
+                let totalClouds = 0;
+
+                layers.forEach((layerType, layerIndex) => {
+                    const layer = document.createElement('div');
+                    layer.className = `cloud-layer cloud-layer-${layerType}`;
+
+                    // 根据性能等级确定云朵数量
+                    let cloudCount;
+                    if (this.performanceLevel === 'high') {
+                        cloudCount = layerType === 'mid' ? 4 : 3;
+                    } else if (this.performanceLevel === 'medium') {
+                        cloudCount = layerType === 'mid' ? 3 : 2;
+                    } else {
+                        cloudCount = layerType === 'mid' ? 2 : 1;
+                    }
+
+                    for (let i = 0; i < cloudCount; i++) {
+                        const cloud = document.createElement('div');
+
+                        // 随机选择云朵形状
+                        const shapeIndex = Math.floor(Math.random() * 4) + 1;
+                        cloud.className = `cloud cloud-shape-${shapeIndex} cloud-3d`;
+
+                        // 添加变形动画（仅高性能模式）
+                        if (this.performanceLevel === 'high') {
+                            cloud.classList.add('cloud-morph');
+                            cloud.style.animationDuration = (Math.random() * 10 + 15) + 's';
+                        }
+
+                        // 设置云朵位置和动画
+                        cloud.style.left = Math.random() * -300 + 'px';
+                        cloud.style.top = Math.random() * 60 + '%';
+                        cloud.style.animationDelay = Math.random() * 10 + 's';
+                        cloud.style.animationDuration = (Math.random() * 20 + 30) + 's';
+
+                        // 添加光晕效果（仅高性能模式）
+                        if (this.performanceLevel === 'high') {
+                            const glow = document.createElement('div');
+                            glow.className = 'cloud-glow';
+                            cloud.appendChild(glow);
+                        }
+
+                        // 添加阴影效果
+                        if (layerType === 'low') {
+                            const shadow = document.createElement('div');
+                            shadow.className = 'cloud-shadow';
+                            cloud.appendChild(shadow);
+                        }
+
+                        layer.appendChild(cloud);
+                        totalClouds++;
+                    }
+
+                    cloudsDiv.appendChild(layer);
+                });
+
                 effect.container.appendChild(cloudsDiv);
                 effect.currentEffect = cloudsDiv;
-                effect.stats.elements = 1;
-                document.getElementById(`cloudsElements`).textContent = '1';
+                effect.stats.elements = totalClouds;
+                document.getElementById(`cloudsElements`).textContent = totalClouds;
             }
 
             // 全局性能监控

@@ -238,31 +238,92 @@ class WeatherEffectsManager {
     this.currentEffects.push('snow');
   }
 
-  // 雷暴特效
+  // 雷暴特效 - 简化版本
   addThunderEffect() {
     const thunderDiv = document.createElement('div');
     thunderDiv.className = 'thunder-effect';
+
+    // 创建雷暴云层
+    const thunderClouds = document.createElement('div');
+    thunderClouds.className = 'thunder-clouds';
+    thunderDiv.appendChild(thunderClouds);
+
+    // 创建闪电背景闪烁
+    const lightningFlash = document.createElement('div');
+    lightningFlash.className = 'lightning-flash';
+    thunderDiv.appendChild(lightningFlash);
+
     this.effectsContainer.appendChild(thunderDiv);
     this.currentEffects.push('thunder');
+
+    // 开始简化的闪电动画循环
+    this.startSimpleLightningAnimation(lightningFlash);
   }
 
-  // 阳光特效
-  addSunshineEffect() {
+  // 简化的闪电动画循环
+  startSimpleLightningAnimation(flashElement) {
+    const createLightning = () => {
+      // 触发背景闪烁
+      flashElement.style.animation = 'none';
+      setTimeout(() => {
+        flashElement.style.animation = 'lightningFlash 0.2s ease-out';
+      }, 10);
+
+      // 随机间隔后创建下一次闪电
+      const nextDelay = Math.random() * 4000 + 2000; // 2-6秒间隔
+      setTimeout(createLightning, nextDelay);
+    };
+
+    // 开始第一次闪电
+    setTimeout(createLightning, Math.random() * 2000);
+  }
+
+  // 阳光特效 - 简化版本
+  addSunshineEffect(intensity = 'normal') {
     const sunDiv = document.createElement('div');
     sunDiv.className = 'sunshine-effect';
+
+    if (intensity === 'strong') {
+      sunDiv.classList.add('sunshine-strong');
+    }
+
+    // 创建简化的阳光效果
+    const sunGlow = document.createElement('div');
+    sunGlow.style.position = 'absolute';
+    sunGlow.style.width = '100%';
+    sunGlow.style.height = '100%';
+    sunGlow.style.background = `radial-gradient(circle at 70% 30%,
+      rgba(255, 255, 0, ${intensity === 'strong' ? 0.3 : 0.2}) 0%,
+      rgba(255, 255, 100, ${intensity === 'strong' ? 0.2 : 0.1}) 30%,
+      transparent 60%)`;
+    sunGlow.style.animation = 'sunGlow 6s ease-in-out infinite';
+
+    sunDiv.appendChild(sunGlow);
+
     this.effectsContainer.appendChild(sunDiv);
     this.currentEffects.push('sunshine');
   }
 
-  // 云层特效
+  // 云层特效 - 简化版本
   addCloudsEffect() {
     const cloudsDiv = document.createElement('div');
     cloudsDiv.className = 'clouds-effect';
+
+    // 创建简化的云朵效果
+    const cloudLayer = document.createElement('div');
+    cloudLayer.style.position = 'absolute';
+    cloudLayer.style.width = '100%';
+    cloudLayer.style.height = '100%';
+    cloudLayer.style.background = `url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 20"><defs><pattern id="clouds" x="0" y="0" width="100" height="20" patternUnits="userSpaceOnUse"><ellipse cx="20" cy="10" rx="15" ry="5" fill="rgba(255,255,255,0.3)"/><ellipse cx="60" cy="8" rx="20" ry="6" fill="rgba(255,255,255,0.2)"/><ellipse cx="85" cy="12" rx="12" ry="4" fill="rgba(255,255,255,0.25)"/></pattern></defs><rect width="100" height="20" fill="url(%23clouds)"/></svg>')`;
+    cloudLayer.style.animation = 'cloudsMove 20s linear infinite';
+
+    cloudsDiv.appendChild(cloudLayer);
+
     this.effectsContainer.appendChild(cloudsDiv);
     this.currentEffects.push('clouds');
   }
 
-  // 雾霾特效
+  // 雾霾特效 - 简化版本
   addFogEffect(visibility) {
     const fogDiv = document.createElement('div');
     fogDiv.className = 'fog-effect';
@@ -275,22 +336,45 @@ class WeatherEffectsManager {
       fogDiv.classList.add('fog-light');
     }
 
+    // 创建简化的雾气层
+    const fogLayer = document.createElement('div');
+    fogLayer.className = 'fog-layer';
+    fogLayer.style.background = `linear-gradient(to bottom,
+      rgba(200, 200, 200, ${visibility < 1 ? 0.8 : visibility < 3 ? 0.6 : 0.4}) 0%,
+      rgba(180, 180, 180, ${visibility < 1 ? 0.6 : visibility < 3 ? 0.4 : 0.2}) 50%,
+      transparent 100%)`;
+    fogLayer.style.animation = 'fogDrift 10s ease-in-out infinite';
+
+    fogDiv.appendChild(fogLayer);
+
     this.effectsContainer.appendChild(fogDiv);
     this.currentEffects.push('fog');
   }
 
-  // 沙尘特效
+  // 沙尘特效 - 简化版本
   addDustEffect() {
     const dustDiv = document.createElement('div');
     dustDiv.className = 'dust-effect';
 
-    // 添加沙尘粒子
-    for (let i = 0; i < 30; i++) {
+    // 创建简化的沙尘背景
+    const dustBg = document.createElement('div');
+    dustBg.className = 'dust-storm-bg';
+    dustDiv.appendChild(dustBg);
+
+    // 创建简化的沙粒效果
+    const particleCount = this.performanceLevel === 'high' ? 30 : this.performanceLevel === 'medium' ? 20 : 10;
+    for (let i = 0; i < particleCount; i++) {
       const particle = document.createElement('div');
       particle.className = 'dust-particle';
+      particle.style.left = Math.random() * 100 + '%';
       particle.style.top = Math.random() * 100 + '%';
+      particle.style.width = Math.random() * 3 + 1 + 'px';
+      particle.style.height = particle.style.width;
+      particle.style.background = `rgba(${139 + Math.random() * 50}, ${69 + Math.random() * 30}, 19, ${0.3 + Math.random() * 0.5})`;
+      particle.style.borderRadius = '50%';
+      particle.style.position = 'absolute';
+      particle.style.animation = `dustParticleFly ${Math.random() * 3 + 2}s linear infinite`;
       particle.style.animationDelay = Math.random() * 2 + 's';
-      particle.style.animationDuration = (Math.random() * 2 + 1) + 's';
       dustDiv.appendChild(particle);
     }
 
