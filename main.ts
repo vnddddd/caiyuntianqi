@@ -639,31 +639,15 @@ async function handler(req: Request, info: Deno.ServeHandlerInfo): Promise<Respo
     }
   }
 
-  // 背景图片文件
-  if (pathname === "/白天.png") {
+  // 背景图片文件 - 使用serveDir处理
+  if (pathname === "/白天.png" || pathname === "/晚上.webp") {
     try {
-      const file = await Deno.readFile("./白天.png");
-      return new Response(file, {
-        headers: {
-          "Content-Type": "image/png",
-          "Cache-Control": "public, max-age=86400" // 缓存1天
-        }
+      return await serveDir(req, {
+        fsRoot: ".",
+        urlRoot: "",
       });
-    } catch {
-      return new Response("图片未找到", { status: 404 });
-    }
-  }
-
-  if (pathname === "/晚上.webp") {
-    try {
-      const file = await Deno.readFile("./晚上.webp");
-      return new Response(file, {
-        headers: {
-          "Content-Type": "image/webp",
-          "Cache-Control": "public, max-age=86400" // 缓存1天
-        }
-      });
-    } catch {
+    } catch (error) {
+      console.error("图片文件服务失败:", error);
       return new Response("图片未找到", { status: 404 });
     }
   }
