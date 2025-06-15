@@ -29,116 +29,25 @@ body {
   font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
   line-height: 1.6;
   color: var(--text-primary);
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  background: linear-gradient(135deg, #87CEEB 0%, #98D8E8 50%, #B0E0E6 100%);
   min-height: 100vh;
   transition: background 0.8s ease-in-out;
+  background-attachment: fixed;
 }
 
-/* 沉浸式背景样式 */
-/* 晴天背景 */
-body.bg-hot-sunny {
-  background: linear-gradient(135deg, #ff9a56 0%, #ff6b35 50%, #f7931e 100%);
+/* 时间背景 - 白天背景 (6:00-19:00) */
+body.time-day {
+  background: linear-gradient(135deg, #87CEEB 0%, #98D8E8 50%, #B0E0E6 100%);
+  background-attachment: fixed;
 }
 
-body.bg-warm-sunny {
-  background: linear-gradient(135deg, #ffeaa7 0%, #fdcb6e 50%, #e17055 100%);
+/* 时间背景 - 夜晚背景 (19:00-6:00) */
+body.time-night {
+  background: linear-gradient(135deg, #2C3E50 0%, #34495E 50%, #4A6741 100%);
+  background-attachment: fixed;
 }
 
-body.bg-cool-sunny {
-  background: linear-gradient(135deg, #74b9ff 0%, #0984e3 50%, #6c5ce7 100%);
-}
-
-/* 晴夜背景 */
-body.bg-clear-night {
-  background: linear-gradient(135deg, #2d3436 0%, #636e72 50%, #74b9ff 100%);
-}
-
-/* 多云背景 */
-body.bg-warm-cloudy {
-  background: linear-gradient(135deg, #ddd6fe 0%, #a78bfa 50%, #8b5cf6 100%);
-}
-
-body.bg-cool-cloudy {
-  background: linear-gradient(135deg, #cbd5e1 0%, #94a3b8 50%, #64748b 100%);
-}
-
-/* 雨天背景 */
-body.bg-light-rain {
-  background: linear-gradient(135deg, #bfdbfe 0%, #60a5fa 50%, #3b82f6 100%);
-}
-
-body.bg-moderate-rain {
-  background: linear-gradient(135deg, #93c5fd 0%, #2563eb 50%, #1d4ed8 100%);
-}
-
-body.bg-heavy-rain {
-  background: linear-gradient(135deg, #475569 0%, #334155 50%, #1e293b 100%);
-}
-
-/* 雪天背景 */
-body.bg-snow {
-  background: linear-gradient(135deg, #f8fafc 0%, #e2e8f0 50%, #cbd5e1 100%);
-}
-
-/* 雾霾背景 */
-body.bg-haze {
-  background: linear-gradient(135deg, #fef3c7 0%, #fbbf24 50%, #d97706 100%);
-}
-
-/* 默认背景 */
-body.bg-default {
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-}
-
-/* 背景动画效果 */
-@keyframes backgroundShift {
-  0% { background-position: 0% 50%; }
-  50% { background-position: 100% 50%; }
-  100% { background-position: 0% 50%; }
-}
-
-/* 为所有背景添加动画 */
-body[class*="bg-"] {
-  background-size: 200% 200%;
-  animation: backgroundShift 20s ease infinite;
-}
-
-/* 特殊天气效果 */
-body.bg-heavy-rain::before {
-  content: '';
-  position: fixed;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
-  background: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><defs><pattern id="rain" x="0" y="0" width="10" height="10" patternUnits="userSpaceOnUse"><line x1="5" y1="0" x2="5" y2="10" stroke="rgba(255,255,255,0.3)" stroke-width="0.5"/></pattern></defs><rect width="100" height="100" fill="url(%23rain)"/></svg>');
-  pointer-events: none;
-  z-index: 1;
-  animation: rainFall 1s linear infinite;
-}
-
-@keyframes rainFall {
-  0% { transform: translateY(-10px); }
-  100% { transform: translateY(10px); }
-}
-
-body.bg-snow::before {
-  content: '';
-  position: fixed;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
-  background: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><defs><pattern id="snow" x="0" y="0" width="20" height="20" patternUnits="userSpaceOnUse"><circle cx="10" cy="10" r="1" fill="rgba(255,255,255,0.8)"/></pattern></defs><rect width="100" height="100" fill="url(%23snow)"/></svg>');
-  pointer-events: none;
-  z-index: 1;
-  animation: snowFall 3s linear infinite;
-}
-
-@keyframes snowFall {
-  0% { transform: translateY(-20px); }
-  100% { transform: translateY(20px); }
-}
+/* 移除旧的天气背景样式，改为基于时间的背景 */
 
 /* 容器布局 */
 .app-container {

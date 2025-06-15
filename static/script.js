@@ -18,6 +18,8 @@ class WeatherApp {
   // 初始化应用
   init() {
     this.bindEvents();
+    // 立即设置基于时间的背景
+    this.updateTimeBasedBackground();
     this.checkLocationPermission();
   }
 
@@ -508,67 +510,31 @@ class WeatherApp {
     document.getElementById('visibility').textContent = `${current.visibility} km`;
     document.getElementById('pressure').textContent = `${current.pressure} hPa`;
 
-    // 更新沉浸式背景
-    this.updateImmersiveBackground(current);
+    // 更新基于时间的背景
+    this.updateTimeBasedBackground();
   }
 
-  // 根据天气状况和温度更新沉浸式背景
-  updateImmersiveBackground(current) {
+  // 根据当前时间更新背景（白天/夜晚）
+  updateTimeBasedBackground() {
     const body = document.body;
-    const temperature = current.temperature;
-    const skycon = current.skycon;
+    const now = new Date();
+    const hour = now.getHours();
 
-    // 移除之前的背景类
-    body.className = body.className.replace(/\bbg-\w+/g, '');
+    // 移除之前的时间背景类
+    body.classList.remove('time-day', 'time-night');
 
-    // 根据天气状况确定背景类型
-    let backgroundClass = '';
-
-    if (skycon.includes('CLEAR_DAY')) {
-      // 晴天 - 根据温度选择背景
-      if (temperature >= 30) {
-        backgroundClass = 'bg-hot-sunny';
-      } else if (temperature >= 20) {
-        backgroundClass = 'bg-warm-sunny';
-      } else {
-        backgroundClass = 'bg-cool-sunny';
-      }
-    } else if (skycon.includes('CLEAR_NIGHT')) {
-      // 晴夜
-      backgroundClass = 'bg-clear-night';
-    } else if (skycon.includes('CLOUDY') || skycon.includes('PARTLY_CLOUDY')) {
-      // 多云/阴天
-      if (temperature >= 25) {
-        backgroundClass = 'bg-warm-cloudy';
-      } else {
-        backgroundClass = 'bg-cool-cloudy';
-      }
-    } else if (skycon.includes('RAIN')) {
-      // 雨天
-      if (skycon.includes('LIGHT')) {
-        backgroundClass = 'bg-light-rain';
-      } else if (skycon.includes('HEAVY') || skycon.includes('STORM')) {
-        backgroundClass = 'bg-heavy-rain';
-      } else {
-        backgroundClass = 'bg-moderate-rain';
-      }
-    } else if (skycon.includes('SNOW')) {
-      // 雪天
-      backgroundClass = 'bg-snow';
-    } else if (skycon.includes('HAZE')) {
-      // 雾霾
-      backgroundClass = 'bg-haze';
+    // 判断是白天还是夜晚
+    // 白天：6:00-19:00 (6点到19点)
+    // 夜晚：19:00-6:00 (19点到次日6点)
+    if (hour >= 6 && hour < 19) {
+      // 白天背景
+      body.classList.add('time-day');
+      console.log('应用白天背景，当前时间:', hour + ':00');
     } else {
-      // 默认背景
-      backgroundClass = 'bg-default';
+      // 夜晚背景
+      body.classList.add('time-night');
+      console.log('应用夜晚背景，当前时间:', hour + ':00');
     }
-
-    // 应用背景类
-    body.classList.add(backgroundClass);
-
-    // 添加温度相关的数据属性，用于CSS选择器
-    body.setAttribute('data-temperature', temperature);
-    body.setAttribute('data-weather', skycon);
   }
 
   // 更新空气质量信息
