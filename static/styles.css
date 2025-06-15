@@ -18,11 +18,11 @@
   --transition: all 0.3s ease;
 
   /* 液态玻璃设计系统变量 */
-  /* 透明度级别 */
-  --glass-opacity-light: rgba(255, 255, 255, 0.1);
-  --glass-opacity-medium: rgba(255, 255, 255, 0.15);
-  --glass-opacity-strong: rgba(255, 255, 255, 0.25);
-  --glass-opacity-ultra: rgba(255, 255, 255, 0.35);
+  /* 透明度级别 - 增强可见性 */
+  --glass-opacity-light: rgba(255, 255, 255, 0.2);
+  --glass-opacity-medium: rgba(255, 255, 255, 0.3);
+  --glass-opacity-strong: rgba(255, 255, 255, 0.4);
+  --glass-opacity-ultra: rgba(255, 255, 255, 0.5);
 
   /* 背景模糊强度 */
   --glass-blur-light: blur(8px);
@@ -30,10 +30,10 @@
   --glass-blur-strong: blur(25px);
   --glass-blur-ultra: blur(35px);
 
-  /* 边框颜色 */
-  --glass-border-light: rgba(255, 255, 255, 0.1);
-  --glass-border-medium: rgba(255, 255, 255, 0.2);
-  --glass-border-strong: rgba(255, 255, 255, 0.3);
+  /* 边框颜色 - 增强可见性 */
+  --glass-border-light: rgba(255, 255, 255, 0.2);
+  --glass-border-medium: rgba(255, 255, 255, 0.3);
+  --glass-border-strong: rgba(255, 255, 255, 0.4);
 
   /* 阴影效果 */
   --glass-shadow-light: 0 4px 16px rgba(0, 0, 0, 0.05);
@@ -1757,20 +1757,20 @@ body.time-night {
   }
 }
 
-/* 为主要卡片添加微妙的呼吸动画 */
-.current-weather-card,
+/* 暂时移除呼吸动画，避免与悬停效果冲突 */
+/* .current-weather-card,
 .hourly-forecast-card,
 .daily-forecast-card,
 .weather-tips-card {
-  animation: glassBreath var(--glass-pulse-duration) ease-in-out infinite;
-}
+  animation: glassBreath 4s ease-in-out infinite;
+} */
 
-/* 悬停时停止呼吸动画，增强交互感 */
+/* 悬停效果保持简单 */
 .current-weather-card:hover,
 .hourly-forecast-card:hover,
 .daily-forecast-card:hover,
 .weather-tips-card:hover {
-  animation: none;
+  /* 悬停时不做特殊处理，让CSS transition处理 */
 }
 
 /* 液态玻璃元素的入场动画 */
@@ -1789,21 +1789,21 @@ body.time-night {
   }
 }
 
-/* 为卡片添加入场动画 */
+/* 简化的入场动画 - 移除复杂的多重动画 */
 .current-weather-card {
-  animation: glassSlideIn 0.8s ease-out, glassBreath var(--glass-pulse-duration) ease-in-out infinite 0.8s;
+  animation: glassSlideIn 0.6s ease-out;
 }
 
 .hourly-forecast-card {
-  animation: glassSlideIn 0.8s ease-out 0.2s both, glassBreath var(--glass-pulse-duration) ease-in-out infinite 1s;
+  animation: glassSlideIn 0.6s ease-out 0.1s both;
 }
 
 .daily-forecast-card {
-  animation: glassSlideIn 0.8s ease-out 0.4s both, glassBreath var(--glass-pulse-duration) ease-in-out infinite 1.2s;
+  animation: glassSlideIn 0.6s ease-out 0.2s both;
 }
 
 .weather-tips-card {
-  animation: glassSlideIn 0.8s ease-out 0.6s both, glassBreath var(--glass-pulse-duration) ease-in-out infinite 1.4s;
+  animation: glassSlideIn 0.6s ease-out 0.3s both;
 }
 
 /* 液态玻璃边框光效 */
