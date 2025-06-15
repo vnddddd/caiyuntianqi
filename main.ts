@@ -639,6 +639,35 @@ async function handler(req: Request, info: Deno.ServeHandlerInfo): Promise<Respo
     }
   }
 
+  // 背景图片文件
+  if (pathname === "/白天.png") {
+    try {
+      const file = await Deno.readFile("./白天.png");
+      return new Response(file, {
+        headers: {
+          "Content-Type": "image/png",
+          "Cache-Control": "public, max-age=86400" // 缓存1天
+        }
+      });
+    } catch {
+      return new Response("图片未找到", { status: 404 });
+    }
+  }
+
+  if (pathname === "/晚上.webp") {
+    try {
+      const file = await Deno.readFile("./晚上.webp");
+      return new Response(file, {
+        headers: {
+          "Content-Type": "image/webp",
+          "Cache-Control": "public, max-age=86400" // 缓存1天
+        }
+      });
+    } catch {
+      return new Response("图片未找到", { status: 404 });
+    }
+  }
+
   // 其他静态资源
   if (pathname.startsWith("/static/")) {
     try {
