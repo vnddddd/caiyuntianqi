@@ -552,20 +552,25 @@ body.time-night {
   overflow-y: auto;
 }
 
-/* 当前位置操作区域 */
+/* 当前位置操作区域 - 液态玻璃风格 */
 .current-location-actions {
   margin-bottom: 1.5rem;
   padding: 1rem;
-  background: var(--bg-secondary);
-  border-radius: var(--border-radius);
-  border: 1px solid var(--border-color);
+  background: var(--glass-opacity-medium);
+  backdrop-filter: var(--glass-blur-medium);
+  -webkit-backdrop-filter: var(--glass-blur-medium);
+  border: 1px solid var(--glass-border-medium);
+  border-radius: var(--glass-radius-medium);
+  box-shadow: var(--glass-shadow-medium);
+  transition: var(--glass-transition-fast);
 }
 
 .current-location-info h4 {
   margin: 0 0 0.75rem 0;
   font-size: 1rem;
   font-weight: 600;
-  color: var(--text-primary);
+  color: white; /* 确保在深色背景下清晰可见 */
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.3); /* 添加文字阴影增强可读性 */
 }
 
 .current-location-display {
