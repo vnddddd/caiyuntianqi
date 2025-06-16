@@ -434,6 +434,659 @@ class WeatherEffectsManager {
   }
 }
 
+// 现代化天气效果管理器 - 集成高级特效
+class AdvancedWeatherEffectsManager extends WeatherEffectsManager {
+  constructor() {
+    super();
+    this.advancedEffectsContainer = document.getElementById('advancedEffects');
+    this.basicEffectsContainer = document.getElementById('basicEffects');
+    this.particlesEngine = null;
+    this.gsapTimelines = new Map();
+    this.lightningGenerator = null;
+    this.cloudGenerators = {
+      threejs: null,
+      canvas: null,
+      dom: null
+    };
+    this.performanceMonitor = null;
+    this.isAdvancedMode = false;
+    this.currentWeatherType = null;
+    this.isTransitioning = false;
+
+    // 监听高级特效库加载完成事件
+    if (window.advancedEffectsReady) {
+      this.initAdvancedEffects();
+    } else {
+      window.addEventListener('advancedEffectsReady', () => {
+        this.initAdvancedEffects();
+      });
+    }
+  }
+
+  // 初始化高级特效
+  async initAdvancedEffects() {
+    try {
+      console.log('🚀 开始初始化高级天气特效...');
+
+      // 检查必要的库是否已加载
+      if (!window.tsParticles || !window.gsap) {
+        throw new Error('必要的库未加载完成');
+      }
+
+      // 初始化tsParticles
+      await this.initParticles();
+
+      // 初始化GSAP
+      this.initGSAP();
+
+      // 初始化性能监控
+      this.initPerformanceMonitor();
+
+      // 显示高级特效容器
+      if (this.advancedEffectsContainer) {
+        this.advancedEffectsContainer.style.display = 'block';
+      }
+
+      // 隐藏基础特效容器
+      if (this.basicEffectsContainer) {
+        this.basicEffectsContainer.style.display = 'none';
+      }
+
+      this.isAdvancedMode = true;
+      console.log('✅ 高级天气特效初始化完成');
+
+      // 如果有当前天气，重新应用特效
+      if (this.lastWeatherData) {
+        this.applyWeatherEffects(this.lastWeatherData);
+      }
+
+    } catch (error) {
+      console.warn('⚠️ 高级特效初始化失败，使用基础特效:', error);
+      this.fallbackToBasicEffects();
+    }
+  }
+
+  // 降级到基础特效
+  fallbackToBasicEffects() {
+    this.isAdvancedMode = false;
+
+    if (this.advancedEffectsContainer) {
+      this.advancedEffectsContainer.style.display = 'none';
+    }
+
+    if (this.basicEffectsContainer) {
+      this.basicEffectsContainer.style.display = 'block';
+    }
+
+    console.log('📱 使用基础天气特效模式');
+  }
+
+  // 初始化tsParticles
+  async initParticles() {
+    if (!window.tsParticles) {
+      throw new Error('tsParticles未加载');
+    }
+
+    this.particlesEngine = window.tsParticles;
+    await this.particlesEngine.load("particles-container", {
+      particles: {
+        number: { value: 0 },
+        color: { value: "#ffffff" },
+        shape: { type: "circle" },
+        opacity: { value: 0.5 },
+        size: { value: 3 },
+        move: {
+          enable: false,
+          speed: 6
+        }
+      },
+      interactivity: {
+        detectsOn: "canvas",
+        events: {
+          resize: true
+        }
+      },
+      detectRetina: true
+    });
+  }
+
+  // 初始化GSAP
+  initGSAP() {
+    if (!window.gsap) {
+      throw new Error('GSAP未加载');
+    }
+
+    // 设置默认动画属性
+    window.gsap.defaults({
+      duration: 1,
+      ease: "power2.out"
+    });
+  }
+
+  // 初始化性能监控
+  initPerformanceMonitor() {
+    this.performanceMonitor = new PerformanceMonitor();
+    this.performanceMonitor.start();
+  }
+
+  // 重写父类的应用天气特效方法
+  applyWeatherEffects(weatherData) {
+    if (this.isAdvancedMode) {
+      this.applyAdvancedWeatherEffects(weatherData);
+    } else {
+      // 使用父类的基础特效
+      super.applyWeatherEffects(weatherData);
+    }
+  }
+
+  // 应用高级天气特效
+  async applyAdvancedWeatherEffects(weatherData) {
+    if (this.isTransitioning) return;
+
+    this.isTransitioning = true;
+    this.lastWeatherData = weatherData;
+
+    try {
+      // 清除当前特效
+      await this.clearAdvancedEffects();
+
+      const { current } = weatherData;
+      const skycon = current.skycon;
+      const windSpeed = current.wind_speed || 0;
+      const visibility = current.visibility || 10;
+
+      console.log('🌤️ 应用高级天气特效:', skycon);
+
+      // 根据天气状况应用对应的高级特效
+      if (skycon.includes('RAIN')) {
+        await this.createAdvancedRainEffect(skycon);
+      } else if (skycon.includes('SNOW')) {
+        await this.createAdvancedSnowEffect(skycon);
+      } else if (skycon.includes('STORM')) {
+        await this.createAdvancedThunderEffect();
+      } else if (skycon.includes('HAIL')) {
+        await this.createAdvancedHailEffect();
+      } else if (skycon.includes('HAZE') || visibility < 5) {
+        await this.createAdvancedFogEffect(visibility);
+      } else if (skycon.includes('DUST') || skycon.includes('SAND') || skycon.includes('WIND')) {
+        await this.createAdvancedDustEffect();
+      } else if (skycon.includes('CLEAR_DAY')) {
+        await this.createAdvancedSunshineEffect();
+      } else if (skycon.includes('CLOUDY') || skycon.includes('PARTLY_CLOUDY')) {
+        await this.createAdvancedCloudyEffect();
+      }
+
+      // 风力特效
+      if (windSpeed > 10) {
+        this.createAdvancedWindEffect(windSpeed);
+      }
+
+      this.currentWeatherType = skycon;
+
+    } catch (error) {
+      console.error('应用高级特效失败:', error);
+      // 降级到基础特效
+      super.applyWeatherEffects(weatherData);
+    } finally {
+      this.isTransitioning = false;
+    }
+  }
+
+  // 清除所有高级特效
+  async clearAdvancedEffects() {
+    try {
+      // 清除粒子效果
+      if (this.particlesEngine) {
+        await this.particlesEngine.load("particles-container", {
+          particles: { number: { value: 0 } }
+        });
+      }
+
+      // 清除GSAP动画
+      this.gsapTimelines.forEach((timeline) => {
+        try {
+          timeline.kill();
+        } catch (error) {
+          console.warn('清除GSAP动画失败:', error);
+        }
+      });
+      this.gsapTimelines.clear();
+
+      // 清除云朵效果
+      Object.values(this.cloudGenerators).forEach(generator => {
+        if (generator && typeof generator.clear === 'function') {
+          generator.clear();
+        }
+      });
+
+      // 清除闪电效果
+      const lightningContainer = document.getElementById('lightning-container');
+      if (lightningContainer) {
+        lightningContainer.innerHTML = '';
+      }
+
+      // 重置容器状态
+      if (window.gsap) {
+        window.gsap.set('.main-content', { x: 0, rotation: 0 });
+      }
+
+    } catch (error) {
+      console.error('清除高级特效失败:', error);
+    }
+  }
+
+  // 重写父类的清除方法
+  clearAllEffects() {
+    if (this.isAdvancedMode) {
+      this.clearAdvancedEffects();
+    } else {
+      super.clearAllEffects();
+    }
+  }
+
+  // 高级雨天特效
+  async createAdvancedRainEffect(intensity) {
+    const particleCount = this.performanceLevel === 'high' ? 300 :
+                         this.performanceLevel === 'medium' ? 200 : 100;
+    const speed = intensity.includes('HEAVY') ? 20 :
+                  intensity.includes('LIGHT') ? 10 : 15;
+
+    await this.particlesEngine.load("particles-container", {
+      particles: {
+        number: { value: particleCount },
+        color: { value: "#ffffff" },
+        shape: { type: "circle" },
+        opacity: { value: 0.6, random: true },
+        size: { value: 2, random: true },
+        move: {
+          enable: true,
+          speed: speed,
+          direction: "bottom",
+          straight: true,
+          outModes: { default: "out" }
+        }
+      },
+      detectRetina: true,
+      fpsLimit: this.performanceLevel === 'low' ? 30 : 60
+    });
+
+    this.changeBackgroundTone('#1a237e', '#283593');
+  }
+
+  // 高级雪天特效
+  async createAdvancedSnowEffect(intensity) {
+    const particleCount = this.performanceLevel === 'high' ? 150 :
+                         this.performanceLevel === 'medium' ? 100 : 60;
+
+    await this.particlesEngine.load("particles-container", {
+      particles: {
+        number: { value: particleCount },
+        color: { value: "#ffffff" },
+        shape: { type: "circle" },
+        opacity: { value: 0.8, random: true },
+        size: { value: 4, random: true },
+        move: {
+          enable: true,
+          speed: 3,
+          direction: "bottom",
+          random: true,
+          straight: false,
+          outModes: { default: "out" }
+        }
+      },
+      detectRetina: true,
+      fpsLimit: this.performanceLevel === 'low' ? 30 : 60
+    });
+
+    this.changeBackgroundTone('#37474f', '#546e7a');
+  }
+
+  // 高级雷暴特效
+  async createAdvancedThunderEffect() {
+    // 创建大雨效果
+    await this.createAdvancedRainEffect('HEAVY_RAIN');
+
+    // 创建闪电效果
+    this.createLightningEffect();
+
+    this.changeBackgroundTone('#1a1a1a', '#2d2d2d');
+  }
+
+  // 闪电效果
+  createLightningEffect() {
+    if (!window.gsap) return;
+
+    const createLightning = () => {
+      const lightningTimeline = window.gsap.timeline({
+        repeat: -1,
+        repeatDelay: 4 + Math.random() * 5
+      });
+
+      lightningTimeline
+        .to('body', {
+          duration: 0.05,
+          backgroundColor: 'rgba(255, 255, 255, 0.3)',
+          ease: "power4.out"
+        })
+        .to('body', {
+          duration: 0.1,
+          backgroundColor: 'transparent',
+          ease: "power4.out"
+        })
+        .to('body', {
+          duration: 0.03,
+          backgroundColor: 'rgba(255, 255, 255, 0.2)',
+          ease: "power4.out"
+        })
+        .to('body', {
+          duration: 0.3,
+          backgroundColor: 'transparent',
+          ease: "power4.out"
+        });
+
+      this.gsapTimelines.set('lightning', lightningTimeline);
+    };
+
+    createLightning();
+  }
+
+  // 高级晴天特效
+  async createAdvancedSunshineEffect() {
+    const particleCount = this.performanceLevel === 'high' ? 50 : 30;
+
+    await this.particlesEngine.load("particles-container", {
+      particles: {
+        number: { value: particleCount },
+        color: { value: "#ffeb3b" },
+        shape: { type: "circle" },
+        opacity: {
+          value: 0.6,
+          random: true,
+          animation: {
+            enable: true,
+            speed: 2,
+            minimumValue: 0.3,
+            sync: false
+          }
+        },
+        size: { value: 3, random: true },
+        move: {
+          enable: true,
+          speed: 1,
+          direction: "none",
+          random: true,
+          straight: false
+        }
+      },
+      detectRetina: true,
+      fpsLimit: this.performanceLevel === 'low' ? 30 : 60
+    });
+
+    this.changeBackgroundTone('#1976d2', '#42a5f5');
+  }
+
+  // 高级多云特效
+  async createAdvancedCloudyEffect() {
+    // 清除粒子效果
+    await this.particlesEngine.load("particles-container", {
+      particles: { number: { value: 0 } }
+    });
+
+    // 创建云朵效果（优先使用Canvas，性能更好）
+    this.createCanvasCloudEffect();
+
+    this.changeBackgroundTone('#546e7a', '#78909c');
+  }
+
+  // Canvas云朵效果
+  createCanvasCloudEffect() {
+    const canvas = document.getElementById('canvas-cloud-container');
+    if (!canvas) return;
+
+    const ctx = canvas.getContext('2d');
+    canvas.width = window.innerWidth;
+    canvas.height = window.innerHeight;
+
+    const clouds = [];
+    const maxClouds = this.performanceLevel === 'high' ? 8 : 5;
+
+    // 生成云朵
+    for (let i = 0; i < maxClouds; i++) {
+      clouds.push({
+        x: -200 - Math.random() * 100,
+        y: Math.random() * (canvas.height * 0.6),
+        width: 150 + Math.random() * 200,
+        height: 75 + Math.random() * 100,
+        speed: 0.3 + Math.random() * 0.8,
+        opacity: 0.6 + Math.random() * 0.3
+      });
+    }
+
+    const animate = () => {
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+      clouds.forEach((cloud, index) => {
+        cloud.x += cloud.speed;
+
+        // 如果云朵移出屏幕，重新生成
+        if (cloud.x > canvas.width + 200) {
+          cloud.x = -200 - Math.random() * 100;
+          cloud.y = Math.random() * (canvas.height * 0.6);
+        }
+
+        // 绘制云朵
+        ctx.save();
+        ctx.globalAlpha = cloud.opacity;
+        ctx.fillStyle = '#ffffff';
+
+        // 简化的云朵形状
+        ctx.beginPath();
+        ctx.arc(cloud.x, cloud.y, cloud.width * 0.3, 0, Math.PI * 2);
+        ctx.arc(cloud.x + cloud.width * 0.3, cloud.y, cloud.width * 0.4, 0, Math.PI * 2);
+        ctx.arc(cloud.x + cloud.width * 0.6, cloud.y, cloud.width * 0.3, 0, Math.PI * 2);
+        ctx.fill();
+
+        ctx.restore();
+      });
+
+      if (this.currentWeatherType && this.currentWeatherType.includes('CLOUDY')) {
+        requestAnimationFrame(animate);
+      }
+    };
+
+    animate();
+  }
+
+  // 高级雾霾特效
+  async createAdvancedFogEffect(visibility) {
+    const particleCount = this.performanceLevel === 'high' ? 80 : 50;
+
+    await this.particlesEngine.load("particles-container", {
+      particles: {
+        number: { value: particleCount },
+        color: { value: "#cccccc" },
+        shape: { type: "circle" },
+        opacity: {
+          value: 0.3,
+          random: true,
+          animation: {
+            enable: true,
+            speed: 1,
+            minimumValue: 0.1,
+            sync: false
+          }
+        },
+        size: { value: 30, random: true },
+        move: {
+          enable: true,
+          speed: 0.5,
+          direction: "none",
+          random: true,
+          straight: false
+        }
+      },
+      detectRetina: true,
+      fpsLimit: this.performanceLevel === 'low' ? 30 : 60
+    });
+
+    this.changeBackgroundTone('#424242', '#616161');
+  }
+
+  // 高级沙尘特效
+  async createAdvancedDustEffect() {
+    const particleCount = this.performanceLevel === 'high' ? 180 : 100;
+
+    await this.particlesEngine.load("particles-container", {
+      particles: {
+        number: { value: particleCount },
+        color: { value: "#d4a574" },
+        shape: { type: "circle" },
+        opacity: { value: 0.7, random: true },
+        size: { value: 3, random: true },
+        move: {
+          enable: true,
+          speed: 12,
+          direction: "right",
+          random: true,
+          straight: false,
+          outModes: { default: "out" }
+        }
+      },
+      detectRetina: true,
+      fpsLimit: this.performanceLevel === 'low' ? 30 : 60
+    });
+
+    this.changeBackgroundTone('#8d6e63', '#a1887f');
+  }
+
+  // 高级冰雹特效
+  async createAdvancedHailEffect() {
+    const particleCount = this.performanceLevel === 'high' ? 80 : 50;
+
+    await this.particlesEngine.load("particles-container", {
+      particles: {
+        number: { value: particleCount },
+        color: { value: "#ffffff" },
+        shape: { type: "circle" },
+        opacity: { value: { min: 0.8, max: 1 } },
+        size: { value: { min: 4, max: 10 } },
+        move: {
+          enable: true,
+          speed: { min: 8, max: 15 },
+          direction: "bottom",
+          straight: true,
+          outModes: { default: "out" },
+          gravity: {
+            enable: true,
+            acceleration: 1.5,
+            maxSpeed: 20
+          }
+        }
+      },
+      detectRetina: true,
+      fpsLimit: this.performanceLevel === 'low' ? 30 : 60
+    });
+
+    this.changeBackgroundTone('#263238', '#37474f');
+  }
+
+  // 高级风力特效
+  createAdvancedWindEffect(windSpeed) {
+    if (!window.gsap) return;
+
+    // 创建摇摆效果
+    const swayTimeline = window.gsap.timeline({
+      repeat: -1,
+      yoyo: true
+    });
+
+    const intensity = windSpeed > 30 ? 5 : windSpeed > 15 ? 3 : 2;
+    const duration = windSpeed > 30 ? 1.5 : 2;
+
+    swayTimeline.to('.main-content', {
+      duration: duration,
+      x: intensity,
+      rotation: 0.5,
+      ease: "power2.inOut"
+    });
+
+    this.gsapTimelines.set('sway', swayTimeline);
+  }
+
+  // 改变背景色调
+  changeBackgroundTone(color1, color2) {
+    if (!window.gsap) return;
+
+    const backgroundElement = document.getElementById('background-animation');
+    if (backgroundElement) {
+      window.gsap.to(backgroundElement, {
+        duration: 2,
+        background: `linear-gradient(135deg, ${color1} 0%, ${color2} 100%)`,
+        ease: "power2.out"
+      });
+    }
+  }
+}
+
+// 性能监控类
+class PerformanceMonitor {
+  constructor() {
+    this.fps = 0;
+    this.frameCount = 0;
+    this.lastTime = performance.now();
+    this.particleCount = 0;
+    this.activeAnimations = 0;
+    this.memoryUsage = 0;
+  }
+
+  start() {
+    this.monitor();
+    setInterval(() => this.updateDisplay(), 1000);
+  }
+
+  monitor() {
+    this.frameCount++;
+    const currentTime = performance.now();
+
+    if (currentTime - this.lastTime >= 1000) {
+      this.fps = Math.round(this.frameCount * 1000 / (currentTime - this.lastTime));
+      this.frameCount = 0;
+      this.lastTime = currentTime;
+      this.updateMemoryUsage();
+    }
+
+    requestAnimationFrame(() => this.monitor());
+  }
+
+  updateMemoryUsage() {
+    if (performance.memory) {
+      this.memoryUsage = Math.round(performance.memory.usedJSHeapSize / 1024 / 1024);
+    }
+  }
+
+  updateDisplay() {
+    const fpsElement = document.getElementById('fps');
+    const memoryElement = document.getElementById('memory-usage');
+    const effectModeElement = document.getElementById('effect-mode');
+
+    if (fpsElement) {
+      fpsElement.textContent = this.fps;
+      fpsElement.style.color = this.fps >= 50 ? '#4caf50' :
+                               this.fps >= 30 ? '#ff9800' : '#f44336';
+    }
+
+    if (memoryElement) {
+      memoryElement.textContent = this.memoryUsage + ' MB';
+    }
+
+    if (effectModeElement && window.weatherApp && window.weatherApp.weatherEffects) {
+      effectModeElement.textContent = window.weatherApp.weatherEffects.isAdvancedMode ? '高级' : '基础';
+    }
+  }
+}
+
+
+
 class WeatherApp {
   constructor() {
     this.currentLocation = null;
@@ -443,7 +1096,7 @@ class WeatherApp {
     this.isLoading = false;
     this.favoriteLocations = this.loadFavoriteLocations();
     this.defaultLocation = this.loadDefaultLocation();
-    this.weatherEffects = new WeatherEffectsManager();
+    this.weatherEffects = new AdvancedWeatherEffectsManager();
     this.init();
   }
 
@@ -1386,5 +2039,5 @@ class WeatherApp {
 
 // 页面加载完成后初始化应用
 document.addEventListener('DOMContentLoaded', () => {
-  new WeatherApp();
+  window.weatherApp = new WeatherApp();
 });

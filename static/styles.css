@@ -122,6 +122,136 @@ body.time-night {
   overflow: hidden;
 }
 
+/* 基础特效容器 */
+.basic-effects {
+  position: absolute;
+  width: 100%;
+  height: 100%;
+  top: 0;
+  left: 0;
+}
+
+/* 高级特效容器 */
+.advanced-effects {
+  position: absolute;
+  width: 100%;
+  height: 100%;
+  top: 0;
+  left: 0;
+}
+
+/* 粒子效果容器 */
+#particles-container {
+  position: absolute;
+  width: 100%;
+  height: 100%;
+  top: 0;
+  left: 0;
+}
+
+/* 闪电效果容器 */
+.lightning-container {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+  z-index: 5;
+}
+
+.lightning-svg {
+  position: absolute;
+  width: 100%;
+  height: 100%;
+  opacity: 0;
+}
+
+.lightning-path {
+  stroke: #ffffff;
+  stroke-width: 3;
+  fill: none;
+  filter: drop-shadow(0 0 10px #4facfe) drop-shadow(0 0 20px #ffffff);
+}
+
+/* 云朵容器 */
+.cloud-container {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+  z-index: 2;
+}
+
+/* Three.js 3D云朵容器 */
+.threejs-cloud-container {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+  z-index: 2;
+}
+
+.threejs-cloud-container canvas {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+}
+
+/* Canvas 高性能云朵容器 */
+.canvas-cloud-container {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+  z-index: 2;
+}
+
+/* 背景动画容器 */
+.background-animation {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  z-index: 0;
+  transition: all 1s ease;
+}
+
+/* 性能监控 */
+.performance-monitor {
+  position: fixed;
+  bottom: 20px;
+  right: 20px;
+  background: rgba(0, 0, 0, 0.8);
+  padding: 15px;
+  border-radius: 10px;
+  font-size: 12px;
+  backdrop-filter: blur(10px);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  z-index: 1001;
+  color: white;
+  font-family: monospace;
+}
+
+.fps-counter {
+  color: #4facfe;
+  font-weight: bold;
+  margin-bottom: 5px;
+}
+
+.effect-status {
+  margin-bottom: 3px;
+}
+
 /* 优化后的雨滴效果 */
 .rain-effect-optimized {
   position: absolute;
@@ -2492,5 +2622,178 @@ body.time-night {
   .aqi-value-large {
     text-shadow: 0 2px 6px rgba(0, 0, 0, 0.2);
     filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.15));
+  }
+}
+
+/* ========================================
+   高级天气特效动画样式
+   ======================================== */
+
+/* 阳光效果动画 */
+@keyframes sunGlow {
+  0%, 100% {
+    opacity: 0.2;
+    transform: scale(1);
+  }
+  50% {
+    opacity: 0.4;
+    transform: scale(1.1);
+  }
+}
+
+/* 云朵移动动画 */
+@keyframes cloudsMove {
+  0% {
+    transform: translateX(-100%);
+  }
+  100% {
+    transform: translateX(100%);
+  }
+}
+
+/* 雾气飘动动画 */
+@keyframes fogDrift {
+  0%, 100% {
+    transform: translateX(-10%) rotate(0deg);
+    opacity: 0.6;
+  }
+  25% {
+    transform: translateX(-5%) rotate(1deg);
+    opacity: 0.8;
+  }
+  50% {
+    transform: translateX(0%) rotate(0deg);
+    opacity: 0.7;
+  }
+  75% {
+    transform: translateX(-8%) rotate(-1deg);
+    opacity: 0.9;
+  }
+}
+
+/* 沙尘粒子飞行动画 */
+@keyframes dustParticleFly {
+  0% {
+    transform: translateX(-100vw) translateY(0) rotate(0deg);
+    opacity: 0;
+  }
+  10% {
+    opacity: 0.7;
+  }
+  90% {
+    opacity: 0.7;
+  }
+  100% {
+    transform: translateX(100vw) translateY(-50px) rotate(360deg);
+    opacity: 0;
+  }
+}
+
+/* 背景摇摆效果 */
+.background-sway {
+  animation: backgroundSway ease-in-out infinite;
+}
+
+.sway-light {
+  animation-duration: 4s;
+}
+
+.sway-moderate {
+  animation-duration: 3s;
+}
+
+.sway-strong {
+  animation-duration: 2s;
+}
+
+@keyframes backgroundSway {
+  0%, 100% {
+    transform: translateX(0) rotate(0deg);
+  }
+  25% {
+    transform: translateX(2px) rotate(0.2deg);
+  }
+  50% {
+    transform: translateX(0) rotate(0deg);
+  }
+  75% {
+    transform: translateX(-2px) rotate(-0.2deg);
+  }
+}
+
+/* 高级特效过渡动画 */
+.advanced-effects {
+  opacity: 0;
+  transition: opacity 0.5s ease-in-out;
+}
+
+.advanced-effects.active {
+  opacity: 1;
+}
+
+/* 性能优化 - 减少重绘和回流 */
+.weather-effects * {
+  will-change: transform, opacity;
+  transform: translateZ(0);
+  backface-visibility: hidden;
+}
+
+/* 移动端性能优化 */
+@media (max-width: 768px) {
+  .performance-monitor {
+    display: none !important;
+  }
+
+  /* 移动端减少动画复杂度 */
+  .advanced-effects {
+    filter: none !important;
+  }
+
+  /* 移动端简化粒子效果 */
+  #particles-container {
+    opacity: 0.7;
+  }
+}
+
+/* 低端设备优化 */
+@media (max-width: 480px) {
+  .advanced-effects {
+    display: none !important;
+  }
+
+  .basic-effects {
+    display: block !important;
+  }
+}
+
+/* 高对比度模式适配 */
+@media (prefers-contrast: high) {
+  .weather-effects {
+    opacity: 0.8;
+  }
+
+  .lightning-path {
+    stroke: #000000;
+    stroke-width: 4;
+  }
+}
+
+/* 减少动画偏好适配 */
+@media (prefers-reduced-motion: reduce) {
+  .weather-effects * {
+    animation-duration: 0.1s !important;
+    animation-iteration-count: 1 !important;
+  }
+
+  .background-sway {
+    animation: none !important;
+  }
+
+  @keyframes sunGlow {
+    0%, 100% { opacity: 0.3; }
+  }
+
+  @keyframes cloudsMove {
+    0%, 100% { transform: translateX(0); }
   }
 }

@@ -6,16 +6,103 @@
     <title>天气 - 实时天气查看</title>
     <meta name="description" content="基于彩云天气API的响应式天气查看网站，支持实时天气、预报信息查询">
     <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🌤️</text></svg>">
-    <link rel="stylesheet" href="/static/styles.css?v=8">
+    <link rel="stylesheet" href="/static/styles.css?v=9">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+
+    <!-- 高级天气特效库 - 异步加载 -->
+    <script>
+        // 检测设备性能，决定是否加载高级特效库
+        const shouldLoadAdvancedEffects = () => {
+            const isMobile = /Android|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+            const hardwareConcurrency = navigator.hardwareConcurrency || 2;
+            const deviceMemory = navigator.deviceMemory || 2;
+
+            // 低端设备不加载高级特效
+            if (isMobile && (hardwareConcurrency < 4 || deviceMemory < 3)) {
+                return false;
+            }
+
+            // 检查用户偏好
+            if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
+                return false;
+            }
+
+            return true;
+        };
+
+        // 异步加载高级特效库
+        if (shouldLoadAdvancedEffects()) {
+            const loadScript = (src) => {
+                return new Promise((resolve, reject) => {
+                    const script = document.createElement('script');
+                    script.src = src;
+                    script.onload = resolve;
+                    script.onerror = reject;
+                    document.head.appendChild(script);
+                });
+            };
+
+            // 并行加载所有库
+            Promise.all([
+                loadScript('https://cdn.jsdelivr.net/npm/tsparticles@2.12.0/tsparticles.bundle.min.js'),
+                loadScript('https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/gsap.min.js'),
+                loadScript('https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js'),
+                loadScript('https://cdnjs.cloudflare.com/ajax/libs/lottie-web/5.12.2/lottie.min.js')
+            ]).then(() => {
+                console.log('✅ 高级天气特效库加载完成');
+                window.advancedEffectsReady = true;
+                // 触发自定义事件通知主应用
+                window.dispatchEvent(new CustomEvent('advancedEffectsReady'));
+            }).catch(error => {
+                console.warn('⚠️ 高级天气特效库加载失败，将使用基础特效:', error);
+                window.advancedEffectsReady = false;
+            });
+        } else {
+            console.log('📱 检测到低端设备或用户偏好，使用基础天气特效');
+            window.advancedEffectsReady = false;
+        }
+    </script>
 </head>
 <body>
     <div class="app-container">
         <!-- 天气动态特效容器 -->
         <div class="weather-effects" id="weatherEffects">
-            <!-- 动态特效将在这里生成 -->
+            <!-- 基础特效容器 -->
+            <div class="basic-effects" id="basicEffects">
+                <!-- 基础CSS动画特效 -->
+            </div>
+
+            <!-- 高级特效容器 -->
+            <div class="advanced-effects" id="advancedEffects" style="display: none;">
+                <!-- 粒子效果容器 -->
+                <div id="particles-container"></div>
+
+                <!-- 闪电效果容器 -->
+                <div class="lightning-container" id="lightning-container"></div>
+
+                <!-- 云朵效果容器 -->
+                <div class="cloud-container" id="cloud-container"></div>
+
+                <!-- Three.js 3D云朵容器 -->
+                <div class="threejs-cloud-container" id="threejs-cloud-container"></div>
+
+                <!-- Canvas高性能云朵容器 -->
+                <canvas class="canvas-cloud-container" id="canvas-cloud-container"></canvas>
+
+                <!-- 背景动画容器 -->
+                <div class="background-animation" id="background-animation"></div>
+            </div>
+
+            <!-- 性能监控（仅在开发模式显示） -->
+            <div class="performance-monitor" id="performanceMonitor" style="display: none;">
+                <div class="fps-counter">FPS: <span id="fps">60</span></div>
+                <div class="effect-status">粒子数: <span id="particle-count">0</span></div>
+                <div class="effect-status">活跃动画: <span id="active-animations">0</span></div>
+                <div class="effect-status">内存使用: <span id="memory-usage">--</span></div>
+                <div class="effect-status">特效模式: <span id="effect-mode">基础</span></div>
+            </div>
         </div>
 
         <!-- 主要内容区域 -->
@@ -208,6 +295,6 @@
         </main>
     </div>
 
-    <script src="/static/script.js?v=8"></script>
+    <script src="/static/script.js?v=9"></script>
 </body>
 </html>
