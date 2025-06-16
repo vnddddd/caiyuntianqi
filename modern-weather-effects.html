@@ -232,6 +232,63 @@
             filter: blur(2px);
         }
 
+        /* 真实云朵样式 */
+        .realistic-cloud {
+            position: absolute;
+            pointer-events: none;
+            z-index: 1;
+            transition: opacity 0.5s ease;
+        }
+
+        .realistic-cloud div {
+            position: absolute;
+            border-radius: 50%;
+            transition: transform 0.3s ease, opacity 0.3s ease;
+        }
+
+        /* 为不同天气类型的云朵添加特殊效果 */
+        .weather-clouds.storm .realistic-cloud {
+            filter: drop-shadow(2px 4px 12px rgba(0,0,0,0.3)) brightness(0.7);
+        }
+
+        .weather-clouds.storm .realistic-cloud div {
+            background: radial-gradient(circle at 30% 30%,
+                rgba(180, 180, 180, 0.9) 0%,
+                rgba(120, 120, 120, 0.8) 40%,
+                rgba(80, 80, 80, 0.6) 70%,
+                rgba(60, 60, 60, 0.3) 100%) !important;
+        }
+
+        /* Three.js 3D云朵容器 */
+        .threejs-cloud-container {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            z-index: 2;
+        }
+
+        .threejs-cloud-container canvas {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+        }
+
+        /* Canvas 高性能云朵容器 */
+        .canvas-cloud-container {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            z-index: 2;
+        }
+
         /* 背景动画容器 */
         .background-animation {
             position: fixed;
@@ -255,6 +312,50 @@
             backdrop-filter: blur(10px);
             border: 1px solid rgba(255, 255, 255, 0.1);
             z-index: 1001;
+        }
+
+        /* 快捷键提示 */
+        .keyboard-shortcuts {
+            position: fixed;
+            bottom: 20px;
+            left: 20px;
+            background: rgba(0, 0, 0, 0.8);
+            padding: 15px;
+            border-radius: 10px;
+            font-size: 11px;
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            z-index: 1001;
+            max-width: 200px;
+            opacity: 0.7;
+            transition: opacity 0.3s ease;
+        }
+
+        .keyboard-shortcuts:hover {
+            opacity: 1;
+        }
+
+        .keyboard-shortcuts h4 {
+            margin: 0 0 10px 0;
+            color: #4facfe;
+            font-size: 12px;
+        }
+
+        .shortcut-item {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 3px;
+            align-items: center;
+        }
+
+        .shortcut-key {
+            background: rgba(255, 255, 255, 0.2);
+            padding: 2px 6px;
+            border-radius: 3px;
+            font-family: monospace;
+            font-size: 10px;
+            min-width: 20px;
+            text-align: center;
         }
 
         .fps-counter {
@@ -293,6 +394,20 @@
                 padding: 6px 10px;
                 font-size: 11px;
                 border-radius: 15px;
+            }
+
+            /* 移动端隐藏快捷键提示 */
+            .keyboard-shortcuts {
+                display: none;
+            }
+
+            /* 移动端性能监控位置调整 */
+            .performance-monitor {
+                bottom: 10px;
+                right: 10px;
+                left: 10px;
+                font-size: 10px;
+                padding: 10px;
             }
         }
 
@@ -436,6 +551,7 @@
                 <button class="control-btn" onclick="setWeather('drizzle')">🌦️ 毛毛雨</button>
                 <button class="control-btn" onclick="setWeather('cloudy')">☁️ 多云</button>
                 <button class="control-btn" onclick="clearEffects()">🚫 清除</button>
+                <button class="control-btn" onclick="toggleFullscreen()">🔳 全屏</button>
             </div>
         </div>
     </div>
@@ -458,6 +574,12 @@
 
         <!-- 云朵效果容器 -->
         <div class="cloud-container" id="cloud-container"></div>
+
+        <!-- Three.js 3D云朵容器 -->
+        <div class="threejs-cloud-container" id="threejs-cloud-container"></div>
+
+        <!-- Canvas高性能云朵容器 -->
+        <canvas class="canvas-cloud-container" id="canvas-cloud-container"></canvas>
     </div>
 
     <!-- 主要内容 -->
@@ -495,10 +617,45 @@
         <div class="effect-status">内存使用: <span id="memory-usage">--</span></div>
     </div>
 
+    <!-- 快捷键提示 -->
+    <div class="keyboard-shortcuts">
+        <h4>⌨️ 快捷键</h4>
+        <div class="shortcut-item">
+            <span>晴天</span>
+            <span class="shortcut-key">1</span>
+        </div>
+        <div class="shortcut-item">
+            <span>雨天</span>
+            <span class="shortcut-key">2</span>
+        </div>
+        <div class="shortcut-item">
+            <span>雪天</span>
+            <span class="shortcut-key">3</span>
+        </div>
+        <div class="shortcut-item">
+            <span>雷暴</span>
+            <span class="shortcut-key">4</span>
+        </div>
+        <div class="shortcut-item">
+            <span>多云</span>
+            <span class="shortcut-key">0</span>
+        </div>
+        <div class="shortcut-item">
+            <span>清除</span>
+            <span class="shortcut-key">ESC</span>
+        </div>
+        <div class="shortcut-item">
+            <span>全屏</span>
+            <span class="shortcut-key">F11</span>
+        </div>
+    </div>
+
     <!-- 引入外部库 - 直接加载 -->
     <script src="https://cdn.jsdelivr.net/npm/tsparticles@2.12.0/tsparticles.bundle.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/lottie-web/5.12.2/lottie.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/gsap.min.js"></script>
+    <!-- 添加Three.js用于高性能云朵效果 -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
 
     <script>
         // 闪电生成器
@@ -510,10 +667,10 @@
 
             generateLightning() {
                 const svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
-                svg.className = 'lightning-svg';
+                svg.setAttribute('class', 'lightning-svg');
 
                 const path = document.createElementNS('http://www.w3.org/2000/svg', 'path');
-                path.className = 'lightning-path';
+                path.setAttribute('class', 'lightning-path');
 
                 // 生成闪电路径
                 const pathData = this.generateLightningPath();
@@ -630,7 +787,556 @@
             }
         }
 
-        // 云朵生成器
+        // Three.js 高性能云朵生成器 - 使用纹理贴图
+        class ThreeJSCloudGenerator {
+            constructor() {
+                this.container = document.getElementById('threejs-cloud-container');
+                this.scene = null;
+                this.camera = null;
+                this.renderer = null;
+                this.clouds = [];
+                this.cloudTextures = [];
+                this.cloudMaterial = null;
+                this.isInitialized = false;
+                this.maxClouds = 6; // 减少云朵数量，避免过于密集
+                this.animationId = null; // 添加动画ID追踪
+                this.isCleared = false; // 添加清理状态标志
+            }
+
+            async init() {
+                if (this.isInitialized) return;
+
+                // 创建场景
+                this.scene = new THREE.Scene();
+
+                // 创建相机
+                this.camera = new THREE.PerspectiveCamera(
+                    75,
+                    window.innerWidth / window.innerHeight,
+                    0.1,
+                    1000
+                );
+                this.camera.position.z = 5;
+
+                // 创建渲染器
+                this.renderer = new THREE.WebGLRenderer({
+                    alpha: true,
+                    antialias: false, // 关闭抗锯齿提升性能
+                    powerPreference: "high-performance"
+                });
+                this.renderer.setSize(window.innerWidth, window.innerHeight);
+                this.renderer.setClearColor(0x000000, 0); // 透明背景
+                this.container.appendChild(this.renderer.domElement);
+
+                // 生成云朵纹理
+                await this.generateCloudTextures();
+
+                // 创建共享材质
+                this.createCloudMaterial();
+
+                // 监听窗口大小变化
+                window.addEventListener('resize', () => this.onWindowResize());
+
+                this.isInitialized = true;
+                console.log('Three.js高性能云朵系统初始化完成');
+            }
+
+            generateCloudTextures() {
+                // 生成多种真实云朵纹理
+                const textureCount = 6;
+
+                for (let i = 0; i < textureCount; i++) {
+                    const canvas = document.createElement('canvas');
+                    canvas.width = 512;
+                    canvas.height = 512; // 正方形纹理，适合球体
+                    const ctx = canvas.getContext('2d');
+
+                    // 清除画布
+                    ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+                    // 创建噪声函数模拟云朵的自然形状
+                    const noise = (x, y, scale = 1) => {
+                        const nx = x * scale;
+                        const ny = y * scale;
+                        return (Math.sin(nx * 0.1) + Math.sin(ny * 0.1) + Math.sin((nx + ny) * 0.05)) / 3;
+                    };
+
+                    // 创建多层云朵效果，使用更复杂的算法
+                    const layers = 6 + Math.floor(Math.random() * 4); // 6-9层
+
+                    for (let layer = 0; layer < layers; layer++) {
+                        const layerOpacity = 0.2 + Math.random() * 0.4; // 0.2-0.6透明度
+
+                        // 创建不规则的云朵形状
+                        const centerX = canvas.width * (0.2 + Math.random() * 0.6);
+                        const centerY = canvas.height * (0.2 + Math.random() * 0.6);
+                        const baseRadius = Math.min(canvas.width, canvas.height) * (0.15 + Math.random() * 0.25);
+
+                        // 使用多个圆形组合创建蓬松的云朵效果
+                        const puffCount = 8 + Math.floor(Math.random() * 8); // 8-15个云团
+
+                        for (let puff = 0; puff < puffCount; puff++) {
+                            const angle = (puff / puffCount) * Math.PI * 2 + Math.random() * 0.5;
+                            const distance = baseRadius * (0.3 + Math.random() * 0.7);
+                            const puffX = centerX + Math.cos(angle) * distance;
+                            const puffY = centerY + Math.sin(angle) * distance * 0.8; // 稍微压扁
+                            const puffRadius = baseRadius * (0.4 + Math.random() * 0.6);
+
+                            // 添加噪声让边缘更自然
+                            const noiseIntensity = puffRadius * 0.2;
+                            const actualRadius = puffRadius + noise(puffX, puffY, 0.01) * noiseIntensity;
+
+                            const gradient = ctx.createRadialGradient(puffX, puffY, 0, puffX, puffY, actualRadius);
+
+                            // 更真实的云朵颜色渐变
+                            const brightness = 0.9 + Math.random() * 0.1;
+                            gradient.addColorStop(0, `rgba(${255 * brightness}, ${255 * brightness}, ${255 * brightness}, ${layerOpacity})`);
+                            gradient.addColorStop(0.3, `rgba(${240 * brightness}, ${248 * brightness}, ${255 * brightness}, ${layerOpacity * 0.8})`);
+                            gradient.addColorStop(0.6, `rgba(${220 * brightness}, ${230 * brightness}, ${240 * brightness}, ${layerOpacity * 0.5})`);
+                            gradient.addColorStop(0.8, `rgba(${200 * brightness}, ${210 * brightness}, ${220 * brightness}, ${layerOpacity * 0.2})`);
+                            gradient.addColorStop(1, 'rgba(255, 255, 255, 0)');
+
+                            ctx.fillStyle = gradient;
+                            ctx.beginPath();
+                            ctx.arc(puffX, puffY, actualRadius, 0, Math.PI * 2);
+                            ctx.fill();
+                        }
+                    }
+
+                    // 添加云朵高光和阴影细节
+                    for (let detail = 0; detail < 20; detail++) {
+                        const x = Math.random() * canvas.width;
+                        const y = Math.random() * canvas.height;
+                        const radius = 5 + Math.random() * 25;
+                        const isHighlight = Math.random() > 0.5;
+                        const opacity = 0.05 + Math.random() * 0.15;
+
+                        const detailGradient = ctx.createRadialGradient(x, y, 0, x, y, radius);
+
+                        if (isHighlight) {
+                            // 高光
+                            detailGradient.addColorStop(0, `rgba(255, 255, 255, ${opacity})`);
+                            detailGradient.addColorStop(1, 'rgba(255, 255, 255, 0)');
+                        } else {
+                            // 阴影
+                            detailGradient.addColorStop(0, `rgba(180, 190, 200, ${opacity})`);
+                            detailGradient.addColorStop(1, 'rgba(180, 190, 200, 0)');
+                        }
+
+                        ctx.fillStyle = detailGradient;
+                        ctx.beginPath();
+                        ctx.arc(x, y, radius, 0, Math.PI * 2);
+                        ctx.fill();
+                    }
+
+                    // 创建Three.js纹理
+                    const texture = new THREE.CanvasTexture(canvas);
+                    texture.wrapS = THREE.RepeatWrapping;
+                    texture.wrapT = THREE.RepeatWrapping;
+                    texture.minFilter = THREE.LinearFilter;
+                    texture.magFilter = THREE.LinearFilter;
+                    texture.needsUpdate = true;
+                    this.cloudTextures.push(texture);
+                }
+            }
+
+            createCloudMaterial() {
+                // 创建共享的云朵材质，适合球体渲染
+                this.cloudMaterial = new THREE.MeshBasicMaterial({
+                    map: this.cloudTextures[0],
+                    transparent: true,
+                    opacity: 0.8,
+                    side: THREE.DoubleSide,
+                    depthWrite: false, // 提升性能
+                    blending: THREE.NormalBlending, // 改为正常混合，避免过亮
+                    alphaTest: 0.1 // 添加alpha测试，提升性能
+                });
+            }
+
+            onWindowResize() {
+                if (!this.camera || !this.renderer) return;
+
+                this.camera.aspect = window.innerWidth / window.innerHeight;
+                this.camera.updateProjectionMatrix();
+                this.renderer.setSize(window.innerWidth, window.innerHeight);
+            }
+
+            createCloudGeometry() {
+                // 使用多个球体组合创建真实的云朵形状，但尺寸更小更自然
+                const cloudGroup = new THREE.Group();
+
+                // 主云团 - 使用更小的球体几何体
+                const mainGeometry = new THREE.SphereGeometry(0.6, 12, 8); // 减小主云团尺寸
+                const textureIndex = Math.floor(Math.random() * this.cloudTextures.length);
+                const material = this.cloudMaterial.clone();
+                material.map = this.cloudTextures[textureIndex];
+                material.opacity = 0.5 + Math.random() * 0.2; // 降低透明度，更自然
+
+                const mainCloud = new THREE.Mesh(mainGeometry, material);
+                cloudGroup.add(mainCloud);
+
+                // 添加更少的额外云团
+                const puffCount = 2 + Math.floor(Math.random() * 2); // 2-3个额外云团，减少数量
+
+                for (let i = 0; i < puffCount; i++) {
+                    const puffGeometry = new THREE.SphereGeometry(
+                        0.3 + Math.random() * 0.3, // 半径 0.3-0.6，更小
+                        8, 6 // 减少几何体复杂度
+                    );
+
+                    const puffMaterial = material.clone();
+                    puffMaterial.opacity = material.opacity * (0.7 + Math.random() * 0.2);
+
+                    const puff = new THREE.Mesh(puffGeometry, puffMaterial);
+
+                    // 更紧凑的分布
+                    const angle = (i / puffCount) * Math.PI * 2 + Math.random() * 0.5;
+                    const distance = 0.4 + Math.random() * 0.4; // 减小分布距离
+                    puff.position.x = Math.cos(angle) * distance;
+                    puff.position.y = Math.sin(angle) * distance * 0.6; // 更扁平
+                    puff.position.z = (Math.random() - 0.5) * 0.3; // 减小Z轴分布
+
+                    cloudGroup.add(puff);
+                }
+
+                // 随机旋转整个云朵组
+                cloudGroup.rotation.x = Math.random() * Math.PI * 2;
+                cloudGroup.rotation.y = Math.random() * Math.PI * 2;
+                cloudGroup.rotation.z = Math.random() * Math.PI * 2;
+
+                return cloudGroup;
+            }
+
+            generateCloud() {
+                if (!this.isInitialized) {
+                    console.warn('Three.js云朵系统未初始化');
+                    return;
+                }
+
+                // 如果已被清理，不生成新云朵
+                if (this.isCleared) {
+                    return;
+                }
+
+                const cloud = this.createCloudGeometry();
+
+                // 设置云朵位置 - 从屏幕左侧开始
+                cloud.position.x = -8 - Math.random() * 2;
+                cloud.position.y = (Math.random() - 0.5) * 4;
+                cloud.position.z = -1 - Math.random() * 2;
+
+                // 设置云朵大小 - 更小更自然
+                const scale = 0.4 + Math.random() * 0.6; // 减小整体缩放范围
+                cloud.scale.set(scale, scale * 0.8, scale); // Y轴稍微压扁
+
+                this.scene.add(cloud);
+
+                // 获取主云朵的透明度（第一个子对象）
+                const mainCloudOpacity = cloud.children.length > 0 ? cloud.children[0].material.opacity : 0.8;
+
+                this.clouds.push({
+                    mesh: cloud,
+                    speed: 0.005 + Math.random() * 0.01, // 增加移动速度
+                    rotationSpeed: (Math.random() - 0.5) * 0.002,
+                    opacity: mainCloudOpacity
+                });
+
+                // 开始动画循环
+                if (this.clouds.length === 1) {
+                    this.animate();
+                }
+
+                // 限制云朵数量
+                if (this.clouds.length > this.maxClouds) {
+                    const oldCloud = this.clouds.shift();
+                    this.scene.remove(oldCloud.mesh);
+
+                    // 清理云朵组资源
+                    oldCloud.mesh.children.forEach(child => {
+                        if (child.geometry) child.geometry.dispose();
+                        if (child.material && child.material !== this.cloudMaterial) {
+                            child.material.dispose();
+                        }
+                    });
+                }
+            }
+
+            animate() {
+                // 检查是否已被清理或未初始化
+                if (!this.isInitialized || this.isCleared || this.clouds.length === 0) {
+                    this.animationId = null;
+                    return;
+                }
+
+                // 更新云朵位置和旋转
+                for (let i = this.clouds.length - 1; i >= 0; i--) {
+                    const cloudData = this.clouds[i];
+                    const cloudGroup = cloudData.mesh;
+
+                    // 移动云朵组
+                    cloudGroup.position.x += cloudData.speed;
+                    cloudGroup.rotation.z += cloudData.rotationSpeed;
+
+                    // 轻微的上下浮动
+                    cloudGroup.position.y += Math.sin(Date.now() * 0.001 + i) * 0.001;
+
+                    // 为云朵组内的每个球体添加轻微的独立旋转
+                    cloudGroup.children.forEach((child, index) => {
+                        child.rotation.x += 0.001 * (index + 1);
+                        child.rotation.y += 0.0005 * (index + 1);
+                    });
+
+                    // 如果云朵移出屏幕，移除它
+                    if (cloudGroup.position.x > 10) {
+                        this.scene.remove(cloudGroup);
+
+                        // 清理资源 - 处理云朵组
+                        cloudGroup.children.forEach(child => {
+                            if (child.geometry) child.geometry.dispose();
+                            if (child.material && child.material !== this.cloudMaterial) {
+                                child.material.dispose();
+                            }
+                        });
+
+                        this.clouds.splice(i, 1);
+                    }
+                }
+
+                // 渲染场景
+                this.renderer.render(this.scene, this.camera);
+
+                // 继续动画循环
+                this.animationId = requestAnimationFrame(() => this.animate());
+            }
+
+            clear() {
+                if (!this.isInitialized) return;
+
+                // 设置清理标志，停止动画和新云朵生成
+                this.isCleared = true;
+
+                // 停止动画循环
+                if (this.animationId) {
+                    cancelAnimationFrame(this.animationId);
+                    this.animationId = null;
+                }
+
+                // 清理所有云朵组
+                this.clouds.forEach(cloudData => {
+                    this.scene.remove(cloudData.mesh);
+
+                    // 清理云朵组内的所有子对象
+                    cloudData.mesh.children.forEach(child => {
+                        if (child.geometry) child.geometry.dispose();
+                        if (child.material && child.material !== this.cloudMaterial) {
+                            child.material.dispose();
+                        }
+                    });
+                });
+                this.clouds = [];
+
+                // 清理渲染器
+                if (this.renderer) {
+                    this.renderer.clear();
+                }
+
+                console.log('Three.js云朵效果已清除');
+            }
+
+            destroy() {
+                this.clear();
+
+                // 清理纹理
+                this.cloudTextures.forEach(texture => texture.dispose());
+                this.cloudTextures = [];
+
+                // 清理材质
+                if (this.cloudMaterial) {
+                    this.cloudMaterial.dispose();
+                    this.cloudMaterial = null;
+                }
+
+                if (this.renderer) {
+                    this.renderer.dispose();
+                    if (this.container && this.renderer.domElement) {
+                        this.container.removeChild(this.renderer.domElement);
+                    }
+                }
+
+                this.isInitialized = false;
+            }
+        }
+
+        // Canvas 超高性能云朵生成器
+        class CanvasCloudGenerator {
+            constructor() {
+                this.canvas = document.getElementById('canvas-cloud-container');
+                this.ctx = this.canvas.getContext('2d');
+                this.clouds = [];
+                this.cloudImages = [];
+                this.isInitialized = false;
+                this.animationId = null;
+                this.maxClouds = 15; // 更多云朵
+            }
+
+            async init() {
+                if (this.isInitialized) return;
+
+                // 设置canvas尺寸
+                this.resizeCanvas();
+                window.addEventListener('resize', () => this.resizeCanvas());
+
+                // 生成云朵图像
+                this.generateCloudImages();
+
+                this.isInitialized = true;
+                console.log('Canvas超高性能云朵系统初始化完成');
+            }
+
+            resizeCanvas() {
+                this.canvas.width = window.innerWidth;
+                this.canvas.height = window.innerHeight;
+            }
+
+            generateCloudImages() {
+                // 生成多种云朵图像
+                const imageCount = 6;
+
+                for (let i = 0; i < imageCount; i++) {
+                    const canvas = document.createElement('canvas');
+                    canvas.width = 300;
+                    canvas.height = 150;
+                    const ctx = canvas.getContext('2d');
+
+                    // 创建云朵渐变
+                    const gradient = ctx.createRadialGradient(
+                        canvas.width * 0.5, canvas.height * 0.5, 0,
+                        canvas.width * 0.5, canvas.height * 0.5, canvas.width * 0.6
+                    );
+
+                    gradient.addColorStop(0, 'rgba(255, 255, 255, 0.9)');
+                    gradient.addColorStop(0.4, 'rgba(240, 248, 255, 0.7)');
+                    gradient.addColorStop(0.7, 'rgba(220, 230, 240, 0.4)');
+                    gradient.addColorStop(1, 'rgba(200, 220, 240, 0)');
+
+                    // 绘制主体
+                    ctx.fillStyle = gradient;
+                    ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+                    // 添加云朵细节
+                    for (let j = 0; j < 12; j++) {
+                        const x = Math.random() * canvas.width;
+                        const y = Math.random() * canvas.height;
+                        const radius = 30 + Math.random() * 60;
+
+                        const detailGradient = ctx.createRadialGradient(x, y, 0, x, y, radius);
+                        detailGradient.addColorStop(0, 'rgba(255, 255, 255, 0.4)');
+                        detailGradient.addColorStop(0.5, 'rgba(240, 248, 255, 0.2)');
+                        detailGradient.addColorStop(1, 'rgba(255, 255, 255, 0)');
+
+                        ctx.fillStyle = detailGradient;
+                        ctx.beginPath();
+                        ctx.arc(x, y, radius, 0, Math.PI * 2);
+                        ctx.fill();
+                    }
+
+                    this.cloudImages.push(canvas);
+                }
+            }
+
+            generateCloud() {
+                if (!this.isInitialized) return;
+
+                const cloud = {
+                    image: this.cloudImages[Math.floor(Math.random() * this.cloudImages.length)],
+                    x: -200 - Math.random() * 100,
+                    y: Math.random() * (this.canvas.height * 0.6),
+                    width: 150 + Math.random() * 200,
+                    height: 75 + Math.random() * 100,
+                    speed: 0.3 + Math.random() * 0.8,
+                    opacity: 0.6 + Math.random() * 0.3,
+                    rotation: Math.random() * Math.PI * 2,
+                    rotationSpeed: (Math.random() - 0.5) * 0.01,
+                    floatOffset: Math.random() * Math.PI * 2,
+                    floatSpeed: 0.02 + Math.random() * 0.02
+                };
+
+                this.clouds.push(cloud);
+
+                // 开始动画
+                if (!this.animationId) {
+                    this.animate();
+                }
+
+                // 限制云朵数量
+                if (this.clouds.length > this.maxClouds) {
+                    this.clouds.shift();
+                }
+            }
+
+            animate() {
+                if (!this.isInitialized || this.clouds.length === 0) {
+                    this.animationId = null;
+                    return;
+                }
+
+                // 清除画布
+                this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
+
+                // 更新和绘制云朵
+                for (let i = this.clouds.length - 1; i >= 0; i--) {
+                    const cloud = this.clouds[i];
+
+                    // 更新位置
+                    cloud.x += cloud.speed;
+                    cloud.rotation += cloud.rotationSpeed;
+                    cloud.floatOffset += cloud.floatSpeed;
+
+                    // 轻微的上下浮动
+                    const floatY = cloud.y + Math.sin(cloud.floatOffset) * 10;
+
+                    // 如果云朵移出屏幕，移除它
+                    if (cloud.x > this.canvas.width + 200) {
+                        this.clouds.splice(i, 1);
+                        continue;
+                    }
+
+                    // 绘制云朵
+                    this.ctx.save();
+                    this.ctx.globalAlpha = cloud.opacity;
+                    this.ctx.translate(cloud.x + cloud.width/2, floatY + cloud.height/2);
+                    this.ctx.rotate(cloud.rotation);
+                    this.ctx.drawImage(
+                        cloud.image,
+                        -cloud.width/2, -cloud.height/2,
+                        cloud.width, cloud.height
+                    );
+                    this.ctx.restore();
+                }
+
+                // 继续动画
+                this.animationId = requestAnimationFrame(() => this.animate());
+            }
+
+            clear() {
+                if (this.animationId) {
+                    cancelAnimationFrame(this.animationId);
+                    this.animationId = null;
+                }
+                this.clouds = [];
+                if (this.ctx) {
+                    this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
+                }
+            }
+
+            destroy() {
+                this.clear();
+                this.cloudImages = [];
+                this.isInitialized = false;
+            }
+        }
+
+        // 原始云朵生成器（保留作为备用）
         class CloudGenerator {
             constructor() {
                 this.container = document.getElementById('cloud-container');
@@ -638,37 +1344,68 @@
             }
 
             generateCloud() {
-                const svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
-                svg.className = 'cloud-svg';
+                // 创建云朵容器
+                const cloudContainer = document.createElement('div');
+                cloudContainer.setAttribute('class', 'realistic-cloud');
 
-                const width = 120 + Math.random() * 80;
-                const height = 60 + Math.random() * 40;
+                const width = 200 + Math.random() * 150;
+                const height = 80 + Math.random() * 60;
                 const x = Math.random() * (window.innerWidth - width);
                 const y = Math.random() * (window.innerHeight * 0.4);
 
-                svg.style.left = x + 'px';
-                svg.style.top = y + 'px';
-                svg.style.width = width + 'px';
-                svg.style.height = height + 'px';
-                svg.setAttribute('viewBox', `0 0 ${width} ${height}`);
+                cloudContainer.style.position = 'absolute';
+                cloudContainer.style.left = x + 'px';
+                cloudContainer.style.top = y + 'px';
+                cloudContainer.style.width = width + 'px';
+                cloudContainer.style.height = height + 'px';
+                cloudContainer.style.pointerEvents = 'none';
 
-                const path = document.createElementNS('http://www.w3.org/2000/svg', 'path');
-                path.className = 'cloud-path';
+                // 生成多层云朵球体来模拟真实云朵的蓬松感
+                const numPuffs = 8 + Math.floor(Math.random() * 6); // 8-13个云团
 
-                // 生成云朵形状
-                const cloudPath = this.generateCloudPath(width, height);
-                path.setAttribute('d', cloudPath);
+                for (let i = 0; i < numPuffs; i++) {
+                    const puff = document.createElement('div');
+                    puff.style.position = 'absolute';
 
-                svg.appendChild(path);
-                this.container.appendChild(svg);
+                    // 随机大小和位置
+                    const puffSize = 40 + Math.random() * 80;
+                    const puffX = Math.random() * (width - puffSize);
+                    const puffY = Math.random() * (height - puffSize);
+
+                    puff.style.width = puffSize + 'px';
+                    puff.style.height = puffSize + 'px';
+                    puff.style.left = puffX + 'px';
+                    puff.style.top = puffY + 'px';
+
+                    // 创建真实的云朵外观
+                    const opacity = 0.7 + Math.random() * 0.3;
+                    const brightness = 0.9 + Math.random() * 0.1;
+
+                    puff.style.background = `radial-gradient(circle at 30% 30%,
+                        rgba(255, 255, 255, ${opacity}) 0%,
+                        rgba(240, 248, 255, ${opacity * 0.8}) 40%,
+                        rgba(220, 230, 240, ${opacity * 0.6}) 70%,
+                        rgba(200, 220, 240, ${opacity * 0.3}) 100%)`;
+
+                    puff.style.borderRadius = '50%';
+                    puff.style.filter = `blur(${1 + Math.random() * 2}px) brightness(${brightness})`;
+                    puff.style.transform = `scale(${0.8 + Math.random() * 0.4})`;
+
+                    cloudContainer.appendChild(puff);
+                }
+
+                // 添加整体云朵阴影效果
+                cloudContainer.style.filter = 'drop-shadow(2px 4px 8px rgba(0,0,0,0.1))';
+
+                this.container.appendChild(cloudContainer);
 
                 // 云朵飘动动画
-                this.animateCloud(svg, x, y);
+                this.animateRealisticCloud(cloudContainer, x, y);
 
-                this.clouds.push(svg);
+                this.clouds.push(cloudContainer);
 
                 // 清理旧云朵
-                if (this.clouds.length > 8) {
+                if (this.clouds.length > 6) {
                     const oldCloud = this.clouds.shift();
                     if (oldCloud.parentNode) {
                         oldCloud.parentNode.removeChild(oldCloud);
@@ -680,37 +1417,79 @@
                 const centerX = width / 2;
                 const centerY = height / 2;
 
-                // 生成多个圆形组成云朵
-                let path = '';
-                const circles = 5 + Math.floor(Math.random() * 3);
+                // 使用贝塞尔曲线生成更自然的云朵形状
+                const points = [];
+                const numPoints = 8 + Math.floor(Math.random() * 4); // 8-11个控制点
 
-                for (let i = 0; i < circles; i++) {
-                    const angle = (i / circles) * Math.PI * 2;
-                    const radius = 15 + Math.random() * 20;
-                    const offsetX = Math.cos(angle) * (width * 0.2);
-                    const offsetY = Math.sin(angle) * (height * 0.2);
+                // 生成基础轮廓点
+                for (let i = 0; i < numPoints; i++) {
+                    const angle = (i / numPoints) * Math.PI * 2;
+                    const baseRadius = Math.min(width, height) * 0.3;
+                    const radiusVariation = baseRadius * (0.3 + Math.random() * 0.4); // 30%-70%的变化
+                    const radius = baseRadius + radiusVariation;
 
-                    const cx = centerX + offsetX;
-                    const cy = centerY + offsetY;
+                    // 添加随机扰动让形状更自然
+                    const angleOffset = (Math.random() - 0.5) * 0.3;
+                    const finalAngle = angle + angleOffset;
 
-                    if (i === 0) {
-                        path = `M ${cx - radius} ${cy} `;
-                        path += `A ${radius} ${radius} 0 1 1 ${cx + radius} ${cy} `;
-                        path += `A ${radius} ${radius} 0 1 1 ${cx - radius} ${cy} `;
-                    } else {
-                        path += `M ${cx - radius} ${cy} `;
-                        path += `A ${radius} ${radius} 0 1 1 ${cx + radius} ${cy} `;
-                        path += `A ${radius} ${radius} 0 1 1 ${cx - radius} ${cy} `;
-                    }
+                    const x = centerX + Math.cos(finalAngle) * radius;
+                    const y = centerY + Math.sin(finalAngle) * radius * 0.7; // 压扁一点，更像云
+
+                    points.push({ x, y });
                 }
+
+                // 使用平滑的贝塞尔曲线连接点
+                let path = `M ${points[0].x} ${points[0].y}`;
+
+                for (let i = 0; i < points.length; i++) {
+                    const current = points[i];
+                    const next = points[(i + 1) % points.length];
+                    const nextNext = points[(i + 2) % points.length];
+
+                    // 计算控制点
+                    const cp1x = current.x + (next.x - current.x) * 0.3;
+                    const cp1y = current.y + (next.y - current.y) * 0.3;
+                    const cp2x = next.x - (nextNext.x - current.x) * 0.2;
+                    const cp2y = next.y - (nextNext.y - current.y) * 0.2;
+
+                    path += ` C ${cp1x} ${cp1y}, ${cp2x} ${cp2y}, ${next.x} ${next.y}`;
+                }
+
+                path += ' Z'; // 闭合路径
 
                 return path;
             }
 
-            animateCloud(svg, startX, startY) {
-                const duration = 20000 + Math.random() * 10000;
-                const endX = startX + 200 + Math.random() * 300;
+            animateRealisticCloud(cloudContainer, startX, startY) {
+                const duration = 30000 + Math.random() * 20000; // 更慢的移动
+                const endX = startX + 300 + Math.random() * 400;
                 const startTime = Date.now();
+
+                // 为云朵内部的每个云团添加轻微的独立动画
+                const puffs = cloudContainer.children;
+                for (let i = 0; i < puffs.length; i++) {
+                    const puff = puffs[i];
+                    const puffDuration = 8000 + Math.random() * 4000;
+                    const puffStartTime = Date.now() + Math.random() * 2000;
+
+                    const animatePuff = () => {
+                        const elapsed = Date.now() - puffStartTime;
+                        const progress = (elapsed / puffDuration) % 1;
+
+                        // 轻微的缩放和透明度变化
+                        const scale = 0.9 + Math.sin(progress * Math.PI * 2) * 0.1;
+                        const opacity = 0.8 + Math.sin(progress * Math.PI * 2 + i) * 0.2;
+
+                        puff.style.transform = `scale(${scale})`;
+                        puff.style.opacity = opacity;
+
+                        if (cloudContainer.parentNode) {
+                            requestAnimationFrame(animatePuff);
+                        }
+                    };
+
+                    setTimeout(() => requestAnimationFrame(animatePuff), Math.random() * 1000);
+                }
 
                 const animate = () => {
                     const elapsed = Date.now() - startTime;
@@ -718,16 +1497,19 @@
 
                     if (progress < 1) {
                         const currentX = startX + (endX - startX) * progress;
-                        const currentY = startY + Math.sin(progress * Math.PI * 2) * 10;
+                        const currentY = startY + Math.sin(progress * Math.PI * 4) * 5; // 更轻微的上下浮动
 
-                        svg.style.left = currentX + 'px';
-                        svg.style.top = currentY + 'px';
-                        svg.style.opacity = 0.6 * (1 - progress * 0.5);
+                        cloudContainer.style.left = currentX + 'px';
+                        cloudContainer.style.top = currentY + 'px';
+
+                        // 更自然的透明度变化
+                        const opacity = Math.max(0.3, 0.9 * (1 - progress * 0.6));
+                        cloudContainer.style.opacity = opacity;
 
                         requestAnimationFrame(animate);
                     } else {
-                        if (svg.parentNode) {
-                            svg.parentNode.removeChild(svg);
+                        if (cloudContainer.parentNode) {
+                            cloudContainer.parentNode.removeChild(cloudContainer);
                         }
                     }
                 };
@@ -757,6 +1539,9 @@
                 this.isTransitioning = false;
                 this.lightningGenerator = null;
                 this.cloudGenerator = null;
+                this.threeJSCloudGenerator = null;
+                this.canvasCloudGenerator = null;
+                this.cloudMode = 'threejs'; // 'canvas', 'threejs', 'dom' - 使用改进的Three.js球体云朵
                 this.isInitialized = false;
 
                 // 不在构造函数中调用异步init方法
@@ -897,7 +1682,7 @@
                         const elapsed = Date.now() - startTime;
 
                         // 检查所有库是否都已加载
-                        if (window.tsParticles && window.lottie && window.gsap) {
+                        if (window.tsParticles && window.lottie && window.gsap && window.THREE) {
                             console.log('✅ 所有库检查完成，可以初始化');
                             resolve();
                             return;
@@ -909,6 +1694,7 @@
                             if (!window.tsParticles) missing.push('tsParticles');
                             if (!window.lottie) missing.push('lottie');
                             if (!window.gsap) missing.push('gsap');
+                            if (!window.THREE) missing.push('three.js');
 
                             const error = new Error(`库加载超时 (${timeout}ms)。未加载的库: ${missing.join(', ')}`);
                             console.error('❌ 库加载超时:', error.message);
@@ -992,6 +1778,7 @@
                 }
 
                 this.isTransitioning = true;
+                this.currentWeather = type; // 提前设置当前天气状态，防止异步调用问题
 
                 try {
                     // 清除当前效果
@@ -1037,8 +1824,6 @@
                             console.warn('未知的天气类型:', type);
                             return;
                     }
-
-                    this.currentWeather = type;
 
                     // 使用GSAP创建过渡动画
                     this.animateTransition();
@@ -1146,45 +1931,24 @@
             }
 
             async createThunderEffect() {
-                // 根据设备性能调整粒子数量
-                const particleCount = this.isLowEndDevice ? 30 : 50;
+                // 更真实的雷暴效果，包含大雨
+                const particleCount = this.isLowEndDevice ? 250 : 500;
+                const speed = this.isLowEndDevice ? 15 : 20;
 
-                // 创建雷暴云效果 - 使用更真实的云朵形状
                 await this.particlesEngine.load("particles-container", {
                     particles: {
                         number: { value: particleCount },
-                        color: { value: ["#2c2c2c", "#404040", "#555555"] },
-                        shape: {
-                            type: "circle"
-                        },
-                        opacity: {
-                            value: 0.7,
-                            random: true,
-                            animation: {
-                                enable: true,
-                                speed: 0.3,
-                                minimumValue: 0.3,
-                                sync: false
-                            }
-                        },
-                        size: {
-                            value: 35,
-                            random: true,
-                            animation: {
-                                enable: true,
-                                speed: 0.5,
-                                minimumValue: 20,
-                                sync: false
-                            }
-                        },
+                        color: { value: "#cccccc" },
+                        shape: { type: "circle" },
+                        opacity: { value: { min: 0.4, max: 0.8 } },
+                        size: { value: { min: 1, max: 3 } },
                         move: {
                             enable: true,
-                            speed: 0.8,
-                            direction: "none",
-                            random: true,
-                            straight: false,
+                            speed: { min: speed, max: speed + 5 },
+                            direction: "bottom",
+                            straight: true,
                             outModes: {
-                                default: "bounce"
+                                default: "out"
                             }
                         }
                     },
@@ -1194,36 +1958,40 @@
 
                 // 创建真实的闪电效果
                 this.createRealisticLightning();
+                
+                // 添加背景闪光
+                this.createLightningFlash();
 
                 // 改变背景色调
                 this.changeBackgroundTone('#1a1a1a', '#333333');
 
-                console.log(`雷暴效果已创建 (${particleCount}个粒子)`);
+                console.log(`雷暴效果已创建 (${particleCount}个雨滴)`);
             }
 
-            createRealisticLightning() {
+            async createRealisticLightning() {
                 // 清除之前的闪电动画
-                if (this.gsapTimelines.has('lightning')) {
-                    this.gsapTimelines.get('lightning').kill();
-                    this.gsapTimelines.delete('lightning');
+                if (this.gsapTimelines.has('lightning-gen')) {
+                    this.gsapTimelines.get('lightning-gen').kill();
+                    this.gsapTimelines.delete('lightning-gen');
                 }
 
                 // 创建闪电生成器
                 this.lightningGenerator = new LightningGenerator();
 
+                // 立即生成一次闪电
+                this.lightningGenerator.generateLightning();
+
                 // 定期生成闪电
-                const generateLightning = () => {
-                    if (this.currentWeather === 'thunder') {
-                        this.lightningGenerator.generateLightning();
-
-                        // 随机间隔生成下一道闪电
-                        const nextDelay = 2000 + Math.random() * 6000; // 2-8秒随机间隔
-                        setTimeout(generateLightning, nextDelay);
+                const genTL = gsap.timeline({ repeat: -1 });
+                genTL.to({}, {
+                    duration: 2 + Math.random() * 4, // 2-6秒
+                    onComplete: () => {
+                        if (this.currentWeather === 'thunder') {
+                            this.lightningGenerator.generateLightning();
+                        }
                     }
-                };
-
-                // 开始生成闪电
-                setTimeout(generateLightning, 1000);
+                });
+                this.gsapTimelines.set('lightning-gen', genTL);
             }
 
             createLightningFlash() {
@@ -1236,13 +2004,13 @@
                 // 使用GSAP创建闪电闪烁效果
                 const lightningTimeline = gsap.timeline({
                     repeat: -1,
-                    repeatDelay: this.isLowEndDevice ? 4 : 3
+                    repeatDelay: 4 + Math.random() * 5 // 4-9秒随机延迟
                 });
 
                 lightningTimeline
                     .to('body', {
-                        duration: 0.1,
-                        backgroundColor: '#ffffff',
+                        duration: 0.05,
+                        backgroundColor: 'rgba(255, 255, 255, 0.3)',
                         ease: "power4.out"
                     })
                     .to('body', {
@@ -1251,12 +2019,12 @@
                         ease: "power4.out"
                     })
                     .to('body', {
-                        duration: 0.05,
-                        backgroundColor: '#ffffff',
+                        duration: 0.03,
+                        backgroundColor: 'rgba(255, 255, 255, 0.2)',
                         ease: "power4.out"
                     })
                     .to('body', {
-                        duration: 0.2,
+                        duration: 0.3,
                         backgroundColor: 'transparent',
                         ease: "power4.out"
                     });
@@ -1460,94 +2228,57 @@
             }
 
             async createHailEffect() {
-                // 根据设备性能调整粒子数量 - 减少粒子数量以提高流畅度
                 const particleCount = this.isLowEndDevice ? 50 : 80;
-                const speed = this.isLowEndDevice ? 15 : 20;
+                const speed = this.isLowEndDevice ? 8 : 12;
+                const maxSpeed = this.isLowEndDevice ? 15 : 20;
 
-                // 创建优化的冰雹效果
                 await this.particlesEngine.load("particles-container", {
                     particles: {
-                        number: {
-                            value: particleCount,
-                            density: {
-                                enable: true,
-                                area: 800
-                            }
-                        },
-                        color: {
-                            value: ["#e3f2fd", "#ffffff", "#f0f8ff"]
-                        },
-                        shape: {
-                            type: "circle"
-                        },
-                        opacity: {
-                            value: 0.8,
-                            random: {
-                                enable: true,
-                                minimumValue: 0.6
-                            }
-                        },
-                        size: {
-                            value: 5,
-                            random: {
-                                enable: true,
-                                minimumValue: 3
-                            },
-                            animation: {
-                                enable: true,
-                                speed: 2,
-                                minimumValue: 3,
-                                sync: false
-                            }
-                        },
+                        number: { value: particleCount },
+                        color: { value: "#ffffff" },
+                        shape: { type: "circle" },
+                        opacity: { value: { min: 0.8, max: 1 } },
+                        size: { value: { min: 4, max: 10 } },
                         move: {
                             enable: true,
-                            speed: {
-                                min: speed * 0.8,
-                                max: speed * 1.2
-                            },
+                            speed: { min: speed, max: speed + 4 },
                             direction: "bottom",
-                            straight: false,
-                            random: {
-                                enable: true,
-                                minimumValue: 0.1
-                            },
+                            straight: true,
                             outModes: {
                                 default: "out",
-                                bottom: "out",
-                                left: "out",
-                                right: "out",
-                                top: "none"
                             },
-                            attract: {
-                                enable: false
-                            },
+                            bounce: false,
                             gravity: {
                                 enable: true,
-                                acceleration: 9.81,
-                                maxSpeed: speed
+                                acceleration: 1.5,
+                                maxSpeed: maxSpeed
                             }
                         },
-                        rotate: {
-                            value: 0,
-                            random: true,
-                            direction: "random",
-                            animation: {
-                                enable: true,
-                                speed: 5,
-                                sync: false
+                        bounce: {
+                            horizontal: {
+                                random: {
+                                    enable: true,
+                                    minimumValue: 0.1
+                                },
+                                value: 0.5
+                            },
+                            vertical: {
+                                random: {
+                                    enable: true,
+                                    minimumValue: 0.1
+                                },
+                                value: 0.5
                             }
                         }
                     },
                     detectRetina: true,
-                    fpsLimit: this.isLowEndDevice ? 30 : 60,
-                    smooth: true
+                    fpsLimit: this.isLowEndDevice ? 30 : 60
                 });
 
                 // 改变背景色调
                 this.changeBackgroundTone('#263238', '#37474f');
 
-                console.log(`冰雹效果已创建 (${particleCount}个粒子)`);
+                console.log(`冰雹效果已创建 (${particleCount}个粒子，最大速度: ${maxSpeed})`);
             }
 
             async createDrizzleEffect() {
@@ -1590,53 +2321,100 @@
             }
 
             async createCloudyEffect() {
-                // 清除粒子效果，使用SVG云朵
+                // 清除粒子效果
                 await this.particlesEngine.load("particles-container", {
                     particles: {
                         number: { value: 0 }
                     }
                 });
 
-                // 创建云朵生成器
-                this.cloudGenerator = new CloudGenerator();
+                // 根据云朵模式选择不同的实现
+                switch (this.cloudMode) {
+                    case 'canvas':
+                        // Canvas超高性能云朵 (推荐)
+                        this.canvasCloudGenerator = new CanvasCloudGenerator();
+                        await this.canvasCloudGenerator.init();
 
-                // 生成初始云朵
-                const cloudCount = this.isLowEndDevice ? 4 : 6;
-                for (let i = 0; i < cloudCount; i++) {
-                    setTimeout(() => {
-                        this.cloudGenerator.generateCloud();
-                    }, i * 1000);
-                }
-
-                // 定期生成新云朵
-                const generateNewCloud = () => {
-                    if (this.currentWeather === 'cloudy') {
-                        this.cloudGenerator.generateCloud();
-
-                        // 随机间隔生成下一朵云
-                        const nextDelay = 8000 + Math.random() * 12000; // 8-20秒随机间隔
-                        setTimeout(generateNewCloud, nextDelay);
-                    }
-                };
-
-                // 开始生成云朵
-                setTimeout(generateNewCloud, 5000);
-                        move: {
-                            enable: true,
-                            speed: 0.8,
-                            direction: "right",
-                            random: false,
-                            straight: false
+                        // 快速生成大量云朵
+                        const canvasCloudCount = this.isLowEndDevice ? 8 : 15;
+                        for (let i = 0; i < canvasCloudCount; i++) {
+                            setTimeout(() => {
+                                this.canvasCloudGenerator.generateCloud();
+                            }, i * 400);
                         }
-                    },
-                    detectRetina: true,
-                    fpsLimit: this.isLowEndDevice ? 30 : 60
-                });
+
+                        // 持续生成云朵
+                        const generateCanvasCloud = () => {
+                            if (this.currentWeather === 'cloudy' && this.canvasCloudGenerator) {
+                                this.canvasCloudGenerator.generateCloud();
+                                const nextDelay = 2000 + Math.random() * 4000;
+                                setTimeout(generateCanvasCloud, nextDelay);
+                            }
+                        };
+                        setTimeout(generateCanvasCloud, 3000);
+
+                        console.log(`多云效果已创建 (使用Canvas超高性能云朵)`);
+                        break;
+
+                    case 'threejs':
+                        if (window.THREE) {
+                            // Three.js高性能云朵
+                            this.threeJSCloudGenerator = new ThreeJSCloudGenerator();
+                            await this.threeJSCloudGenerator.init();
+
+                            // 重置清理标志，允许生成新云朵
+                            this.threeJSCloudGenerator.isCleared = false;
+
+                            const threeJSCloudCount = this.isLowEndDevice ? 3 : 4; // 减少初始云朵数量
+                            for (let i = 0; i < threeJSCloudCount; i++) {
+                                setTimeout(() => {
+                                    this.threeJSCloudGenerator.generateCloud();
+                                }, i * 1500); // 增加生成间隔
+                            }
+
+                            const generateThreeJSCloud = () => {
+                                if (this.currentWeather === 'cloudy' && this.threeJSCloudGenerator && !this.threeJSCloudGenerator.isCleared) {
+                                    this.threeJSCloudGenerator.generateCloud();
+                                    const nextDelay = 8000 + Math.random() * 10000; // 增加生成间隔
+                                    setTimeout(generateThreeJSCloud, nextDelay);
+                                }
+                            };
+                            setTimeout(generateThreeJSCloud, 10000); // 延迟后续生成
+
+                            console.log(`多云效果已创建 (使用Three.js纹理贴图云朵)`);
+                            break;
+                        }
+                        // 如果Three.js不可用，降级到canvas
+                        this.cloudMode = 'canvas';
+                        return this.createCloudyEffect();
+
+                    case 'dom':
+                    default:
+                        // DOM云朵 (降级模式)
+                        this.cloudGenerator = new CloudGenerator();
+
+                        const domCloudCount = this.isLowEndDevice ? 3 : 5;
+                        for (let i = 0; i < domCloudCount; i++) {
+                            setTimeout(() => {
+                                this.cloudGenerator.generateCloud();
+                            }, i * 1500);
+                        }
+
+                        const generateDOMCloud = () => {
+                            if (this.currentWeather === 'cloudy') {
+                                this.cloudGenerator.generateCloud();
+                                const nextDelay = 8000 + Math.random() * 10000;
+                                setTimeout(generateDOMCloud, nextDelay);
+                            }
+                        };
+                        setTimeout(generateDOMCloud, 5000);
+
+                        console.log(`多云效果已创建 (使用DOM云朵)`);
+                        break;
+                }
 
                 // 改变背景色调
                 this.changeBackgroundTone('#546e7a', '#78909c');
-
-                console.log(`多云效果已创建 (${particleCount}个粒子)`);
             }
 
             changeBackgroundTone(color1, color2) {
@@ -1689,6 +2467,14 @@
                     }
 
                     // 清除云朵效果
+                    if (this.canvasCloudGenerator) {
+                        this.canvasCloudGenerator.clear();
+                    }
+
+                    if (this.threeJSCloudGenerator) {
+                        this.threeJSCloudGenerator.clear();
+                    }
+
                     if (this.cloudGenerator) {
                         this.cloudGenerator.clear();
                         const cloudContainer = document.getElementById('cloud-container');
@@ -1941,13 +2727,18 @@
             }
 
             updateParticleCount() {
-                // 尝试获取粒子数量
+                // 尝试获取真实粒子数量
                 try {
-                    const container = document.getElementById('particles-container');
-                    const canvas = container.querySelector('canvas');
-                    if (canvas) {
-                        // 估算粒子数量（这是一个简化的方法）
-                        this.particleCount = Math.floor(Math.random() * 300); // 模拟数据
+                    // 从全局weatherSystem获取真实粒子数量
+                    if (window.weatherSystem && window.weatherSystem.particlesEngine) {
+                        const container = window.weatherSystem.particlesEngine.dom();
+                        if (container && container.particles) {
+                            this.particleCount = container.particles.count || 0;
+                        } else {
+                            this.particleCount = 0;
+                        }
+                    } else {
+                        this.particleCount = 0;
                     }
                 } catch (error) {
                     this.particleCount = 0;
@@ -1973,13 +2764,15 @@
                 if (fpsElement) {
                     fpsElement.textContent = this.fps;
 
-                    // 根据性能调整显示颜色
+                    // 根据性能调整显示颜色和自动优化
                     if (this.fps >= 50) {
                         fpsElement.style.color = '#4caf50';
                     } else if (this.fps >= 30) {
                         fpsElement.style.color = '#ff9800';
                     } else {
                         fpsElement.style.color = '#f44336';
+                        // 性能过低时自动降级
+                        this.autoOptimizePerformance();
                     }
                 }
 
@@ -1993,6 +2786,42 @@
 
                 if (memoryUsageElement) {
                     memoryUsageElement.textContent = this.memoryUsage + (this.memoryUsage !== '--' ? ' MB' : '');
+                }
+            }
+
+            autoOptimizePerformance() {
+                // 防止频繁调用
+                if (this.lastOptimization && Date.now() - this.lastOptimization < 5000) {
+                    return;
+                }
+                this.lastOptimization = Date.now();
+
+                console.warn('⚠️ 检测到性能问题，自动优化中...');
+
+                // 通知weatherSystem降低粒子数量
+                if (window.weatherSystem && window.weatherSystem.particlesEngine) {
+                    try {
+                        const currentConfig = window.weatherSystem.particlesEngine.options;
+                        if (currentConfig && currentConfig.particles && currentConfig.particles.number) {
+                            const currentCount = currentConfig.particles.number.value || 100;
+                            const newCount = Math.max(20, Math.floor(currentCount * 0.6)); // 减少40%
+
+                            window.weatherSystem.particlesEngine.load("particles-container", {
+                                ...currentConfig,
+                                particles: {
+                                    ...currentConfig.particles,
+                                    number: {
+                                        ...currentConfig.particles.number,
+                                        value: newCount
+                                    }
+                                }
+                            });
+
+                            console.log(`🔧 粒子数量已从 ${currentCount} 降低到 ${newCount}`);
+                        }
+                    } catch (error) {
+                        console.warn('自动性能优化失败:', error);
+                    }
                 }
             }
         }
@@ -2031,6 +2860,17 @@
             }
         }
 
+        // 全屏模式切换
+        function toggleFullscreen() {
+            if (!document.fullscreenElement) {
+                document.documentElement.requestFullscreen().catch(err => {
+                    console.log(`无法进入全屏模式: ${err.message}`);
+                });
+            } else {
+                document.exitFullscreen();
+            }
+        }
+
         // 简化的初始化逻辑
         async function initializeWeatherSystem() {
             try {
@@ -2052,13 +2892,45 @@
             }
         }
 
+        // 键盘快捷键支持
+        document.addEventListener('keydown', (event) => {
+            if (!weatherSystem) return;
+
+            const keyMap = {
+                '1': 'clear',     // 1 - 晴天
+                '2': 'rain',      // 2 - 雨天
+                '3': 'snow',      // 3 - 雪天
+                '4': 'thunder',   // 4 - 雷暴
+                '5': 'fog',       // 5 - 雾霾
+                '6': 'wind',      // 6 - 大风
+                '7': 'dust',      // 7 - 沙尘
+                '8': 'hail',      // 8 - 冰雹
+                '9': 'drizzle',   // 9 - 毛毛雨
+                '0': 'cloudy',    // 0 - 多云
+                'Escape': 'clear', // ESC - 清除
+                'F11': 'fullscreen' // F11 - 全屏
+            };
+
+            const weatherType = keyMap[event.key];
+            if (weatherType) {
+                event.preventDefault();
+                if (weatherType === 'clear' && event.key === 'Escape') {
+                    clearEffects();
+                } else if (weatherType === 'fullscreen') {
+                    toggleFullscreen();
+                } else {
+                    setWeather(weatherType);
+                }
+            }
+        });
+
         // 页面加载完成后开始初始化
         document.addEventListener('DOMContentLoaded', () => {
             console.log('页面DOM加载完成，开始检查库状态...');
 
             // 定期检查库是否加载完成
             const checkInterval = setInterval(() => {
-                if (window.tsParticles && window.lottie && window.gsap) {
+                if (window.tsParticles && window.lottie && window.gsap && window.THREE) {
                     clearInterval(checkInterval);
                     console.log('✅ 库加载完成，正在初始化天气系统...');
                     setTimeout(initializeWeatherSystem, 500);

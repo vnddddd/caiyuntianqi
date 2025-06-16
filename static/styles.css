@@ -951,27 +951,27 @@ body.time-night {
 
 /* 复杂3D云朵特效代码已简化，现在使用SVG图案实现 */
 
-/* 背景摇摆效果（用于风力） - 只影响特效容器 */
+/* 背景摇摆效果（用于风力） - 只影响特效容器，减少摇摆幅度 */
 .weather-effects.background-sway {
   animation: backgroundSway ease-in-out infinite;
 }
 
 .weather-effects.sway-light {
-  animation-duration: 4s;
+  animation-duration: 6s; /* 增加持续时间，减少频率 */
 }
 
 .weather-effects.sway-moderate {
-  animation-duration: 2s;
+  animation-duration: 4s; /* 增加持续时间，减少频率 */
 }
 
 .weather-effects.sway-strong {
-  animation-duration: 1s;
+  animation-duration: 3s; /* 增加持续时间，减少频率 */
 }
 
 @keyframes backgroundSway {
   0%, 100% { transform: translateX(0) rotate(0deg); }
-  25% { transform: translateX(1px) rotate(0.2deg); }
-  75% { transform: translateX(-1px) rotate(-0.2deg); }
+  25% { transform: translateX(0.5px) rotate(0.1deg); } /* 减少摇摆幅度 */
+  75% { transform: translateX(-0.5px) rotate(-0.1deg); } /* 减少摇摆幅度 */
 }
 
 /* 性能优化 - 启用硬件加速 */
@@ -1056,6 +1056,34 @@ body.time-night {
     transform: translateX(5px) scale(1.02);
     opacity: 1;
   }
+}
+
+/* 星空特效动画 */
+@keyframes starTwinkle {
+  0%, 100% {
+    opacity: 0.3;
+    transform: scale(1);
+  }
+  50% {
+    opacity: 1;
+    transform: scale(1.2);
+  }
+}
+
+/* 星星特效样式 */
+.stars-effect {
+  position: absolute;
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+}
+
+.star {
+  position: absolute;
+  background: #ffffff;
+  border-radius: 50%;
+  animation: starTwinkle ease-in-out infinite;
+  box-shadow: 0 0 6px rgba(255, 255, 255, 0.8);
 }
 
 /* 白天和夜晚背景下的雨滴适配 */
@@ -2689,37 +2717,8 @@ body.time-night {
   }
 }
 
-/* 背景摇摆效果 */
-.background-sway {
-  animation: backgroundSway ease-in-out infinite;
-}
-
-.sway-light {
-  animation-duration: 4s;
-}
-
-.sway-moderate {
-  animation-duration: 3s;
-}
-
-.sway-strong {
-  animation-duration: 2s;
-}
-
-@keyframes backgroundSway {
-  0%, 100% {
-    transform: translateX(0) rotate(0deg);
-  }
-  25% {
-    transform: translateX(2px) rotate(0.2deg);
-  }
-  50% {
-    transform: translateX(0) rotate(0deg);
-  }
-  75% {
-    transform: translateX(-2px) rotate(-0.2deg);
-  }
-}
+/* 背景摇摆效果 - 已移动到上方，此处移除重复定义 */
+/* 重复的backgroundSway动画已在上方定义，此处移除避免冲突 */
 
 /* 高级特效过渡动画 */
 .advanced-effects {

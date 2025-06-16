@@ -142,7 +142,9 @@ class WeatherEffectsManager {
       this.addDustEffect();
     } else if (skycon.includes('CLEAR_DAY')) {
       this.addSunshineEffect();
-    } else if (skycon.includes('CLOUDY')) {
+    } else if (skycon.includes('CLEAR_NIGHT')) {
+      this.addStarsEffect(); // 添加星空特效
+    } else if (skycon.includes('CLOUDY') || skycon.includes('PARTLY_CLOUDY')) {
       this.addCloudsEffect();
     }
 
@@ -171,17 +173,17 @@ class WeatherEffectsManager {
     const rainDiv = document.createElement('div');
     rainDiv.className = 'rain-effect-optimized';
 
-    // 根据性能等级调整雨滴数量和复杂度
+    // 根据性能等级调整雨滴数量和复杂度 - 性能优化版
     let dropCount, animationClass;
 
     if (intensity.includes('LIGHT')) {
-      dropCount = this.performanceLevel === 'high' ? 30 : (this.performanceLevel === 'medium' ? 20 : 10);
+      dropCount = this.performanceLevel === 'high' ? 20 : (this.performanceLevel === 'medium' ? 15 : 8);
       animationClass = 'rain-light';
     } else if (intensity.includes('HEAVY') || intensity.includes('STORM')) {
-      dropCount = this.performanceLevel === 'high' ? 80 : (this.performanceLevel === 'medium' ? 50 : 25);
+      dropCount = this.performanceLevel === 'high' ? 40 : (this.performanceLevel === 'medium' ? 30 : 15);
       animationClass = 'rain-heavy';
     } else {
-      dropCount = this.performanceLevel === 'high' ? 50 : (this.performanceLevel === 'medium' ? 35 : 18);
+      dropCount = this.performanceLevel === 'high' ? 30 : (this.performanceLevel === 'medium' ? 20 : 12);
       animationClass = 'rain-moderate';
     }
 
@@ -304,6 +306,33 @@ class WeatherEffectsManager {
     this.currentEffects.push('sunshine');
   }
 
+  // 星空特效 - 晴夜专用
+  addStarsEffect() {
+    const starsDiv = document.createElement('div');
+    starsDiv.className = 'stars-effect';
+
+    // 创建星星
+    const starCount = this.performanceLevel === 'high' ? 50 : this.performanceLevel === 'medium' ? 30 : 20;
+    for (let i = 0; i < starCount; i++) {
+      const star = document.createElement('div');
+      star.className = 'star';
+      star.style.position = 'absolute';
+      star.style.left = Math.random() * 100 + '%';
+      star.style.top = Math.random() * 60 + '%'; // 只在上半部分显示
+      star.style.width = Math.random() * 3 + 1 + 'px';
+      star.style.height = star.style.width;
+      star.style.backgroundColor = '#ffffff';
+      star.style.borderRadius = '50%';
+      star.style.opacity = Math.random() * 0.8 + 0.2;
+      star.style.animation = `starTwinkle ${Math.random() * 3 + 2}s ease-in-out infinite`;
+      star.style.animationDelay = Math.random() * 2 + 's';
+      starsDiv.appendChild(star);
+    }
+
+    this.effectsContainer.appendChild(starsDiv);
+    this.currentEffects.push('stars');
+  }
+
   // 云层特效 - 简化版本
   addCloudsEffect() {
     const cloudsDiv = document.createElement('div');
@@ -361,8 +390,8 @@ class WeatherEffectsManager {
     dustBg.className = 'dust-storm-bg';
     dustDiv.appendChild(dustBg);
 
-    // 创建简化的沙粒效果
-    const particleCount = this.performanceLevel === 'high' ? 30 : this.performanceLevel === 'medium' ? 20 : 10;
+    // 创建简化的沙粒效果 - 性能优化版
+    const particleCount = this.performanceLevel === 'high' ? 15 : this.performanceLevel === 'medium' ? 10 : 6;
     for (let i = 0; i < particleCount; i++) {
       const particle = document.createElement('div');
       particle.className = 'dust-particle';
@@ -469,27 +498,40 @@ class AdvancedWeatherEffectsManager extends WeatherEffectsManager {
       console.log('🚀 开始初始化高级天气特效...');
 
       // 检查必要的库是否已加载
+      console.log('🔧 检查库加载状态:');
+      console.log('  - window.tsParticles:', !!window.tsParticles);
+      console.log('  - window.gsap:', !!window.gsap);
+      console.log('  - window.THREE:', !!window.THREE);
+      console.log('  - window.lottie:', !!window.lottie);
+
       if (!window.tsParticles || !window.gsap) {
         throw new Error('必要的库未加载完成');
       }
 
       // 初始化tsParticles
+      console.log('🎯 初始化tsParticles...');
       await this.initParticles();
 
       // 初始化GSAP
+      console.log('🎯 初始化GSAP...');
       this.initGSAP();
 
       // 初始化性能监控
+      console.log('🎯 初始化性能监控...');
       this.initPerformanceMonitor();
 
       // 显示高级特效容器
       if (this.advancedEffectsContainer) {
         this.advancedEffectsContainer.style.display = 'block';
+        console.log('✅ 高级特效容器已显示');
+      } else {
+        console.warn('⚠️ 高级特效容器未找到');
       }
 
       // 隐藏基础特效容器
       if (this.basicEffectsContainer) {
         this.basicEffectsContainer.style.display = 'none';
+        console.log('✅ 基础特效容器已隐藏');
       }
 
       this.isAdvancedMode = true;
@@ -497,6 +539,7 @@ class AdvancedWeatherEffectsManager extends WeatherEffectsManager {
 
       // 如果有当前天气，重新应用特效
       if (this.lastWeatherData) {
+        console.log('🔄 重新应用天气特效...');
         this.applyWeatherEffects(this.lastWeatherData);
       }
 
@@ -567,6 +610,12 @@ class AdvancedWeatherEffectsManager extends WeatherEffectsManager {
   initPerformanceMonitor() {
     this.performanceMonitor = new PerformanceMonitor();
     this.performanceMonitor.start();
+
+    // 在开发模式下显示性能监控
+    const performanceMonitorElement = document.getElementById('performanceMonitor');
+    if (performanceMonitorElement) {
+      performanceMonitorElement.style.display = 'block';
+    }
   }
 
   // 重写父类的应用天气特效方法
@@ -595,29 +644,49 @@ class AdvancedWeatherEffectsManager extends WeatherEffectsManager {
       const windSpeed = current.wind_speed || 0;
       const visibility = current.visibility || 10;
 
-      console.log('🌤️ 应用高级天气特效:', skycon);
+      console.log('🌤️ 应用高级天气特效:', skycon, '天气描述:', current.weather_info?.desc);
+      console.log('🔧 高级特效状态检查:');
+      console.log('  - isAdvancedMode:', this.isAdvancedMode);
+      console.log('  - particlesEngine:', !!this.particlesEngine);
+      console.log('  - window.tsParticles:', !!window.tsParticles);
+      console.log('  - window.gsap:', !!window.gsap);
+      console.log('  - performanceLevel:', this.performanceLevel);
 
       // 根据天气状况应用对应的高级特效
       if (skycon.includes('RAIN')) {
+        console.log('🌧️ 检测到雨天，应用雨天特效...');
         await this.createAdvancedRainEffect(skycon);
       } else if (skycon.includes('SNOW')) {
+        console.log('❄️ 检测到雪天，应用雪天特效...');
         await this.createAdvancedSnowEffect(skycon);
       } else if (skycon.includes('STORM')) {
+        console.log('⛈️ 检测到雷暴，应用雷暴特效...');
         await this.createAdvancedThunderEffect();
       } else if (skycon.includes('HAIL')) {
+        console.log('🧊 检测到冰雹，应用冰雹特效...');
         await this.createAdvancedHailEffect();
       } else if (skycon.includes('HAZE') || visibility < 5) {
+        console.log('🌫️ 检测到雾霾，应用雾霾特效...');
         await this.createAdvancedFogEffect(visibility);
       } else if (skycon.includes('DUST') || skycon.includes('SAND') || skycon.includes('WIND')) {
+        console.log('💨 检测到沙尘，应用沙尘特效...');
         await this.createAdvancedDustEffect();
       } else if (skycon.includes('CLEAR_DAY')) {
+        console.log('☀️ 检测到晴天，应用晴天特效...');
         await this.createAdvancedSunshineEffect();
+      } else if (skycon.includes('CLEAR_NIGHT')) {
+        console.log('🌙 检测到晴夜，应用星空特效...');
+        await this.createAdvancedStarsEffect();
       } else if (skycon.includes('CLOUDY') || skycon.includes('PARTLY_CLOUDY')) {
+        console.log('☁️ 检测到多云，应用云朵特效...');
         await this.createAdvancedCloudyEffect();
+      } else {
+        console.log('❓ 未识别的天气类型:', skycon);
       }
 
       // 风力特效
       if (windSpeed > 10) {
+        console.log('💨 检测到大风，应用风力特效...');
         this.createAdvancedWindEffect(windSpeed);
       }
 
@@ -684,39 +753,61 @@ class AdvancedWeatherEffectsManager extends WeatherEffectsManager {
     }
   }
 
-  // 高级雨天特效
+  // 高级雨天特效 - 性能优化版
   async createAdvancedRainEffect(intensity) {
-    const particleCount = this.performanceLevel === 'high' ? 300 :
-                         this.performanceLevel === 'medium' ? 200 : 100;
-    const speed = intensity.includes('HEAVY') ? 20 :
-                  intensity.includes('LIGHT') ? 10 : 15;
+    console.log('🌧️ 开始创建高级雨天特效:', intensity);
 
-    await this.particlesEngine.load("particles-container", {
-      particles: {
-        number: { value: particleCount },
-        color: { value: "#ffffff" },
-        shape: { type: "circle" },
-        opacity: { value: 0.6, random: true },
-        size: { value: 2, random: true },
-        move: {
-          enable: true,
-          speed: speed,
-          direction: "bottom",
-          straight: true,
-          outModes: { default: "out" }
-        }
-      },
-      detectRetina: true,
-      fpsLimit: this.performanceLevel === 'low' ? 30 : 60
+    // 检查粒子引擎状态
+    if (!this.particlesEngine) {
+      console.error('❌ 粒子引擎未初始化');
+      return;
+    }
+
+    // 大幅降低粒子数量以减少CPU/GPU负载
+    const particleCount = this.performanceLevel === 'high' ? 60 :
+                         this.performanceLevel === 'medium' ? 40 : 20;
+    const speed = intensity.includes('HEAVY') ? 15 :
+                  intensity.includes('LIGHT') ? 8 : 12;
+
+    console.log('🌧️ 雨天特效参数:', {
+      intensity,
+      particleCount,
+      speed,
+      performanceLevel: this.performanceLevel
     });
 
-    this.changeBackgroundTone('#1a237e', '#283593');
+    try {
+      await this.particlesEngine.load("particles-container", {
+        particles: {
+          number: { value: particleCount },
+          color: { value: "#ffffff" },
+          shape: { type: "circle" },
+          opacity: { value: 0.6, random: true },
+          size: { value: 2, random: true },
+          move: {
+            enable: true,
+            speed: speed,
+            direction: "bottom",
+            straight: true,
+            outModes: { default: "out" }
+          }
+        },
+        detectRetina: false, // 禁用高分辨率检测以提升性能
+        fpsLimit: 30 // 统一限制为30FPS以降低性能消耗
+      });
+
+      console.log('✅ 雨天特效创建成功');
+      this.changeBackgroundTone('#1a237e', '#283593');
+
+    } catch (error) {
+      console.error('❌ 雨天特效创建失败:', error);
+    }
   }
 
-  // 高级雪天特效
-  async createAdvancedSnowEffect(intensity) {
-    const particleCount = this.performanceLevel === 'high' ? 150 :
-                         this.performanceLevel === 'medium' ? 100 : 60;
+  // 高级雪天特效 - 性能优化版
+  async createAdvancedSnowEffect(_intensity) {
+    const particleCount = this.performanceLevel === 'high' ? 40 :
+                         this.performanceLevel === 'medium' ? 25 : 15;
 
     await this.particlesEngine.load("particles-container", {
       particles: {
@@ -724,18 +815,18 @@ class AdvancedWeatherEffectsManager extends WeatherEffectsManager {
         color: { value: "#ffffff" },
         shape: { type: "circle" },
         opacity: { value: 0.8, random: true },
-        size: { value: 4, random: true },
+        size: { value: 3, random: true },
         move: {
           enable: true,
-          speed: 3,
+          speed: 2,
           direction: "bottom",
           random: true,
           straight: false,
           outModes: { default: "out" }
         }
       },
-      detectRetina: true,
-      fpsLimit: this.performanceLevel === 'low' ? 30 : 60
+      detectRetina: false,
+      fpsLimit: 30
     });
 
     this.changeBackgroundTone('#37474f', '#546e7a');
@@ -790,9 +881,9 @@ class AdvancedWeatherEffectsManager extends WeatherEffectsManager {
     createLightning();
   }
 
-  // 高级晴天特效
+  // 高级晴天特效 - 性能优化版
   async createAdvancedSunshineEffect() {
-    const particleCount = this.performanceLevel === 'high' ? 50 : 30;
+    const particleCount = this.performanceLevel === 'high' ? 20 : 10;
 
     await this.particlesEngine.load("particles-container", {
       particles: {
@@ -800,26 +891,26 @@ class AdvancedWeatherEffectsManager extends WeatherEffectsManager {
         color: { value: "#ffeb3b" },
         shape: { type: "circle" },
         opacity: {
-          value: 0.6,
+          value: 0.5,
           random: true,
           animation: {
             enable: true,
-            speed: 2,
-            minimumValue: 0.3,
+            speed: 1,
+            minimumValue: 0.2,
             sync: false
           }
         },
-        size: { value: 3, random: true },
+        size: { value: 2, random: true },
         move: {
           enable: true,
-          speed: 1,
+          speed: 0.5,
           direction: "none",
           random: true,
           straight: false
         }
       },
-      detectRetina: true,
-      fpsLimit: this.performanceLevel === 'low' ? 30 : 60
+      detectRetina: false,
+      fpsLimit: 30
     });
 
     this.changeBackgroundTone('#1976d2', '#42a5f5');
@@ -848,17 +939,17 @@ class AdvancedWeatherEffectsManager extends WeatherEffectsManager {
     canvas.height = window.innerHeight;
 
     const clouds = [];
-    const maxClouds = this.performanceLevel === 'high' ? 8 : 5;
+    const maxClouds = this.performanceLevel === 'high' ? 4 : 3; // 减少云朵数量
 
     // 生成云朵
     for (let i = 0; i < maxClouds; i++) {
       clouds.push({
         x: -200 - Math.random() * 100,
         y: Math.random() * (canvas.height * 0.6),
-        width: 150 + Math.random() * 200,
-        height: 75 + Math.random() * 100,
-        speed: 0.3 + Math.random() * 0.8,
-        opacity: 0.6 + Math.random() * 0.3
+        width: 120 + Math.random() * 150, // 减小云朵尺寸
+        height: 60 + Math.random() * 80,
+        speed: 0.2 + Math.random() * 0.5, // 降低移动速度
+        opacity: 0.5 + Math.random() * 0.2
       });
     }
 
@@ -897,9 +988,9 @@ class AdvancedWeatherEffectsManager extends WeatherEffectsManager {
     animate();
   }
 
-  // 高级雾霾特效
-  async createAdvancedFogEffect(visibility) {
-    const particleCount = this.performanceLevel === 'high' ? 80 : 50;
+  // 高级雾霾特效 - 性能优化版
+  async createAdvancedFogEffect(_visibility) {
+    const particleCount = this.performanceLevel === 'high' ? 25 : 15;
 
     await this.particlesEngine.load("particles-container", {
       particles: {
@@ -910,107 +1001,208 @@ class AdvancedWeatherEffectsManager extends WeatherEffectsManager {
           value: 0.3,
           random: true,
           animation: {
-            enable: true,
-            speed: 1,
-            minimumValue: 0.1,
-            sync: false
+            enable: false // 禁用动画以提升性能
           }
         },
-        size: { value: 30, random: true },
+        size: { value: 20, random: true }, // 减小粒子尺寸
         move: {
           enable: true,
-          speed: 0.5,
+          speed: 0.3, // 降低移动速度
           direction: "none",
           random: true,
           straight: false
         }
       },
-      detectRetina: true,
-      fpsLimit: this.performanceLevel === 'low' ? 30 : 60
+      detectRetina: false,
+      fpsLimit: 30
     });
 
     this.changeBackgroundTone('#424242', '#616161');
   }
 
-  // 高级沙尘特效
+  // 高级沙尘特效 - 性能优化版
   async createAdvancedDustEffect() {
-    const particleCount = this.performanceLevel === 'high' ? 180 : 100;
+    const particleCount = this.performanceLevel === 'high' ? 50 : 30;
 
     await this.particlesEngine.load("particles-container", {
       particles: {
         number: { value: particleCount },
         color: { value: "#d4a574" },
         shape: { type: "circle" },
-        opacity: { value: 0.7, random: true },
-        size: { value: 3, random: true },
+        opacity: { value: 0.6, random: true },
+        size: { value: 2, random: true },
         move: {
           enable: true,
-          speed: 12,
+          speed: 8, // 降低移动速度
           direction: "right",
           random: true,
           straight: false,
           outModes: { default: "out" }
         }
       },
-      detectRetina: true,
-      fpsLimit: this.performanceLevel === 'low' ? 30 : 60
+      detectRetina: false,
+      fpsLimit: 30
     });
 
     this.changeBackgroundTone('#8d6e63', '#a1887f');
   }
 
-  // 高级冰雹特效
+  // 高级冰雹特效 - 性能优化版
   async createAdvancedHailEffect() {
-    const particleCount = this.performanceLevel === 'high' ? 80 : 50;
+    const particleCount = this.performanceLevel === 'high' ? 30 : 20;
 
     await this.particlesEngine.load("particles-container", {
       particles: {
         number: { value: particleCount },
         color: { value: "#ffffff" },
         shape: { type: "circle" },
-        opacity: { value: { min: 0.8, max: 1 } },
-        size: { value: { min: 4, max: 10 } },
+        opacity: { value: { min: 0.7, max: 0.9 } },
+        size: { value: { min: 3, max: 6 } }, // 减小冰雹尺寸
         move: {
           enable: true,
-          speed: { min: 8, max: 15 },
+          speed: { min: 6, max: 12 }, // 降低速度
           direction: "bottom",
           straight: true,
           outModes: { default: "out" },
           gravity: {
             enable: true,
-            acceleration: 1.5,
-            maxSpeed: 20
+            acceleration: 1.2, // 降低重力加速度
+            maxSpeed: 15
           }
         }
       },
-      detectRetina: true,
-      fpsLimit: this.performanceLevel === 'low' ? 30 : 60
+      detectRetina: false,
+      fpsLimit: 30
     });
 
     this.changeBackgroundTone('#263238', '#37474f');
   }
 
-  // 高级风力特效
-  createAdvancedWindEffect(windSpeed) {
+  // 高级星空特效 - 晴夜专用
+  async createAdvancedStarsEffect() {
+    const starCount = this.performanceLevel === 'high' ? 80 : this.performanceLevel === 'medium' ? 50 : 30;
+
+    await this.particlesEngine.load("particles-container", {
+      particles: {
+        number: { value: starCount },
+        color: { value: "#ffffff" },
+        shape: { type: "star" },
+        opacity: {
+          value: { min: 0.3, max: 1.0 },
+          animation: {
+            enable: true,
+            speed: 0.5,
+            minimumValue: 0.3,
+            sync: false
+          }
+        },
+        size: {
+          value: { min: 1, max: 4 },
+          animation: {
+            enable: true,
+            speed: 0.3,
+            minimumValue: 1,
+            sync: false
+          }
+        },
+        move: {
+          enable: false // 星星不移动，只闪烁
+        },
+        position: {
+          x: { value: 0, offset: 100 },
+          y: { value: 0, offset: 60 } // 只在上半部分显示星星
+        }
+      },
+      detectRetina: false,
+      fpsLimit: 30
+    });
+
+    // 添加月亮效果
+    this.createMoonEffect();
+
+    this.changeBackgroundTone('#0d1421', '#1a237e');
+  }
+
+  // 月亮特效
+  createMoonEffect() {
     if (!window.gsap) return;
 
-    // 创建摇摆效果
-    const swayTimeline = window.gsap.timeline({
+    const moonContainer = document.createElement('div');
+    moonContainer.className = 'moon-effect';
+    moonContainer.style.cssText = `
+      position: absolute;
+      top: 10%;
+      right: 15%;
+      width: 80px;
+      height: 80px;
+      background: radial-gradient(circle at 30% 30%, #ffffff 0%, #f5f5f5 50%, #e0e0e0 100%);
+      border-radius: 50%;
+      box-shadow: 0 0 30px rgba(255, 255, 255, 0.3);
+      pointer-events: none;
+      z-index: 2;
+    `;
+
+    this.effectsContainer.appendChild(moonContainer);
+
+    // 月亮微微发光动画
+    window.gsap.to(moonContainer, {
+      duration: 4,
+      boxShadow: "0 0 50px rgba(255, 255, 255, 0.5)",
+      ease: "power2.inOut",
       repeat: -1,
       yoyo: true
     });
 
-    const intensity = windSpeed > 30 ? 5 : windSpeed > 15 ? 3 : 2;
-    const duration = windSpeed > 30 ? 1.5 : 2;
+    this.currentEffects.push('moon');
+  }
 
-    swayTimeline.to('.main-content', {
-      duration: duration,
-      x: intensity,
-      rotation: 0.5,
-      ease: "power2.inOut"
-    });
+  // 高级风力特效 - 移除主内容摇摆，只保留特效容器内的风力效果
+  createAdvancedWindEffect(windSpeed) {
+    if (!window.gsap) return;
 
-    this.gsapTimelines.set('sway', swayTimeline);
+    // 不再对主内容区域应用摇摆效果，避免与CSS backgroundSway冲突
+    // 只在特效容器内创建风力粒子效果
+    const windContainer = document.createElement('div');
+    windContainer.className = 'advanced-wind-effect';
+    windContainer.style.cssText = `
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      pointer-events: none;
+      z-index: 1;
+    `;
+
+    // 创建风力粒子
+    for (let i = 0; i < Math.min(20, Math.floor(windSpeed / 2)); i++) {
+      const particle = document.createElement('div');
+      particle.style.cssText = `
+        position: absolute;
+        width: 2px;
+        height: 2px;
+        background: rgba(255,255,255,0.4);
+        border-radius: 50%;
+        top: ${Math.random() * 100}%;
+        left: -10px;
+      `;
+
+      windContainer.appendChild(particle);
+
+      // 使用GSAP创建粒子动画
+      window.gsap.to(particle, {
+        duration: 2 + Math.random() * 2,
+        x: window.innerWidth + 20,
+        y: -20 + Math.random() * 40,
+        opacity: 0,
+        ease: "power2.out",
+        repeat: -1,
+        delay: Math.random() * 2
+      });
+    }
+
+    this.effectsContainer.appendChild(windContainer);
+    this.currentEffects.push('advanced-wind');
   }
 
   // 改变背景色调
