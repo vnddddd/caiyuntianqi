@@ -1258,6 +1258,8 @@ class PerformanceMonitor {
 
   updateDisplay() {
     const fpsElement = document.getElementById('fps');
+    const particleCountElement = document.getElementById('particle-count');
+    const activeAnimationsElement = document.getElementById('active-animations');
     const memoryElement = document.getElementById('memory-usage');
     const effectModeElement = document.getElementById('effect-mode');
 
@@ -1267,12 +1269,63 @@ class PerformanceMonitor {
                                this.fps >= 30 ? '#ff9800' : '#f44336';
     }
 
+    // 更新粒子数量
+    if (particleCountElement) {
+      this.updateParticleCount();
+      particleCountElement.textContent = this.particleCount;
+    }
+
+    // 更新活跃动画数量
+    if (activeAnimationsElement) {
+      this.updateActiveAnimations();
+      activeAnimationsElement.textContent = this.activeAnimations;
+    }
+
     if (memoryElement) {
       memoryElement.textContent = this.memoryUsage + ' MB';
     }
 
     if (effectModeElement && window.weatherApp && window.weatherApp.weatherEffects) {
       effectModeElement.textContent = window.weatherApp.weatherEffects.isAdvancedMode ? '高级' : '基础';
+    }
+  }
+
+  // 更新粒子数量
+  updateParticleCount() {
+    try {
+      // 检查tsParticles实例
+      if (window.tsParticles && window.weatherApp && window.weatherApp.weatherEffects) {
+        const container = window.tsParticles.domItem(0);
+        if (container && container.particles) {
+          this.particleCount = container.particles.count || 0;
+        } else {
+          this.particleCount = 0;
+        }
+      } else {
+        this.particleCount = 0;
+      }
+    } catch (error) {
+      this.particleCount = 0;
+    }
+  }
+
+  // 更新活跃动画数量
+  updateActiveAnimations() {
+    try {
+      let animationCount = 0;
+
+      // 检查GSAP动画
+      if (window.weatherApp && window.weatherApp.weatherEffects && window.weatherApp.weatherEffects.gsapTimelines) {
+        animationCount += window.weatherApp.weatherEffects.gsapTimelines.size || 0;
+      }
+
+      // 检查CSS动画（基础特效）
+      const animatedElements = document.querySelectorAll('.rain-effect-optimized, .snow-effect-optimized, .stars-effect, .background-sway');
+      animationCount += animatedElements.length;
+
+      this.activeAnimations = animationCount;
+    } catch (error) {
+      this.activeAnimations = 0;
     }
   }
 }
