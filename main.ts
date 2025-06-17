@@ -627,7 +627,14 @@ function getClientIP(req: Request, info?: Deno.ServeHandlerInfo): string {
     const value = req.headers.get(header);
     if (value) {
       // x-forwarded-for 可能包含多个IP，取第一个
-      const ip = value.split(',')[0].trim();
+      let ip = value.split(',')[0].trim();
+
+      // 移除端口号（如果存在）
+      if (ip.includes(':') && !ip.includes('::')) {
+        // IPv4地址可能包含端口，移除端口部分
+        ip = ip.split(':')[0];
+      }
+
       if (ip && ip !== 'unknown' && ip !== '127.0.0.1' && ip !== 'localhost') {
         console.log(`从头字段 ${header} 获取到IP: ${ip}`);
         return ip;
@@ -639,7 +646,13 @@ function getClientIP(req: Request, info?: Deno.ServeHandlerInfo): string {
   if (info && info.remoteAddr) {
     const remoteAddr = info.remoteAddr;
     if ('hostname' in remoteAddr && remoteAddr.hostname) {
-      const ip = remoteAddr.hostname;
+      let ip = remoteAddr.hostname;
+
+      // 移除端口号（如果存在）
+      if (ip.includes(':') && !ip.includes('::')) {
+        ip = ip.split(':')[0];
+      }
+
       if (ip !== '127.0.0.1' && ip !== 'localhost') {
         console.log(`从remoteAddr获取到IP: ${ip}`);
         return ip;
