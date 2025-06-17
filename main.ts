@@ -633,36 +633,41 @@ async function searchLocation(query: string): Promise<Array<{lat: number, lng: n
   return fuzzyMatches.length > 0 ? fuzzyMatches : [];
 }
 
-// 获取客户端真实IP的辅助函数
+// 获取客户端真实IP的辅助函数（优化支持Cloudflare）
 function getClientIP(req: Request, info?: Deno.ServeHandlerInfo): string {
-  // 优先从Caddy传递的头字段获取真实IP
+  // 优先级排序的头字段列表（Cloudflare优先）
   const possibleHeaders = [
-    'x-real-ip',           // Caddy设置的真实IP
+    'cf-connecting-ip',    // Cloudflare 真实用户IP（最高优先级）
+    'x-real-ip',           // Caddy/Nginx设置的真实IP
     'x-forwarded-for',     // 标准的转发IP头
-    'cf-connecting-ip',    // Cloudflare
     'x-client-ip',         // 其他代理
+    'true-client-ip',      // 一些CDN使用
     'x-forwarded',
     'forwarded-for',
     'forwarded',
-    'true-client-ip',
     'x-cluster-client-ip'
   ];
 
   for (const header of possibleHeaders) {
     const value = req.headers.get(header);
     if (value) {
-      // x-forwarded-for 可能包含多个IP，取第一个
-      let ip = value.split(',')[0].trim();
+      // x-forwarded-for 可能包含多个IP，取第一个真实IP
+      const ips = value.split(',').map(ip => ip.trim());
 
-      // 移除端口号（如果存在）
-      if (ip.includes(':') && !ip.includes('::')) {
-        // IPv4地址可能包含端口，移除端口部分
-        ip = ip.split(':')[0];
-      }
+      for (const ip of ips) {
+        let cleanIP = ip;
 
-      if (ip && ip !== 'unknown' && ip !== '127.0.0.1' && ip !== 'localhost') {
-        console.log(`从头字段 ${header} 获取到IP: ${ip}`);
-        return ip;
+        // 移除端口号（如果存在）
+        if (cleanIP.includes(':') && !cleanIP.includes('::')) {
+          // IPv4地址可能包含端口，移除端口部分
+          cleanIP = cleanIP.split(':')[0];
+        }
+
+        // 验证IP是否有效且不是内网IP
+        if (isValidPublicIP(cleanIP)) {
+          console.log(`从头字段 ${header} 获取到真实IP: ${cleanIP}`);
+          return cleanIP;
+        }
       }
     }
   }
@@ -678,7 +683,7 @@ function getClientIP(req: Request, info?: Deno.ServeHandlerInfo): string {
         ip = ip.split(':')[0];
       }
 
-      if (ip !== '127.0.0.1' && ip !== 'localhost') {
+      if (isValidPublicIP(ip)) {
         console.log(`从remoteAddr获取到IP: ${ip}`);
         return ip;
       }
@@ -687,6 +692,38 @@ function getClientIP(req: Request, info?: Deno.ServeHandlerInfo): string {
 
   console.log('未能获取到有效的客户端IP，使用auto');
   return 'auto';
+}
+
+// 验证IP是否为有效的公网IP
+function isValidPublicIP(ip: string): boolean {
+  if (!ip || ip === 'unknown' || ip === 'localhost') {
+    return false;
+  }
+
+  // 检查是否为内网IP
+  const privateRanges = [
+    /^127\./,           // 127.0.0.0/8 (localhost)
+    /^10\./,            // 10.0.0.0/8 (private)
+    /^192\.168\./,      // 192.168.0.0/16 (private)
+    /^172\.(1[6-9]|2[0-9]|3[0-1])\./,  // 172.16.0.0/12 (private)
+    /^169\.254\./,      // 169.254.0.0/16 (link-local)
+    /^::1$/,            // IPv6 localhost
+    /^fe80:/,           // IPv6 link-local
+    /^fc00:/,           // IPv6 unique local
+    /^fd00:/            // IPv6 unique local
+  ];
+
+  for (const range of privateRanges) {
+    if (range.test(ip)) {
+      return false;
+    }
+  }
+
+  // 简单的IP格式验证
+  const ipv4Regex = /^(\d{1,3}\.){3}\d{1,3}$/;
+  const ipv6Regex = /^([0-9a-fA-F]{1,4}:){7}[0-9a-fA-F]{1,4}$|^::1$|^::$/;
+
+  return ipv4Regex.test(ip) || ipv6Regex.test(ip);
 }
 
 // 路由处理器
