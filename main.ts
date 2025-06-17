@@ -610,20 +610,12 @@ async function searchLocation(query: string): Promise<Array<{lat: number, lng: n
 
 // 获取客户端真实IP的辅助函数
 function getClientIP(req: Request, info?: Deno.ServeHandlerInfo): string {
-  // 首先尝试从Deno.ServeHandlerInfo获取IP
-  if (info && info.remoteAddr) {
-    const remoteAddr = info.remoteAddr;
-    if ('hostname' in remoteAddr && remoteAddr.hostname) {
-      return remoteAddr.hostname;
-    }
-  }
-
-  // 尝试各种可能的头字段
+  // 优先从Caddy传递的头字段获取真实IP
   const possibleHeaders = [
-    'x-forwarded-for',
-    'x-real-ip',
-    'cf-connecting-ip',
-    'x-client-ip',
+    'x-real-ip',           // Caddy设置的真实IP
+    'x-forwarded-for',     // 标准的转发IP头
+    'cf-connecting-ip',    // Cloudflare
+    'x-client-ip',         // 其他代理
     'x-forwarded',
     'forwarded-for',
     'forwarded',
@@ -636,12 +628,26 @@ function getClientIP(req: Request, info?: Deno.ServeHandlerInfo): string {
     if (value) {
       // x-forwarded-for 可能包含多个IP，取第一个
       const ip = value.split(',')[0].trim();
-      if (ip && ip !== 'unknown') {
+      if (ip && ip !== 'unknown' && ip !== '127.0.0.1' && ip !== 'localhost') {
+        console.log(`从头字段 ${header} 获取到IP: ${ip}`);
         return ip;
       }
     }
   }
 
+  // 最后尝试从Deno.ServeHandlerInfo获取IP
+  if (info && info.remoteAddr) {
+    const remoteAddr = info.remoteAddr;
+    if ('hostname' in remoteAddr && remoteAddr.hostname) {
+      const ip = remoteAddr.hostname;
+      if (ip !== '127.0.0.1' && ip !== 'localhost') {
+        console.log(`从remoteAddr获取到IP: ${ip}`);
+        return ip;
+      }
+    }
+  }
+
+  console.log('未能获取到有效的客户端IP，使用auto');
   return 'auto';
 }
 
