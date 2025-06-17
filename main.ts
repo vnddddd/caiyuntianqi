@@ -91,12 +91,16 @@ function formatWeatherData(rawData: any, longitude: number) {
     // 24小时预报 - 修复时间显示错误
     let hourlyForecast: any[] = [];
     if (hourly && hourly.temperature && Array.isArray(hourly.temperature)) {
-      // 获取当前时间
-      const now = new Date();
-      const currentHour = now.getHours();
+      // 根据经度计算当地时区
+      const timezoneOffset = Math.round(longitude / 15); // 经度每15度约等于1小时时差
 
-      // 简单的时区估算：经度每15度约等于1小时时差
-      const timezoneOffset = Math.round(longitude / 15);
+      // 获取当地当前时间
+      const now = new Date();
+      const utcTime = now.getTime() + (now.getTimezoneOffset() * 60000); // 转换为UTC时间
+      const localTime = new Date(utcTime + (timezoneOffset * 3600000)); // 转换为当地时间
+      const currentHour = localTime.getHours();
+
+      console.log(`经度: ${longitude}, 时区偏移: ${timezoneOffset}, 当地时间: ${localTime.toLocaleString()}, 当前小时: ${currentHour}`);
 
       hourlyForecast = hourly.temperature.slice(0, 24).map((temp: any, index: number) => {
         // 从当前小时开始计算，每小时递增
