@@ -48,27 +48,48 @@ const SKYCON_MAP: Record<string, { icon: string; desc: string }> = {
 };
 
 // 数据验证辅助函数
-function safeGet(obj: any, path: string, defaultValue: any = null) {
-  return path.split('.').reduce((current, key) => {
-    return current && current[key] !== undefined ? current[key] : defaultValue;
-  }, obj);
+function safeGet(obj: Record<string, unknown>, path: string, defaultValue: unknown = null): unknown {
+  const keys = path.split('.');
+  let current: unknown = obj;
+
+  for (const key of keys) {
+    if (current && typeof current === 'object' && current !== null && key in current) {
+      current = (current as Record<string, unknown>)[key];
+    } else {
+      return defaultValue;
+    }
+  }
+
+  return current;
 }
 
-function safeRound(value: any, defaultValue: number = 0): number {
-  const num = parseFloat(value);
+function safeRound(value: unknown, defaultValue: number = 0): number {
+  const num = parseFloat(String(value));
   return isNaN(num) ? defaultValue : Math.round(num);
 }
 
+function safeNumber(value: unknown, defaultValue: number = 0): number {
+  const num = Number(value);
+  return isNaN(num) ? defaultValue : num;
+}
+
+function safeString(value: unknown, defaultValue: string = ''): string {
+  return typeof value === 'string' ? value : String(value || defaultValue);
+}
+
 // 格式化天气数据
-function formatWeatherData(rawData: any, longitude: number) {
+function formatWeatherData(rawData: Record<string, unknown>, longitude: number) {
   try {
     const { result } = rawData;
 
-    if (!result) {
+    if (!result || typeof result !== 'object') {
       throw new Error("API 返回数据格式错误：缺少 result 字段");
     }
 
-    const { realtime, hourly, daily } = result;
+    const resultData = result as Record<string, unknown>;
+    const realtime = resultData.realtime as Record<string, unknown>;
+    const hourly = resultData.hourly as Record<string, unknown>;
+    const daily = resultData.daily as Record<string, unknown>;
 
     if (!realtime) {
       throw new Error("API 返回数据格式错误：缺少实时天气数据");
@@ -78,13 +99,13 @@ function formatWeatherData(rawData: any, longitude: number) {
     const current = {
       temperature: safeRound(realtime.temperature),
       apparent_temperature: safeRound(realtime.apparent_temperature),
-      humidity: safeRound(safeGet(realtime, 'humidity', 0) * 100),
-      wind_speed: safeRound(safeGet(realtime, 'wind.speed', 0) * 3.6), // m/s 转 km/h
+      humidity: safeRound(safeNumber(safeGet(realtime, 'humidity', 0)) * 100),
+      wind_speed: safeRound(safeNumber(safeGet(realtime, 'wind.speed', 0)) * 3.6), // m/s 转 km/h
       wind_direction: safeRound(safeGet(realtime, 'wind.direction', 0)),
-      pressure: safeRound(safeGet(realtime, 'pressure', 101325) / 100), // Pa 转 hPa
+      pressure: safeRound(safeNumber(safeGet(realtime, 'pressure', 101325)) / 100), // Pa 转 hPa
       visibility: safeGet(realtime, 'visibility', 0),
       skycon: safeGet(realtime, 'skycon', 'CLEAR_DAY'),
-      weather_info: SKYCON_MAP[realtime.skycon] || { icon: "🌤️", desc: "未知" },
+      weather_info: SKYCON_MAP[safeString(realtime.skycon, 'CLEAR_DAY')] || { icon: "🌤️", desc: "未知" },
       air_quality: safeGet(realtime, 'air_quality', {})
     };
 
