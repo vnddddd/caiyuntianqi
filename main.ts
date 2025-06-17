@@ -239,95 +239,124 @@ async function getWeatherData(longitude: number, latitude: number) {
 
 // IP 地理位置获取 - 使用多个备用接口
 async function getLocationByIP(clientIP?: string): Promise<{ lat: number; lng: number; address: string } | null> {
-  // 定义多个IP定位服务（按准确度排序）
+  // 定义多个IP定位服务（按准确度和详细程度排序）
   const ipServices = [
-    // 服务1: 腾讯位置服务（国内最准确）
+    // 服务1: 美团接口（国内最详细，包含区县级信息）
     async () => {
-      const ipApiUrl = clientIP
-        ? `https://apis.map.qq.com/ws/location/v1/ip?ip=${clientIP}&key=OB4BZ-D4W3U-B7VVO-4PJWW-6TKDJ-WPB77`
-        : `https://apis.map.qq.com/ws/location/v1/ip?key=OB4BZ-D4W3U-B7VVO-4PJWW-6TKDJ-WPB77`;
-
-      const response = await fetch(ipApiUrl);
-      if (!response.ok) throw new Error(`腾讯API: ${response.status}`);
-
-      const data = await response.json();
-      if (data.status === 0 && data.result) {
-        const { location, ad_info } = data.result;
-        return {
-          lat: location.lat,
-          lng: location.lng,
-          address: `${ad_info.nation || ''} ${ad_info.province || ''} ${ad_info.city || ''} ${ad_info.district || ''}`.trim() || '未知位置'
-        };
+      // 美团API需要真实的外网IP，跳过本地IP
+      if (!clientIP || clientIP === 'auto' || clientIP.startsWith('127.') || clientIP.startsWith('192.168.') || clientIP.startsWith('10.') || clientIP === '::1') {
+        throw new Error('美团API需要真实外网IP，跳过本地IP检测');
       }
-      throw new Error('腾讯API返回错误');
-    },
 
-    // 服务2: 美团接口
-    async () => {
-      const ipApiUrl = clientIP
-        ? `https://apimobile.meituan.com/locate/v2/ip/loc?rgeo=true&ip=${clientIP}`
-        : `https://apimobile.meituan.com/locate/v2/ip/loc?rgeo=true`;
+      const ipApiUrl = `https://apimobile.meituan.com/locate/v2/ip/loc?rgeo=true&ip=${clientIP}`;
+      console.log('美团API请求URL:', ipApiUrl);
 
       const response = await fetch(ipApiUrl, {
         headers: {
-          'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36',
-          'Referer': 'https://www.meituan.com/'
+          'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+          'Referer': 'https://www.meituan.com/',
+          'Accept': 'application/json, text/plain, */*',
+          'Accept-Language': 'zh-CN,zh;q=0.9,en;q=0.8',
+          'Cache-Control': 'no-cache',
+          'Pragma': 'no-cache',
+          'Origin': 'https://www.meituan.com'
         }
       });
 
-      if (!response.ok) throw new Error(`美团API: ${response.status}`);
+      if (!response.ok) throw new Error(`美团API HTTP错误: ${response.status}`);
 
       const data = await response.json();
+      console.log('美团API响应数据:', data);
+
+      // 检查是否有错误
+      if (data.error) {
+        throw new Error(`美团API返回错误: ${data.error.message || data.error.type || '未知错误'}`);
+      }
+
       if (data.data && data.data.lat && data.data.lng) {
         const { lat, lng, rgeo } = data.data;
         let address = '未知位置';
+
+        // 美团API提供最详细的地址信息
         if (rgeo) {
-          address = `${rgeo.country || ''} ${rgeo.province || ''} ${rgeo.city || ''} ${rgeo.district || ''}`.trim();
+          const addressParts = [];
+          if (rgeo.country) addressParts.push(rgeo.country);
+          if (rgeo.province && rgeo.province !== rgeo.city) addressParts.push(rgeo.province);
+          if (rgeo.city) addressParts.push(rgeo.city);
+          if (rgeo.district) addressParts.push(rgeo.district);
+          if (rgeo.street) addressParts.push(rgeo.street);
+          if (rgeo.town) addressParts.push(rgeo.town);
+
+          address = addressParts.join(' ').trim();
         }
-        return { lat, lng, address: address || '未知位置' };
-      }
-      throw new Error('美团API返回数据格式错误');
-    },
 
-    // 服务3: ip-api.com (免费，支持中文)
-    async () => {
-      const ipApiUrl = clientIP
-        ? `http://ip-api.com/json/${clientIP}?lang=zh-CN&fields=status,lat,lon,country,regionName,city,district`
-        : `http://ip-api.com/json?lang=zh-CN&fields=status,lat,lon,country,regionName,city,district`;
-
-      const response = await fetch(ipApiUrl);
-      if (!response.ok) throw new Error(`ip-api: ${response.status}`);
-
-      const data = await response.json();
-      if (data.status === 'success') {
-        return {
-          lat: data.lat,
-          lng: data.lon,
-          address: `${data.country} ${data.regionName} ${data.city}${data.district ? ' ' + data.district : ''}`
-        };
-      }
-      throw new Error('ip-api返回失败状态');
-    },
-
-    // 服务4: ipinfo.io (备用)
-    async () => {
-      const ipApiUrl = clientIP
-        ? `https://ipinfo.io/${clientIP}/json`
-        : `https://ipinfo.io/json`;
-
-      const response = await fetch(ipApiUrl);
-      if (!response.ok) throw new Error(`ipinfo: ${response.status}`);
-
-      const data = await response.json();
-      if (data.loc) {
-        const [lat, lng] = data.loc.split(',').map(Number);
         return {
           lat,
           lng,
-          address: `${data.country || ''} ${data.region || ''} ${data.city || ''}`.trim() || '未知位置'
+          address: address || '未知位置'
         };
       }
-      throw new Error('ipinfo返回数据格式错误');
+      throw new Error(`美团API返回数据格式错误: ${JSON.stringify(data)}`);
+    },
+
+    // 服务2: ip-api.com (免费，支持中文，稳定)
+    async () => {
+      const ipApiUrl = clientIP && clientIP !== 'auto' && !clientIP.startsWith('127.') && !clientIP.startsWith('192.168.') && !clientIP.startsWith('10.') && clientIP !== '::1'
+        ? `http://ip-api.com/json/${clientIP}?lang=zh-CN&fields=status,lat,lon,country,regionName,city,district,zip,timezone`
+        : `http://ip-api.com/json?lang=zh-CN&fields=status,lat,lon,country,regionName,city,district,zip,timezone`;
+
+      console.log('ip-api请求URL:', ipApiUrl);
+      const response = await fetch(ipApiUrl);
+      if (!response.ok) throw new Error(`ip-api HTTP错误: ${response.status}`);
+
+      const data = await response.json();
+      console.log('ip-api响应数据:', data);
+
+      if (data.status === 'success' && data.lat && data.lon) {
+        const addressParts = [];
+        if (data.country) addressParts.push(data.country);
+        if (data.regionName) addressParts.push(data.regionName);
+        if (data.city) addressParts.push(data.city);
+        if (data.district) addressParts.push(data.district);
+
+        return {
+          lat: data.lat,
+          lng: data.lon,
+          address: addressParts.join(' ').trim() || '未知位置'
+        };
+      }
+      throw new Error(`ip-api返回失败: ${data.status || '未知错误'}, message: ${data.message || '无详细信息'}`);
+    },
+
+    // 服务3: ipinfo.io (备用)
+    async () => {
+      const ipApiUrl = clientIP && clientIP !== 'auto' && !clientIP.startsWith('127.') && !clientIP.startsWith('192.168.') && !clientIP.startsWith('10.') && clientIP !== '::1'
+        ? `https://ipinfo.io/${clientIP}/json`
+        : `https://ipinfo.io/json`;
+
+      console.log('ipinfo请求URL:', ipApiUrl);
+      const response = await fetch(ipApiUrl);
+      if (!response.ok) throw new Error(`ipinfo HTTP错误: ${response.status}`);
+
+      const data = await response.json();
+      console.log('ipinfo响应数据:', data);
+
+      if (data.loc && typeof data.loc === 'string' && data.loc.includes(',')) {
+        const [lat, lng] = data.loc.split(',').map(Number);
+        if (!isNaN(lat) && !isNaN(lng)) {
+          const addressParts = [];
+          if (data.country) addressParts.push(data.country);
+          if (data.region) addressParts.push(data.region);
+          if (data.city) addressParts.push(data.city);
+
+          return {
+            lat,
+            lng,
+            address: addressParts.join(' ').trim() || '未知位置'
+          };
+        }
+      }
+      throw new Error(`ipinfo返回数据格式错误: loc=${data.loc}, 完整数据=${JSON.stringify(data)}`);
     }
   ];
 
