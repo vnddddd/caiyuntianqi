@@ -3,69 +3,89 @@
  * 处理位置获取、天气数据展示、用户界面更新
  */
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 class WeatherApp {
   constructor() {
     this.currentLocation = null;
     this.weatherData = null;
     this.cache = new Map();
     this.cacheExpiry = 5 * 60 * 1000; // 5分钟缓存
+    this.maxCacheSize = 50; // 限制缓存大小
     this.isLoading = false;
     this.favoriteLocations = this.loadFavoriteLocations();
     this.defaultLocation = this.loadDefaultLocation();
+
+    // 跟踪事件监听器以便清理
+    this.eventListeners = [];
+
+    // 缓存DOM元素引用
+    this.domElements = {};
 
     this.init();
   }
 
   // 初始化应用
   init() {
+    this.cacheDOMElements();
     this.bindEvents();
     // 立即设置基于时间的背景
     this.updateTimeBasedBackground();
     this.checkLocationPermission();
   }
 
+  // 缓存DOM元素引用
+  cacheDOMElements() {
+    const elements = [
+      'currentTemp', 'weatherIcon', 'weatherDesc', 'feelsLike',
+      'humidity', 'windSpeed', 'visibility', 'pressure',
+      'currentLocationBtn', 'retryBtn', 'closeModalBtn', 'searchBtn',
+      'locationSearch', 'modalFavoriteBtn', 'modalSetDefaultBtn',
+      'locationModal', 'hourlyForecast', 'dailyForecast',
+      'aqiValue', 'aqiDesc', 'aqiValueLarge', 'aqiDescLarge',
+      'pm25', 'pm10', 'o3', 'weatherTips', 'weatherTipsCard',
+      'currentLocation', 'updateTime', 'loadingState', 'errorState',
+      'weatherContent', 'errorMessage', 'currentLocationActions',
+      'modalCurrentLocation', 'favoriteLocations', 'favoriteList'
+    ];
+
+    elements.forEach(id => {
+      this.domElements[id] = document.getElementById(id);
+    });
+  }
+
+  // 安全的事件监听器绑定
+  addEventListenerSafe(element, event, handler, options = {}) {
+    if (element) {
+      element.addEventListener(event, handler, options);
+      this.eventListeners.push({ element, event, handler });
+    }
+  }
+
+  // 清理资源
+  cleanup() {
+    // 清理事件监听器
+    this.eventListeners.forEach(({ element, event, handler }) => {
+      element.removeEventListener(event, handler);
+    });
+    this.eventListeners = [];
+
+    // 清理缓存
+    this.cache.clear();
+  }
+
   // 绑定事件监听器
   bindEvents() {
-    const currentLocationBtn = document.getElementById('currentLocationBtn');
-    const retryBtn = document.getElementById('retryBtn');
-    const closeModalBtn = document.getElementById('closeModalBtn');
-    const searchBtn = document.getElementById('searchBtn');
-    const locationSearch = document.getElementById('locationSearch');
-    // 注意：favoriteBtn 和 setDefaultBtn 在当前HTML中不存在，已移除引用
-
-    currentLocationBtn?.addEventListener('click', () => this.showLocationModal());
-    retryBtn?.addEventListener('click', () => this.getCurrentLocation());
-    closeModalBtn?.addEventListener('click', () => this.hideLocationModal());
-    searchBtn?.addEventListener('click', () => this.searchLocation());
+    // 使用安全的事件监听器绑定
+    this.addEventListenerSafe(this.domElements.currentLocationBtn, 'click', () => this.showLocationModal());
+    this.addEventListenerSafe(this.domElements.retryBtn, 'click', () => this.getCurrentLocation());
+    this.addEventListenerSafe(this.domElements.closeModalBtn, 'click', () => this.hideLocationModal());
+    this.addEventListenerSafe(this.domElements.searchBtn, 'click', () => this.searchLocation());
 
     // 模态框中的按钮事件
-    const modalFavoriteBtn = document.getElementById('modalFavoriteBtn');
-    const modalSetDefaultBtn = document.getElementById('modalSetDefaultBtn');
-    modalFavoriteBtn?.addEventListener('click', () => this.toggleFavorite());
-    modalSetDefaultBtn?.addEventListener('click', () => this.setAsDefault());
+    this.addEventListenerSafe(this.domElements.modalFavoriteBtn, 'click', () => this.toggleFavorite());
+    this.addEventListenerSafe(this.domElements.modalSetDefaultBtn, 'click', () => this.setAsDefault());
 
     // 回车键搜索
-    locationSearch?.addEventListener('keypress', (e) => {
+    this.addEventListenerSafe(this.domElements.locationSearch, 'keypress', (e) => {
       if (e.key === 'Enter') {
         this.searchLocation();
       }
@@ -73,17 +93,18 @@ class WeatherApp {
 
     // 热门城市按钮
     document.querySelectorAll('.city-btn').forEach(btn => {
-      btn.addEventListener('click', (e) => {
+      const handler = (e) => {
         const target = e.target;
         const city = target.dataset.city;
-        const lng = parseFloat(target.dataset.lng || '0');
-        const lat = parseFloat(target.dataset.lat || '0');
+        const lng = this.validateNumber(target.dataset.lng, 0);
+        const lat = this.validateNumber(target.dataset.lat, 0);
         this.selectLocation(lng, lat, city || '');
-      });
+      };
+      this.addEventListenerSafe(btn, 'click', handler);
     });
 
     // 点击模态框外部关闭
-    document.getElementById('locationModal')?.addEventListener('click', (e) => {
+    this.addEventListenerSafe(this.domElements.locationModal, 'click', (e) => {
       if (e.target === e.currentTarget) {
         this.hideLocationModal();
       }
@@ -128,7 +149,7 @@ class WeatherApp {
           return;
         }
       } catch (error) {
-        console.log('GPS权限检查失败，尝试IP定位:', error);
+        this.handleError(error, 'GPS权限检查');
       }
     } else {
       console.log('浏览器不支持地理位置API，尝试IP定位...');
@@ -140,7 +161,7 @@ class WeatherApp {
       await this.getLocationByIP();
       return; // IP定位成功，直接返回
     } catch (ipError) {
-      console.log('IP定位也失败，加载默认位置（北京）:', ipError);
+      this.handleError(ipError, 'IP定位');
       // 直接加载默认位置（北京）
       await this.loadBeijingWeather();
     }
@@ -175,8 +196,6 @@ class WeatherApp {
     this.currentLocation = { lat: latitude, lng: longitude };
 
     console.log('位置获取成功:', this.currentLocation);
-
-
 
     // 获取详细地址并获取天气数据
     this.showLoading('正在获取位置信息...');
@@ -247,8 +266,6 @@ class WeatherApp {
 
       console.log('IP 定位成功:', this.currentLocation, '地址:', data.address);
 
-
-
       // 获取天气数据
       await this.fetchWeatherData(this.currentLocation.lng, this.currentLocation.lat, data.address);
 
@@ -258,21 +275,17 @@ class WeatherApp {
     }
   }
 
-
-
   // 加载默认位置（北京）
   async loadBeijingWeather() {
     try {
       console.log('加载默认位置：北京');
       this.currentLocation = { lat: 39.9042, lng: 116.4074 };
 
-
-
       // 获取天气数据
       await this.fetchWeatherData(116.4074, 39.9042, '北京市');
 
     } catch (error) {
-      console.error('加载默认位置失败:', error);
+      this.handleError(error, '加载默认位置');
       // 如果连默认位置都失败了，显示最终错误
       this.showError('网络连接异常，请检查网络后重试');
     }
@@ -295,13 +308,46 @@ class WeatherApp {
     return null;
   }
 
-  // 设置缓存
+  // 设置缓存（带大小限制）
   setCachedData(lng, lat, data) {
     const key = this.getCacheKey(lng, lat);
+
+    // 如果缓存超过最大大小，删除最旧的条目
+    if (this.cache.size >= this.maxCacheSize) {
+      const firstKey = this.cache.keys().next().value;
+      this.cache.delete(firstKey);
+    }
+
     this.cache.set(key, {
       data,
       timestamp: Date.now()
     });
+  }
+
+  // 数值验证函数
+  validateNumber(value, defaultValue = 0, min = -Infinity, max = Infinity) {
+    const num = parseFloat(value);
+    if (isNaN(num) || num < min || num > max) {
+      return defaultValue;
+    }
+    return num;
+  }
+
+  // 统一错误处理
+  handleError(error, context) {
+    console.error(`${context}失败:`, error);
+
+    let userMessage = '网络连接异常，请检查网络后重试';
+
+    if (error.message.includes('timeout')) {
+      userMessage = '请求超时，请重试';
+    } else if (error.message.includes('404')) {
+      userMessage = '服务暂时不可用，请稍后重试';
+    } else if (error.message.includes('permission')) {
+      userMessage = '权限被拒绝，请检查设置';
+    }
+
+    this.showError(userMessage);
   }
 
   // 获取天气数据
@@ -362,12 +408,10 @@ class WeatherApp {
       console.log('天气数据显示完成');
 
     } catch (error) {
-      console.error('获取天气数据出错:', error);
       if (error.name === 'AbortError') {
         this.showError('请求超时，请检查网络连接');
       } else {
-        console.error('获取天气数据失败:', error);
-        this.showError(`获取天气数据失败: ${error.message}`);
+        this.handleError(error, '获取天气数据');
       }
     } finally {
       this.isLoading = false;
@@ -387,7 +431,7 @@ class WeatherApp {
       const data = await response.json();
       return data.address || '未知位置';
     } catch (error) {
-      console.error('获取地址失败:', error);
+      this.handleError(error, '获取地址');
       return '未知位置';
     }
   }
@@ -463,19 +507,20 @@ class WeatherApp {
 
         // 绑定点击事件
         searchResults.querySelectorAll('.search-result-item').forEach(item => {
-          item.addEventListener('click', (e) => {
+          const handler = (e) => {
             const target = e.currentTarget;
-            const lng = parseFloat(target.dataset.lng || '0');
-            const lat = parseFloat(target.dataset.lat || '0');
+            const lng = this.validateNumber(target.dataset.lng, 0);
+            const lat = this.validateNumber(target.dataset.lat, 0);
             const name = target.dataset.name || '';
             this.selectLocation(lng, lat, name);
-          });
+          };
+          this.addEventListenerSafe(item, 'click', handler);
         });
       } else {
         searchResults.innerHTML = '<div style="text-align: center; padding: 1rem; color: #666;">未找到相关位置</div>';
       }
     } catch (error) {
-      console.error('搜索位置失败:', error);
+      this.handleError(error, '搜索位置');
       searchResults.innerHTML = '<div style="text-align: center; padding: 1rem; color: #f56565;">搜索失败，请重试</div>';
     }
   }
@@ -484,8 +529,6 @@ class WeatherApp {
   async selectLocation(lng, lat, locationName) {
     this.hideLocationModal();
     this.currentLocation = { lat, lng };
-
-
 
     // 获取天气数据
     await this.fetchWeatherData(lng, lat, locationName);
@@ -519,21 +562,42 @@ class WeatherApp {
     this.showWeatherContent();
   }
 
-  // 更新当前天气信息
+  // 更新当前天气信息（优化DOM操作，添加数据验证）
   updateCurrentWeather(current) {
-    document.getElementById('currentTemp').textContent = current.temperature;
-    document.getElementById('weatherIcon').textContent = current.weather_info.icon;
-    document.getElementById('weatherDesc').textContent = current.weather_info.desc;
-    document.getElementById('feelsLike').textContent = `体感温度 ${current.apparent_temperature}°C`;
-    document.getElementById('humidity').textContent = `${current.humidity}%`;
-    document.getElementById('windSpeed').textContent = `${current.wind_speed} km/h`;
-    document.getElementById('visibility').textContent = `${current.visibility} km`;
-    document.getElementById('pressure').textContent = `${current.pressure} hPa`;
+    if (!current || !current.weather_info) {
+      console.error('天气数据无效:', current);
+      return;
+    }
 
-    // 更新基于时间的背景
-    this.updateTimeBasedBackground();
+    // 数据验证和安全获取
+    const temperature = this.validateNumber(current.temperature, '--');
+    const apparentTemp = this.validateNumber(current.apparent_temperature, '--');
+    const humidity = this.validateNumber(current.humidity, '--', 0, 100);
+    const windSpeed = this.validateNumber(current.wind_speed, '--', 0);
+    const visibility = this.validateNumber(current.visibility, '--', 0);
+    const pressure = this.validateNumber(current.pressure, '--', 0);
 
+    // 批量更新DOM以减少重排
+    const updates = [
+      { element: this.domElements.currentTemp, content: temperature },
+      { element: this.domElements.weatherIcon, content: current.weather_info.icon || '❓' },
+      { element: this.domElements.weatherDesc, content: current.weather_info.desc || '未知' },
+      { element: this.domElements.feelsLike, content: `体感温度 ${apparentTemp}°C` },
+      { element: this.domElements.humidity, content: `${humidity}%` },
+      { element: this.domElements.windSpeed, content: `${windSpeed} km/h` },
+      { element: this.domElements.visibility, content: `${visibility} km` },
+      { element: this.domElements.pressure, content: `${pressure} hPa` }
+    ];
 
+    // 使用requestAnimationFrame批量更新，减少DOM操作
+    requestAnimationFrame(() => {
+      updates.forEach(({ element, content }) => {
+        if (element) element.textContent = content;
+      });
+
+      // 更新基于时间的背景
+      this.updateTimeBasedBackground();
+    });
   }
 
   // 根据当前时间更新背景（白天/夜晚）
@@ -587,9 +651,9 @@ class WeatherApp {
     if (o3El) o3El.textContent = `${airQuality.o3 || '--'} μg/m³`;
   }
 
-  // 更新24小时预报
+  // 更新24小时预报（优化DOM操作）
   updateHourlyForecast(hourly) {
-    const container = document.getElementById('hourlyForecast');
+    const container = this.domElements.hourlyForecast;
     if (!container || !hourly) return;
 
     container.innerHTML = hourly.map(item => `
@@ -601,9 +665,9 @@ class WeatherApp {
     `).join('');
   }
 
-  // 更新3天预报
+  // 更新3天预报（优化DOM操作）
   updateDailyForecast(daily) {
-    const container = document.getElementById('dailyForecast');
+    const container = this.domElements.dailyForecast;
     if (!container || !daily) return;
 
     container.innerHTML = daily.map(item => `
@@ -975,4 +1039,11 @@ class WeatherApp {
 // 页面加载完成后初始化应用
 document.addEventListener('DOMContentLoaded', () => {
   globalThis.weatherApp = new WeatherApp();
+});
+
+// 页面卸载时清理资源
+globalThis.addEventListener('beforeunload', () => {
+  if (globalThis.weatherApp) {
+    globalThis.weatherApp.cleanup();
+  }
 });

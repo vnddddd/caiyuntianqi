@@ -869,42 +869,6 @@ async function handler(req: Request, info: Deno.ServeHandlerInfo): Promise<Respo
     }
   }
 
-  // 现代化天气特效演示页面
-  if (pathname === "/modern" || pathname === "/modern-weather-effects.html") {
-    try {
-      const html = await Deno.readTextFile("./modern-weather-effects.html");
-      return new Response(html, {
-        headers: { "Content-Type": "text/html; charset=utf-8" }
-      });
-    } catch {
-      return new Response("页面未找到", { status: 404 });
-    }
-  }
-
-  // 简化特效测试页面
-  if (pathname === "/simple" || pathname === "/simple-weather-effects-test.html") {
-    try {
-      const html = await Deno.readTextFile("./simple-weather-effects-test.html");
-      return new Response(html, {
-        headers: { "Content-Type": "text/html; charset=utf-8" }
-      });
-    } catch {
-      return new Response("页面未找到", { status: 404 });
-    }
-  }
-
-  // 性能对比页面
-  if (pathname === "/comparison" || pathname === "/performance-comparison.html") {
-    try {
-      const html = await Deno.readTextFile("./performance-comparison.html");
-      return new Response(html, {
-        headers: { "Content-Type": "text/html; charset=utf-8" }
-      });
-    } catch {
-      return new Response("页面未找到", { status: 404 });
-    }
-  }
-
 
 
   // 其他静态资源
