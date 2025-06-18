@@ -19,7 +19,7 @@ declare global {
 // 环境变量配置
 const CAIYUN_API_TOKEN = Deno.env.get("CAIYUN_API_TOKEN") || "";
 const AMAP_API_KEY = Deno.env.get("AMAP_API_KEY") || "";
-const PORT = parseInt(Deno.env.get("PORT") || "8000");
+const PORT = parseInt(Deno.env.get("PORT") || "9997");
 
 // 彩云天气 API 基础配置
 const CAIYUN_API_BASE = "https://api.caiyunapp.com/v2.6";
@@ -262,70 +262,156 @@ async function getWeatherData(longitude: number, latitude: number) {
   }
 }
 
-// IP 地理位置获取 - 使用多个备用接口
+// 检测是否为IPv6地址
+function isIPv6(ip: string): boolean {
+  if (!ip) return false;
+  return ip.includes(':') && !ip.includes('.');
+}
+
+// IP 地理位置获取 - 使用多个备用接口，优化IPv6支持
 async function getLocationByIP(clientIP?: string): Promise<{ lat: number; lng: number; address: string } | null> {
-  // 定义多个IP定位服务（按准确度和详细程度排序）
-  const ipServices = [
-    // 服务1: 美团接口（国内最详细，包含区县级信息）
-    async () => {
-      // 美团API需要真实的外网IP，跳过本地IP
-      if (!clientIP || clientIP === 'auto' || clientIP.startsWith('127.') || clientIP.startsWith('192.168.') || clientIP.startsWith('10.') || clientIP === '::1') {
-        throw new Error('美团API需要真实外网IP，跳过本地IP检测');
+  const isIPv6Address = clientIP ? isIPv6(clientIP) : false;
+  console.log(`IP定位请求: ${clientIP}, IPv6: ${isIPv6Address}`);
+
+  // 定义多个IP定位服务（IPv6优先使用支持IPv6的服务）
+  const ipServices = [];
+
+  // 如果是IPv6地址，优先使用明确支持IPv6的服务
+  if (isIPv6Address) {
+    // IPv6专用服务1: ipinfo.io IPv6端点
+    ipServices.push(async () => {
+      if (!clientIP || clientIP === 'auto') {
+        throw new Error('IPv6定位需要明确的IP地址');
       }
 
-      const ipApiUrl = `https://apimobile.meituan.com/locate/v2/ip/loc?rgeo=true&ip=${clientIP}`;
-      console.log('美团API请求URL:', ipApiUrl);
+      // 使用IPv6专用端点
+      const ipApiUrl = `https://v6.ipinfo.io/${clientIP}/json`;
+      console.log('ipinfo IPv6 API请求URL:', ipApiUrl);
 
       const response = await fetch(ipApiUrl, {
         headers: {
           'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
-          'Referer': 'https://www.meituan.com/',
-          'Accept': 'application/json, text/plain, */*',
-          'Accept-Language': 'zh-CN,zh;q=0.9,en;q=0.8',
-          'Cache-Control': 'no-cache',
-          'Pragma': 'no-cache',
-          'Origin': 'https://www.meituan.com'
+          'Accept': 'application/json'
         }
       });
 
-      if (!response.ok) throw new Error(`美团API HTTP错误: ${response.status}`);
+      if (!response.ok) throw new Error(`ipinfo IPv6 API HTTP错误: ${response.status}`);
 
       const data = await response.json();
-      console.log('美团API响应数据:', data);
+      console.log('ipinfo IPv6 API响应数据:', data);
 
-      // 检查是否有错误
-      if (data.error) {
-        throw new Error(`美团API返回错误: ${data.error.message || data.error.type || '未知错误'}`);
+      if (data.loc && typeof data.loc === 'string' && data.loc.includes(',')) {
+        const [lat, lng] = data.loc.split(',').map(Number);
+        if (!isNaN(lat) && !isNaN(lng)) {
+          const addressParts = [];
+          if (data.country) addressParts.push(data.country);
+          if (data.region) addressParts.push(data.region);
+          if (data.city) addressParts.push(data.city);
+
+          return {
+            lat,
+            lng,
+            address: addressParts.join(' ').trim() || '未知位置'
+          };
+        }
+      }
+      throw new Error(`ipinfo IPv6 API返回数据格式错误: loc=${data.loc}, 完整数据=${JSON.stringify(data)}`);
+    });
+
+    // IPv6专用服务2: ip-api.com (明确支持IPv6)
+    ipServices.push(async () => {
+      if (!clientIP || clientIP === 'auto') {
+        throw new Error('IPv6定位需要明确的IP地址');
       }
 
-      if (data.data && data.data.lat && data.data.lng) {
-        const { lat, lng, rgeo } = data.data;
-        let address = '未知位置';
+      const ipApiUrl = `http://ip-api.com/json/${clientIP}?lang=zh-CN&fields=status,lat,lon,country,regionName,city,district,zip,timezone`;
+      console.log('ip-api IPv6请求URL:', ipApiUrl);
 
-        // 美团API提供最详细的地址信息
-        if (rgeo) {
-          const addressParts = [];
-          if (rgeo.country) addressParts.push(rgeo.country);
-          if (rgeo.province && rgeo.province !== rgeo.city) addressParts.push(rgeo.province);
-          if (rgeo.city) addressParts.push(rgeo.city);
-          if (rgeo.district) addressParts.push(rgeo.district);
-          if (rgeo.street) addressParts.push(rgeo.street);
-          if (rgeo.town) addressParts.push(rgeo.town);
+      const response = await fetch(ipApiUrl);
+      if (!response.ok) throw new Error(`ip-api IPv6 HTTP错误: ${response.status}`);
 
-          address = addressParts.join(' ').trim();
-        }
+      const data = await response.json();
+      console.log('ip-api IPv6响应数据:', data);
+
+      if (data.status === 'success' && data.lat && data.lon) {
+        const addressParts = [];
+        if (data.country) addressParts.push(data.country);
+        if (data.regionName) addressParts.push(data.regionName);
+        if (data.city) addressParts.push(data.city);
+        if (data.district) addressParts.push(data.district);
 
         return {
-          lat,
-          lng,
-          address: address || '未知位置'
+          lat: data.lat,
+          lng: data.lon,
+          address: addressParts.join(' ').trim() || '未知位置'
         };
       }
-      throw new Error(`美团API返回数据格式错误: ${JSON.stringify(data)}`);
-    },
+      throw new Error(`ip-api IPv6返回失败: ${data.status || '未知错误'}, message: ${data.message || '无详细信息'}`);
+    });
+  }
 
-    // 服务2: ip-api.com (免费，支持中文，稳定)
-    async () => {
+  // 通用服务（支持IPv4和IPv6）
+
+  // 服务1: 美团接口（国内最详细，包含区县级信息，已确认支持IPv6）
+  ipServices.push(async () => {
+        // 美团API需要真实的外网IP，跳过本地IP
+        if (!clientIP || clientIP === 'auto' || clientIP.startsWith('127.') || clientIP.startsWith('192.168.') || clientIP.startsWith('10.') || clientIP === '::1') {
+          throw new Error('美团API需要真实外网IP，跳过本地IP检测');
+        }
+
+        const ipApiUrl = `https://apimobile.meituan.com/locate/v2/ip/loc?rgeo=true&ip=${clientIP}`;
+        console.log('美团API请求URL:', ipApiUrl);
+
+        const response = await fetch(ipApiUrl, {
+          headers: {
+            'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+            'Referer': 'https://www.meituan.com/',
+            'Accept': 'application/json, text/plain, */*',
+            'Accept-Language': 'zh-CN,zh;q=0.9,en;q=0.8',
+            'Cache-Control': 'no-cache',
+            'Pragma': 'no-cache',
+            'Origin': 'https://www.meituan.com'
+          }
+        });
+
+        if (!response.ok) throw new Error(`美团API HTTP错误: ${response.status}`);
+
+        const data = await response.json();
+        console.log('美团API响应数据:', data);
+
+        // 检查是否有错误
+        if (data.error) {
+          throw new Error(`美团API返回错误: ${data.error.message || data.error.type || '未知错误'}`);
+        }
+
+        if (data.data && data.data.lat && data.data.lng) {
+          const { lat, lng, rgeo } = data.data;
+          let address = '未知位置';
+
+          // 美团API提供最详细的地址信息
+          if (rgeo) {
+            const addressParts = [];
+            if (rgeo.country) addressParts.push(rgeo.country);
+            if (rgeo.province && rgeo.province !== rgeo.city) addressParts.push(rgeo.province);
+            if (rgeo.city) addressParts.push(rgeo.city);
+            if (rgeo.district) addressParts.push(rgeo.district);
+            if (rgeo.street) addressParts.push(rgeo.street);
+            if (rgeo.town) addressParts.push(rgeo.town);
+
+            address = addressParts.join(' ').trim();
+          }
+
+          return {
+            lat,
+            lng,
+            address: address || '未知位置'
+          };
+        }
+        throw new Error(`美团API返回数据格式错误: ${JSON.stringify(data)}`);
+    });
+
+  // 服务2: ip-api.com (免费，支持中文，稳定，支持IPv4和IPv6)
+  ipServices.push(async () => {
       const ipApiUrl = clientIP && clientIP !== 'auto' && !clientIP.startsWith('127.') && !clientIP.startsWith('192.168.') && !clientIP.startsWith('10.') && clientIP !== '::1'
         ? `http://ip-api.com/json/${clientIP}?lang=zh-CN&fields=status,lat,lon,country,regionName,city,district,zip,timezone`
         : `http://ip-api.com/json?lang=zh-CN&fields=status,lat,lon,country,regionName,city,district,zip,timezone`;
@@ -351,10 +437,10 @@ async function getLocationByIP(clientIP?: string): Promise<{ lat: number; lng: n
         };
       }
       throw new Error(`ip-api返回失败: ${data.status || '未知错误'}, message: ${data.message || '无详细信息'}`);
-    },
+    });
 
-    // 服务3: ipinfo.io (备用)
-    async () => {
+  // 服务3: ipinfo.io (备用，支持IPv4和IPv6)
+  ipServices.push(async () => {
       const ipApiUrl = clientIP && clientIP !== 'auto' && !clientIP.startsWith('127.') && !clientIP.startsWith('192.168.') && !clientIP.startsWith('10.') && clientIP !== '::1'
         ? `https://ipinfo.io/${clientIP}/json`
         : `https://ipinfo.io/json`;
@@ -382,8 +468,46 @@ async function getLocationByIP(clientIP?: string): Promise<{ lat: number; lng: n
         }
       }
       throw new Error(`ipinfo返回数据格式错误: loc=${data.loc}, 完整数据=${JSON.stringify(data)}`);
-    }
-  ];
+    });
+
+  // 添加额外的IPv6专用服务作为备用
+  if (isIPv6Address) {
+    // 备用IPv6服务: ipapi.co (支持IPv6)
+    ipServices.push(async () => {
+      if (!clientIP || clientIP === 'auto') {
+        throw new Error('IPv6定位需要明确的IP地址');
+      }
+
+      const ipApiUrl = `https://ipapi.co/${clientIP}/json/`;
+      console.log('ipapi.co IPv6请求URL:', ipApiUrl);
+
+      const response = await fetch(ipApiUrl, {
+        headers: {
+          'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+          'Accept': 'application/json'
+        }
+      });
+
+      if (!response.ok) throw new Error(`ipapi.co IPv6 HTTP错误: ${response.status}`);
+
+      const data = await response.json();
+      console.log('ipapi.co IPv6响应数据:', data);
+
+      if (data.latitude && data.longitude) {
+        const addressParts = [];
+        if (data.country_name) addressParts.push(data.country_name);
+        if (data.region) addressParts.push(data.region);
+        if (data.city) addressParts.push(data.city);
+
+        return {
+          lat: data.latitude,
+          lng: data.longitude,
+          address: addressParts.join(' ').trim() || '未知位置'
+        };
+      }
+      throw new Error(`ipapi.co IPv6返回数据格式错误: ${JSON.stringify(data)}`);
+    });
+  }
 
   // 依次尝试各个服务
   for (let i = 0; i < ipServices.length; i++) {
@@ -656,17 +780,21 @@ function getClientIP(req: Request, info?: Deno.ServeHandlerInfo): string {
 
       for (const ip of ips) {
         let cleanIP = ip;
+        console.log(`处理IP: ${cleanIP} (来自头字段: ${header})`);
 
         // 移除端口号（如果存在）
-        if (cleanIP.includes(':') && !cleanIP.includes('::')) {
-          // IPv4地址可能包含端口，移除端口部分
-          cleanIP = cleanIP.split(':')[0];
-        }
+        cleanIP = removePortFromIP(cleanIP);
+        console.log(`移除端口后: ${cleanIP}`);
 
         // 验证IP是否有效且不是内网IP
-        if (isValidPublicIP(cleanIP)) {
-          console.log(`从头字段 ${header} 获取到真实IP: ${cleanIP}`);
-          return cleanIP;
+        const isValid = isValidPublicIP(cleanIP);
+        console.log(`IP验证结果: ${isValid}`);
+
+        if (isValid) {
+          // 标准化IP地址格式
+          const normalizedIP = normalizeIPv6(cleanIP);
+          console.log(`从头字段 ${header} 获取到真实IP: ${normalizedIP} (原始: ${cleanIP})`);
+          return normalizedIP;
         }
       }
     }
@@ -679,19 +807,98 @@ function getClientIP(req: Request, info?: Deno.ServeHandlerInfo): string {
       let ip = remoteAddr.hostname;
 
       // 移除端口号（如果存在）
-      if (ip.includes(':') && !ip.includes('::')) {
-        ip = ip.split(':')[0];
-      }
+      ip = removePortFromIP(ip);
 
       if (isValidPublicIP(ip)) {
-        console.log(`从remoteAddr获取到IP: ${ip}`);
-        return ip;
+        // 标准化IP地址格式
+        const normalizedIP = normalizeIPv6(ip);
+        console.log(`从remoteAddr获取到IP: ${normalizedIP} (原始: ${ip})`);
+        return normalizedIP;
       }
     }
   }
 
   console.log('未能获取到有效的客户端IP，使用auto');
   return 'auto';
+}
+
+// 从IP地址中移除端口号的辅助函数
+function removePortFromIP(ip: string): string {
+  if (!ip) return ip;
+
+  // 检测IPv6地址格式
+  if (ip.includes(':')) {
+    // IPv6地址可能的格式：
+    // 1. [2001:db8::1]:8080 - 带方括号和端口
+    // 2. 2001:db8::1 - 纯IPv6地址
+    // 3. ::ffff:192.0.2.1:8080 - IPv4映射的IPv6地址带端口（错误格式，但可能出现）
+
+    // 处理带方括号的IPv6地址 [IPv6]:port
+    if (ip.startsWith('[') && ip.includes(']:')) {
+      const bracketEnd = ip.indexOf(']:');
+      return ip.substring(1, bracketEnd); // 移除方括号和端口
+    }
+
+    // 检查是否为IPv4映射的IPv6地址或IPv4地址
+    const ipv4Pattern = /(\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}):(\d+)$/;
+    const ipv4Match = ip.match(ipv4Pattern);
+    if (ipv4Match) {
+      return ipv4Match[1]; // 返回IPv4部分，移除端口
+    }
+
+    // 对于纯IPv6地址，不应该有端口号直接附加
+    // 如果有多个连续的冒号，说明是IPv6压缩格式，不是端口
+    if (ip.includes('::') || ip.split(':').length > 2) {
+      return ip; // 纯IPv6地址，无需处理端口
+    }
+
+    // 如果只有一个冒号且不是IPv6格式，可能是IPv4:port
+    const parts = ip.split(':');
+    if (parts.length === 2 && /^\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}$/.test(parts[0])) {
+      return parts[0]; // IPv4地址，移除端口
+    }
+
+    return ip; // 其他情况保持原样
+  }
+
+  // IPv4地址处理
+  const colonIndex = ip.lastIndexOf(':');
+  if (colonIndex > 0) {
+    const portPart = ip.substring(colonIndex + 1);
+    if (/^\d+$/.test(portPart)) {
+      return ip.substring(0, colonIndex);
+    }
+  }
+
+  return ip;
+}
+
+// 标准化IPv6地址格式
+function normalizeIPv6(ip: string): string {
+  if (!ip || !ip.includes(':')) return ip;
+
+  try {
+    // 移除可能的方括号
+    let cleanIP = ip.replace(/^\[|\]$/g, '');
+
+    // 处理IPv4映射的IPv6地址
+    const ipv4MappedPattern = /^::ffff:(\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3})$/i;
+    const ipv4Match = cleanIP.match(ipv4MappedPattern);
+    if (ipv4Match) {
+      return ipv4Match[1]; // 返回IPv4地址
+    }
+
+    // 基本的IPv6格式验证和标准化
+    if (cleanIP.includes('::')) {
+      // 压缩格式的IPv6地址，保持原样
+      return cleanIP.toLowerCase();
+    }
+
+    return cleanIP.toLowerCase();
+  } catch (error) {
+    console.warn('IPv6地址标准化失败:', ip, error);
+    return ip;
+  }
 }
 
 // 验证IP是否为有效的公网IP
@@ -719,11 +926,66 @@ function isValidPublicIP(ip: string): boolean {
     }
   }
 
-  // 简单的IP格式验证
-  const ipv4Regex = /^(\d{1,3}\.){3}\d{1,3}$/;
-  const ipv6Regex = /^([0-9a-fA-F]{1,4}:){7}[0-9a-fA-F]{1,4}$|^::1$|^::$/;
+  // 标准化IP地址
+  const normalizedIP = normalizeIPv6(ip);
 
-  return ipv4Regex.test(ip) || ipv6Regex.test(ip);
+  // IPv4格式验证
+  const ipv4Regex = /^(\d{1,3}\.){3}\d{1,3}$/;
+  if (ipv4Regex.test(normalizedIP)) {
+    // 验证IPv4地址的每个段是否在有效范围内
+    const parts = normalizedIP.split('.');
+    return parts.every(part => {
+      const num = parseInt(part, 10);
+      return num >= 0 && num <= 255;
+    });
+  }
+
+  // IPv6格式验证（支持完整格式和压缩格式）
+  // 更完整的IPv6验证逻辑
+  if (normalizedIP.includes(':')) {
+    // 基本格式检查：只能包含十六进制字符、冒号和点（IPv4映射）
+    if (!/^[0-9a-fA-F:\.]+$/.test(normalizedIP)) {
+      return false;
+    }
+
+    // 检查冒号数量（IPv6最多7个冒号，压缩格式可能更少）
+    const colonCount = (normalizedIP.match(/:/g) || []).length;
+    if (colonCount > 7) {
+      return false;
+    }
+
+    // 如果包含::，说明是压缩格式
+    if (normalizedIP.includes('::')) {
+      // ::只能出现一次
+      if ((normalizedIP.match(/::/g) || []).length > 1) {
+        return false;
+      }
+      return true; // 压缩格式基本有效
+    }
+
+    // 完整格式：必须有7个冒号，8个段
+    if (colonCount === 7) {
+      const segments = normalizedIP.split(':');
+      if (segments.length === 8) {
+        // 每个段必须是1-4位十六进制数（但允许一些非标准格式）
+        return segments.every(segment =>
+          segment.length > 0 &&
+          segment.length <= 5 && // 放宽到5位以支持一些非标准格式
+          /^[0-9a-fA-F]+$/.test(segment)
+        );
+      }
+    }
+
+    // IPv4映射的IPv6地址
+    if (normalizedIP.startsWith('::ffff:') || normalizedIP.startsWith('::')) {
+      return true;
+    }
+
+    // 其他情况，如果冒号数量合理，认为是有效的
+    return colonCount >= 2 && colonCount <= 7;
+  }
+
+  return false;
 }
 
 // 路由处理器
@@ -740,8 +1002,7 @@ async function handler(req: Request, info: Deno.ServeHandlerInfo): Promise<Respo
     try {
       // 使用改进的IP获取函数
       const clientIP = getClientIP(req, info);
-
-
+      console.log(`API请求: /api/location/ip, 获取到的IP: ${clientIP}`);
 
       const location = await getLocationByIP(clientIP === 'auto' ? undefined : clientIP);
 
