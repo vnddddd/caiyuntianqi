@@ -273,12 +273,70 @@ async function getLocationByIP(clientIP?: string): Promise<{ lat: number; lng: n
   const isIPv6Address = clientIP ? isIPv6(clientIP) : false;
   console.log(`IP定位请求: ${clientIP}, IPv6: ${isIPv6Address}`);
 
-  // 定义多个IP定位服务（IPv6优先使用支持IPv6的服务）
+  // 定义多个IP定位服务（美团API优先，因为在国内最精准）
   const ipServices = [];
 
-  // 如果是IPv6地址，优先使用明确支持IPv6的服务
+  // 服务1: 美团接口（国内最详细最精准，已确认支持IPv6，优先级最高）
+  ipServices.push(async () => {
+    // 美团API需要真实的外网IP，跳过本地IP
+    if (!clientIP || clientIP === 'auto' || clientIP.startsWith('127.') || clientIP.startsWith('192.168.') || clientIP.startsWith('10.') || clientIP === '::1') {
+      throw new Error('美团API需要真实外网IP，跳过本地IP检测');
+    }
+
+    const ipApiUrl = `https://apimobile.meituan.com/locate/v2/ip/loc?rgeo=true&ip=${clientIP}`;
+    console.log('美团API请求URL:', ipApiUrl);
+
+    const response = await fetch(ipApiUrl, {
+      headers: {
+        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+        'Referer': 'https://www.meituan.com/',
+        'Accept': 'application/json, text/plain, */*',
+        'Accept-Language': 'zh-CN,zh;q=0.9,en;q=0.8',
+        'Cache-Control': 'no-cache',
+        'Pragma': 'no-cache',
+        'Origin': 'https://www.meituan.com'
+      }
+    });
+
+    if (!response.ok) throw new Error(`美团API HTTP错误: ${response.status}`);
+
+    const data = await response.json();
+    console.log('美团API响应数据:', data);
+
+    // 检查是否有错误
+    if (data.error) {
+      throw new Error(`美团API返回错误: ${data.error.message || data.error.type || '未知错误'}`);
+    }
+
+    if (data.data && data.data.lat && data.data.lng) {
+      const { lat, lng, rgeo } = data.data;
+      let address = '未知位置';
+
+      // 美团API提供最详细的地址信息
+      if (rgeo) {
+        const addressParts = [];
+        if (rgeo.country) addressParts.push(rgeo.country);
+        if (rgeo.province && rgeo.province !== rgeo.city) addressParts.push(rgeo.province);
+        if (rgeo.city) addressParts.push(rgeo.city);
+        if (rgeo.district) addressParts.push(rgeo.district);
+        if (rgeo.street) addressParts.push(rgeo.street);
+        if (rgeo.town) addressParts.push(rgeo.town);
+
+        address = addressParts.join(' ').trim();
+      }
+
+      return {
+        lat,
+        lng,
+        address: address || '未知位置'
+      };
+    }
+    throw new Error(`美团API返回数据格式错误: ${JSON.stringify(data)}`);
+  });
+
+  // 如果是IPv6地址，添加IPv6专用备用服务
   if (isIPv6Address) {
-    // IPv6专用服务1: ipinfo.io IPv6端点
+    // IPv6备用服务1: ipinfo.io IPv6端点
     ipServices.push(async () => {
       if (!clientIP || clientIP === 'auto') {
         throw new Error('IPv6定位需要明确的IP地址');
@@ -350,65 +408,7 @@ async function getLocationByIP(clientIP?: string): Promise<{ lat: number; lng: n
     });
   }
 
-  // 通用服务（支持IPv4和IPv6）
-
-  // 服务1: 美团接口（国内最详细，包含区县级信息，已确认支持IPv6）
-  ipServices.push(async () => {
-        // 美团API需要真实的外网IP，跳过本地IP
-        if (!clientIP || clientIP === 'auto' || clientIP.startsWith('127.') || clientIP.startsWith('192.168.') || clientIP.startsWith('10.') || clientIP === '::1') {
-          throw new Error('美团API需要真实外网IP，跳过本地IP检测');
-        }
-
-        const ipApiUrl = `https://apimobile.meituan.com/locate/v2/ip/loc?rgeo=true&ip=${clientIP}`;
-        console.log('美团API请求URL:', ipApiUrl);
-
-        const response = await fetch(ipApiUrl, {
-          headers: {
-            'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
-            'Referer': 'https://www.meituan.com/',
-            'Accept': 'application/json, text/plain, */*',
-            'Accept-Language': 'zh-CN,zh;q=0.9,en;q=0.8',
-            'Cache-Control': 'no-cache',
-            'Pragma': 'no-cache',
-            'Origin': 'https://www.meituan.com'
-          }
-        });
-
-        if (!response.ok) throw new Error(`美团API HTTP错误: ${response.status}`);
-
-        const data = await response.json();
-        console.log('美团API响应数据:', data);
-
-        // 检查是否有错误
-        if (data.error) {
-          throw new Error(`美团API返回错误: ${data.error.message || data.error.type || '未知错误'}`);
-        }
-
-        if (data.data && data.data.lat && data.data.lng) {
-          const { lat, lng, rgeo } = data.data;
-          let address = '未知位置';
-
-          // 美团API提供最详细的地址信息
-          if (rgeo) {
-            const addressParts = [];
-            if (rgeo.country) addressParts.push(rgeo.country);
-            if (rgeo.province && rgeo.province !== rgeo.city) addressParts.push(rgeo.province);
-            if (rgeo.city) addressParts.push(rgeo.city);
-            if (rgeo.district) addressParts.push(rgeo.district);
-            if (rgeo.street) addressParts.push(rgeo.street);
-            if (rgeo.town) addressParts.push(rgeo.town);
-
-            address = addressParts.join(' ').trim();
-          }
-
-          return {
-            lat,
-            lng,
-            address: address || '未知位置'
-          };
-        }
-        throw new Error(`美团API返回数据格式错误: ${JSON.stringify(data)}`);
-    });
+  // 通用备用服务（支持IPv4和IPv6）
 
   // 服务2: ip-api.com (免费，支持中文，稳定，支持IPv4和IPv6)
   ipServices.push(async () => {
