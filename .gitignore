@@ -36,3 +36,7 @@ node_modules/
 dist/
 build/
 美团IP查询接口.md
+
+#Claude code配置
+.claude/
+CLAUDE.md

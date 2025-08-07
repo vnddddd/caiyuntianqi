@@ -268,25 +268,26 @@ function isIPv6(ip: string): boolean {
   return ip.includes(':') && !ip.includes('.');
 }
 
-// IP 地理位置获取 - 使用多个备用接口，优化IPv6支持
+// IP 地理位置获取 - 只使用美团API（国内最精准）
 async function getLocationByIP(clientIP?: string): Promise<{ lat: number; lng: number; address: string } | null> {
-  const isIPv6Address = clientIP ? isIPv6(clientIP) : false;
-  console.log(`IP定位请求: ${clientIP}, IPv6: ${isIPv6Address}`);
+  console.log(`IP定位请求: ${clientIP}`);
 
-  // 定义多个IP定位服务（美团API优先，因为在国内最精准）
-  const ipServices = [];
-
-  // 服务1: 美团接口（国内最详细最精准，已确认支持IPv6，优先级最高）
-  ipServices.push(async () => {
-    // 美团API需要真实的外网IP，跳过本地IP
+  try {
+    // 美团API需要真实的外网IP，本地IP直接返回北京
     if (!clientIP || clientIP === 'auto' || clientIP.startsWith('127.') || clientIP.startsWith('192.168.') || clientIP.startsWith('10.') || clientIP === '::1') {
-      throw new Error('美团API需要真实外网IP，跳过本地IP检测');
+      console.log('本地IP或无效IP，返回默认位置：北京');
+      return { lat: 39.9042, lng: 116.4074, address: '北京市' };
     }
 
     const ipApiUrl = `https://apimobile.meituan.com/locate/v2/ip/loc?rgeo=true&ip=${clientIP}`;
     console.log('美团API请求URL:', ipApiUrl);
 
+    // 设置超时时间为3秒
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 3000);
+
     const response = await fetch(ipApiUrl, {
+      signal: controller.signal,
       headers: {
         'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
         'Referer': 'https://www.meituan.com/',
@@ -298,7 +299,11 @@ async function getLocationByIP(clientIP?: string): Promise<{ lat: number; lng: n
       }
     });
 
-    if (!response.ok) throw new Error(`美团API HTTP错误: ${response.status}`);
+    clearTimeout(timeoutId);
+
+    if (!response.ok) {
+      throw new Error(`美团API HTTP错误: ${response.status}`);
+    }
 
     const data = await response.json();
     console.log('美团API响应数据:', data);
@@ -331,199 +336,20 @@ async function getLocationByIP(clientIP?: string): Promise<{ lat: number; lng: n
         address: address || '未知位置'
       };
     }
+    
     throw new Error(`美团API返回数据格式错误: ${JSON.stringify(data)}`);
-  });
-
-  // 如果是IPv6地址，添加IPv6专用备用服务
-  if (isIPv6Address) {
-    // IPv6备用服务1: ipinfo.io IPv6端点
-    ipServices.push(async () => {
-      if (!clientIP || clientIP === 'auto') {
-        throw new Error('IPv6定位需要明确的IP地址');
-      }
-
-      // 使用IPv6专用端点
-      const ipApiUrl = `https://v6.ipinfo.io/${clientIP}/json`;
-      console.log('ipinfo IPv6 API请求URL:', ipApiUrl);
-
-      const response = await fetch(ipApiUrl, {
-        headers: {
-          'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
-          'Accept': 'application/json'
-        }
-      });
-
-      if (!response.ok) throw new Error(`ipinfo IPv6 API HTTP错误: ${response.status}`);
-
-      const data = await response.json();
-      console.log('ipinfo IPv6 API响应数据:', data);
-
-      if (data.loc && typeof data.loc === 'string' && data.loc.includes(',')) {
-        const [lat, lng] = data.loc.split(',').map(Number);
-        if (!isNaN(lat) && !isNaN(lng)) {
-          const addressParts = [];
-          if (data.country) addressParts.push(data.country);
-          if (data.region) addressParts.push(data.region);
-          if (data.city) addressParts.push(data.city);
-
-          return {
-            lat,
-            lng,
-            address: addressParts.join(' ').trim() || '未知位置'
-          };
-        }
-      }
-      throw new Error(`ipinfo IPv6 API返回数据格式错误: loc=${data.loc}, 完整数据=${JSON.stringify(data)}`);
-    });
-
-    // IPv6专用服务2: ip-api.com (明确支持IPv6)
-    ipServices.push(async () => {
-      if (!clientIP || clientIP === 'auto') {
-        throw new Error('IPv6定位需要明确的IP地址');
-      }
-
-      const ipApiUrl = `http://ip-api.com/json/${clientIP}?lang=zh-CN&fields=status,lat,lon,country,regionName,city,district,zip,timezone`;
-      console.log('ip-api IPv6请求URL:', ipApiUrl);
-
-      const response = await fetch(ipApiUrl);
-      if (!response.ok) throw new Error(`ip-api IPv6 HTTP错误: ${response.status}`);
-
-      const data = await response.json();
-      console.log('ip-api IPv6响应数据:', data);
-
-      if (data.status === 'success' && data.lat && data.lon) {
-        const addressParts = [];
-        if (data.country) addressParts.push(data.country);
-        if (data.regionName) addressParts.push(data.regionName);
-        if (data.city) addressParts.push(data.city);
-        if (data.district) addressParts.push(data.district);
-
-        return {
-          lat: data.lat,
-          lng: data.lon,
-          address: addressParts.join(' ').trim() || '未知位置'
-        };
-      }
-      throw new Error(`ip-api IPv6返回失败: ${data.status || '未知错误'}, message: ${data.message || '无详细信息'}`);
-    });
-  }
-
-  // 通用备用服务（支持IPv4和IPv6）
-
-  // 服务2: ip-api.com (免费，支持中文，稳定，支持IPv4和IPv6)
-  ipServices.push(async () => {
-      const ipApiUrl = clientIP && clientIP !== 'auto' && !clientIP.startsWith('127.') && !clientIP.startsWith('192.168.') && !clientIP.startsWith('10.') && clientIP !== '::1'
-        ? `http://ip-api.com/json/${clientIP}?lang=zh-CN&fields=status,lat,lon,country,regionName,city,district,zip,timezone`
-        : `http://ip-api.com/json?lang=zh-CN&fields=status,lat,lon,country,regionName,city,district,zip,timezone`;
-
-      console.log('ip-api请求URL:', ipApiUrl);
-      const response = await fetch(ipApiUrl);
-      if (!response.ok) throw new Error(`ip-api HTTP错误: ${response.status}`);
-
-      const data = await response.json();
-      console.log('ip-api响应数据:', data);
-
-      if (data.status === 'success' && data.lat && data.lon) {
-        const addressParts = [];
-        if (data.country) addressParts.push(data.country);
-        if (data.regionName) addressParts.push(data.regionName);
-        if (data.city) addressParts.push(data.city);
-        if (data.district) addressParts.push(data.district);
-
-        return {
-          lat: data.lat,
-          lng: data.lon,
-          address: addressParts.join(' ').trim() || '未知位置'
-        };
-      }
-      throw new Error(`ip-api返回失败: ${data.status || '未知错误'}, message: ${data.message || '无详细信息'}`);
-    });
-
-  // 服务3: ipinfo.io (备用，支持IPv4和IPv6)
-  ipServices.push(async () => {
-      const ipApiUrl = clientIP && clientIP !== 'auto' && !clientIP.startsWith('127.') && !clientIP.startsWith('192.168.') && !clientIP.startsWith('10.') && clientIP !== '::1'
-        ? `https://ipinfo.io/${clientIP}/json`
-        : `https://ipinfo.io/json`;
-
-      console.log('ipinfo请求URL:', ipApiUrl);
-      const response = await fetch(ipApiUrl);
-      if (!response.ok) throw new Error(`ipinfo HTTP错误: ${response.status}`);
-
-      const data = await response.json();
-      console.log('ipinfo响应数据:', data);
-
-      if (data.loc && typeof data.loc === 'string' && data.loc.includes(',')) {
-        const [lat, lng] = data.loc.split(',').map(Number);
-        if (!isNaN(lat) && !isNaN(lng)) {
-          const addressParts = [];
-          if (data.country) addressParts.push(data.country);
-          if (data.region) addressParts.push(data.region);
-          if (data.city) addressParts.push(data.city);
-
-          return {
-            lat,
-            lng,
-            address: addressParts.join(' ').trim() || '未知位置'
-          };
-        }
-      }
-      throw new Error(`ipinfo返回数据格式错误: loc=${data.loc}, 完整数据=${JSON.stringify(data)}`);
-    });
-
-  // 添加额外的IPv6专用服务作为备用
-  if (isIPv6Address) {
-    // 备用IPv6服务: ipapi.co (支持IPv6)
-    ipServices.push(async () => {
-      if (!clientIP || clientIP === 'auto') {
-        throw new Error('IPv6定位需要明确的IP地址');
-      }
-
-      const ipApiUrl = `https://ipapi.co/${clientIP}/json/`;
-      console.log('ipapi.co IPv6请求URL:', ipApiUrl);
-
-      const response = await fetch(ipApiUrl, {
-        headers: {
-          'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
-          'Accept': 'application/json'
-        }
-      });
-
-      if (!response.ok) throw new Error(`ipapi.co IPv6 HTTP错误: ${response.status}`);
-
-      const data = await response.json();
-      console.log('ipapi.co IPv6响应数据:', data);
-
-      if (data.latitude && data.longitude) {
-        const addressParts = [];
-        if (data.country_name) addressParts.push(data.country_name);
-        if (data.region) addressParts.push(data.region);
-        if (data.city) addressParts.push(data.city);
-
-        return {
-          lat: data.latitude,
-          lng: data.longitude,
-          address: addressParts.join(' ').trim() || '未知位置'
-        };
-      }
-      throw new Error(`ipapi.co IPv6返回数据格式错误: ${JSON.stringify(data)}`);
-    });
-  }
-
-  // 依次尝试各个服务
-  for (let i = 0; i < ipServices.length; i++) {
-    try {
-      console.log(`尝试IP定位服务 ${i + 1}...`);
-      const result = await ipServices[i]();
-      console.log(`IP定位服务 ${i + 1} 成功:`, result);
-      return result;
-    } catch (error) {
-      console.log(`IP定位服务 ${i + 1} 失败:`, error.message);
-      // 继续尝试下一个服务
+    
+  } catch (error) {
+    if (error.name === 'AbortError') {
+      console.error('美团API请求超时');
+    } else {
+      console.error('美团API定位失败:', error.message);
     }
+    
+    // 失败时返回默认位置（北京）
+    console.log('IP定位失败，返回默认位置：北京');
+    return { lat: 39.9042, lng: 116.4074, address: '北京市' };
   }
-
-  console.error('所有IP定位服务都失败了');
-  return null;
 }
 
 // 地理编码 - 将经纬度转换为详细地址 - 使用美团接口

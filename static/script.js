@@ -3,6 +3,88 @@
  * 处理位置获取、天气数据展示、用户界面更新
  */
 
+// 防抖函数
+function debounce(func, wait) {
+  let timeout;
+  return function executedFunction(...args) {
+    const later = () => {
+      clearTimeout(timeout);
+      func(...args);
+    };
+    clearTimeout(timeout);
+    timeout = setTimeout(later, wait);
+  };
+}
+
+// 节流函数
+function throttle(func, limit) {
+  let inThrottle;
+  return function(...args) {
+    if (!inThrottle) {
+      func.apply(this, args);
+      inThrottle = true;
+      setTimeout(() => inThrottle = false, limit);
+    }
+  };
+}
+
+// 请求管理器 - 实现缓存和去重
+class RequestManager {
+  constructor() {
+    this.pending = new Map();
+    this.cache = new Map();
+    this.cacheTime = 5 * 60 * 1000; // 5分钟缓存
+  }
+
+  async fetch(url, options = {}) {
+    const key = `${url}:${JSON.stringify(options)}`;
+    
+    // 检查是否有相同请求正在进行
+    if (this.pending.has(key)) {
+      console.log('请求去重，等待已有请求:', url);
+      return this.pending.get(key);
+    }
+    
+    // 检查缓存
+    if (this.cache.has(key)) {
+      const cached = this.cache.get(key);
+      if (Date.now() - cached.time < this.cacheTime) {
+        console.log('使用缓存数据:', url);
+        return Promise.resolve(cached.data);
+      } else {
+        this.cache.delete(key);
+      }
+    }
+    
+    // 发起新请求
+    const promise = fetch(url, options)
+      .then(response => {
+        if (!response.ok) throw new Error(`HTTP ${response.status}`);
+        return response.json();
+      })
+      .then(data => {
+        // 缓存成功的结果
+        this.cache.set(key, { data, time: Date.now() });
+        this.pending.delete(key);
+        return data;
+      })
+      .catch(error => {
+        this.pending.delete(key);
+        throw error;
+      });
+    
+    this.pending.set(key, promise);
+    return promise;
+  }
+
+  clearCache() {
+    this.cache.clear();
+  }
+}
+
+// 全局请求管理器实例
+const requestManager = new RequestManager();
+
 class WeatherApp {
   constructor() {
     this.currentLocation = null;
@@ -19,17 +101,25 @@ class WeatherApp {
 
     // 缓存DOM元素引用
     this.domElements = {};
+    
+    // 创建防抖的搜索函数
+    this.searchLocationDebounced = debounce(this.searchLocation.bind(this), 300);
 
     this.init();
   }
 
   // 初始化应用
   init() {
+    console.log('[WeatherApp] 开始初始化...');
     this.cacheDOMElements();
+    console.log('[WeatherApp] DOM元素缓存完成');
     this.bindEvents();
+    console.log('[WeatherApp] 事件绑定完成');
     // 立即设置基于时间的背景
     this.updateTimeBasedBackground();
+    console.log('[WeatherApp] 背景更新完成');
     this.checkLocationPermission();
+    console.log('[WeatherApp] 开始检查位置权限...');
   }
 
   // 缓存DOM元素引用
@@ -60,16 +150,32 @@ class WeatherApp {
     }
   }
 
-  // 清理资源
+  // 清理资源 - 增强内存管理
   cleanup() {
     // 清理事件监听器
     this.eventListeners.forEach(({ element, event, handler }) => {
-      element.removeEventListener(event, handler);
+      if (element && typeof element.removeEventListener === 'function') {
+        element.removeEventListener(event, handler);
+      }
     });
     this.eventListeners = [];
 
     // 清理缓存
     this.cache.clear();
+    
+    // 清理请求管理器缓存
+    if (window.requestManager) {
+      requestManager.clearCache();
+    }
+    
+    // 清理DOM元素引用
+    this.domElements = {};
+    
+    // 取消所有定时器
+    if (this.timeoutIds) {
+      this.timeoutIds.forEach(id => clearTimeout(id));
+      this.timeoutIds = [];
+    }
   }
 
   // 绑定事件监听器
@@ -84,9 +190,15 @@ class WeatherApp {
     this.addEventListenerSafe(this.domElements.modalFavoriteBtn, 'click', () => this.toggleFavorite());
     this.addEventListenerSafe(this.domElements.modalSetDefaultBtn, 'click', () => this.setAsDefault());
 
-    // 回车键搜索
+    // 输入时自动搜索（带防抖）
+    this.addEventListenerSafe(this.domElements.locationSearch, 'input', () => {
+      this.searchLocationDebounced();
+    });
+    
+    // 回车键立即搜索
     this.addEventListenerSafe(this.domElements.locationSearch, 'keypress', (e) => {
       if (e.key === 'Enter') {
+        this.searchLocationDebounced.cancel && this.searchLocationDebounced.cancel();
         this.searchLocation();
       }
     });
@@ -115,6 +227,8 @@ class WeatherApp {
 
   // 检查位置权限并自动获取位置
   async checkLocationPermission() {
+    console.log('[初始化] 开始checkLocationPermission');
+    
     // 优先检查是否有默认位置
     if (this.defaultLocation) {
       console.log('加载默认位置:', this.defaultLocation);
@@ -124,47 +238,32 @@ class WeatherApp {
       return;
     }
 
-    // 首先尝试GPS定位作为主要方案（更准确）
-    if ('geolocation' in navigator) {
-      try {
-        console.log('开始尝试GPS定位...');
-        // 尝试获取位置权限状态
-        if ('permissions' in navigator) {
-          const permission = await navigator.permissions.query({ name: 'geolocation' });
-          if (permission.state === 'granted') {
-            console.log('GPS权限已授予，开始GPS定位...');
-            this.getCurrentLocation();
-            return;
-          } else if (permission.state === 'prompt') {
-            console.log('GPS权限需要用户确认，尝试请求权限...');
-            this.getCurrentLocation(); // 这会触发权限请求
-            return;
-          } else {
-            console.log('GPS权限被拒绝，尝试IP定位...');
-          }
-        } else {
-          // 没有权限API，直接尝试获取位置（会触发权限请求）
-          console.log('浏览器不支持权限API，直接尝试GPS定位...');
-          this.getCurrentLocation();
-          return;
-        }
-      } catch (error) {
-        this.handleError(error, 'GPS权限检查');
-      }
-    } else {
-      console.log('浏览器不支持地理位置API，尝试IP定位...');
-    }
-
-    // GPS定位失败或不可用，尝试IP定位作为备用方案
-    console.log('开始尝试IP定位作为备用方案...');
+    // 直接使用IP定位，避免GPS定位可能的阻塞问题
+    console.log('[初始化] 直接使用IP定位...');
     try {
       await this.getLocationByIP();
-      return; // IP定位成功，直接返回
+      console.log('[初始化] IP定位成功');
+      return;
     } catch (ipError) {
+      console.error('[初始化] IP定位失败:', ipError);
       this.handleError(ipError, 'IP定位');
       // 直接加载默认位置（北京）
       await this.loadBeijingWeather();
     }
+    
+    // 异步尝试GPS定位，不阻塞页面
+    setTimeout(() => {
+      if ('geolocation' in navigator && 'permissions' in navigator) {
+        navigator.permissions.query({ name: 'geolocation' }).then(permission => {
+          if (permission.state === 'granted') {
+            console.log('[后台] GPS权限已授予，尝试更新到更精确的位置');
+            // 这里可以选择性更新到GPS位置
+          }
+        }).catch(e => {
+          console.log('[后台] 无法查询GPS权限:', e);
+        });
+      }
+    }, 1000);
   }
 
   // 显示位置获取提示
@@ -249,14 +348,17 @@ class WeatherApp {
 
   // 通过 IP 获取位置
   async getLocationByIP() {
+    console.log('[IP定位] 开始获取IP位置...');
     try {
-      const response = await fetch('/api/location/ip');
+      const response = await fetch('api/location/ip');
+      console.log('[IP定位] API响应状态:', response.status);
 
       if (!response.ok) {
         throw new Error(`HTTP ${response.status}: ${response.statusText}`);
       }
 
       const data = await response.json();
+      console.log('[IP定位] 收到数据:', data);
 
       if (data.error) {
         throw new Error(data.error);
@@ -350,57 +452,23 @@ class WeatherApp {
     this.showError(userMessage);
   }
 
-  // 获取天气数据
+  // 获取天气数据 - 使用请求管理器优化
   async fetchWeatherData(lng, lat, locationName = null) {
     console.log(`开始获取天气数据: lng=${lng}, lat=${lat}, locationName=${locationName}`);
 
-    if (this.isLoading) {
-      console.log('已有请求在进行中，跳过');
-      return; // 防止重复请求
-    }
-
-    // 检查缓存
-    const cachedData = this.getCachedData(lng, lat);
-    if (cachedData) {
-      console.log('使用缓存数据');
-      this.weatherData = cachedData;
-      this.displayWeatherData(locationName);
-      return;
-    }
-
-    this.isLoading = true;
     this.showLoading('正在获取天气信息...');
-    console.log('开始发送API请求...');
 
     try {
-      const controller = new AbortController();
-      const timeoutId = setTimeout(() => {
-        console.log('请求超时，中止请求');
-        controller.abort();
-      }, 10000); // 10秒超时
-
-      console.log('发送fetch请求到:', `/api/weather?lng=${lng}&lat=${lat}`);
-      const response = await fetch(`/api/weather?lng=${lng}&lat=${lat}`, {
-        signal: controller.signal
-      });
-
-      clearTimeout(timeoutId);
-      console.log('收到响应:', response.status, response.statusText);
-
-      if (!response.ok) {
-        throw new Error(`HTTP ${response.status}: ${response.statusText}`);
-      }
-
-      console.log('开始解析JSON...');
-      const data = await response.json();
-      console.log('JSON解析完成，数据:', data);
+      const url = `api/weather?lng=${lng}&lat=${lat}`;
+      console.log('发送请求到:', url);
+      
+      // 使用请求管理器，自动处理缓存和去重
+      const data = await requestManager.fetch(url);
+      console.log('获取到数据:', data);
 
       if (data.error) {
         throw new Error(data.error);
       }
-
-      // 缓存数据
-      this.setCachedData(lng, lat, data);
 
       this.weatherData = data;
       console.log('开始显示天气数据...');
@@ -408,21 +476,14 @@ class WeatherApp {
       console.log('天气数据显示完成');
 
     } catch (error) {
-      if (error.name === 'AbortError') {
-        this.showError('请求超时，请检查网络连接');
-      } else {
-        this.handleError(error, '获取天气数据');
-      }
-    } finally {
-      this.isLoading = false;
-      console.log('fetchWeatherData 完成，isLoading 设为 false');
+      this.handleError(error, '获取天气数据');
     }
   }
 
   // 获取详细地址
   async getDetailedAddress(lng, lat) {
     try {
-      const response = await fetch(`/api/location/geocode?lng=${lng}&lat=${lat}`);
+      const response = await fetch(`api/location/geocode?lng=${lng}&lat=${lat}`);
 
       if (!response.ok) {
         return '未知位置';
@@ -469,7 +530,7 @@ class WeatherApp {
     }
   }
 
-  // 搜索位置
+  // 搜索位置 - 添加防抖优化
   async searchLocation() {
     const searchInput = document.getElementById('locationSearch');
     const searchResults = document.getElementById('searchResults');
@@ -482,40 +543,48 @@ class WeatherApp {
     searchResults.innerHTML = '<div style="text-align: center; padding: 1rem; color: #666;">搜索中...</div>';
 
     try {
-      // 使用后端搜索API
-      const response = await fetch(`/api/location/search?q=${encodeURIComponent(query)}`);
-
-      if (!response.ok) {
-        throw new Error(`HTTP ${response.status}: ${response.statusText}`);
-      }
-
-      const data = await response.json();
+      // 使用请求管理器
+      const url = `api/location/search?q=${encodeURIComponent(query)}`;
+      const data = await requestManager.fetch(url);
 
       if (data.results && data.results.length > 0) {
         const results = data.results.slice(0, 5); // 最多显示5个结果
 
-        searchResults.innerHTML = results.map(result => {
-          return `
-            <div class="search-result-item" data-lng="${result.lng}" data-lat="${result.lat}" data-name="${result.name}">
-              <div style="font-weight: 500;">${result.name}</div>
-              <div style="font-size: 0.875rem; color: #666; margin-top: 0.25rem;">
-                ${result.address || ''}
-              </div>
+        // 使用DocumentFragment批量更新
+        const fragment = document.createDocumentFragment();
+        
+        results.forEach(result => {
+          const div = document.createElement('div');
+          div.className = 'search-result-item';
+          div.setAttribute('data-lng', result.lng);
+          div.setAttribute('data-lat', result.lat);
+          div.setAttribute('data-name', result.name);
+          div.innerHTML = `
+            <div style="font-weight: 500;">${result.name}</div>
+            <div style="font-size: 0.875rem; color: #666; margin-top: 0.25rem;">
+              ${result.address || ''}
             </div>
           `;
-        }).join('');
-
-        // 绑定点击事件
-        searchResults.querySelectorAll('.search-result-item').forEach(item => {
-          const handler = (e) => {
-            const target = e.currentTarget;
-            const lng = this.validateNumber(target.dataset.lng, 0);
-            const lat = this.validateNumber(target.dataset.lat, 0);
-            const name = target.dataset.name || '';
-            this.selectLocation(lng, lat, name);
-          };
-          this.addEventListenerSafe(item, 'click', handler);
+          fragment.appendChild(div);
         });
+        
+        searchResults.innerHTML = '';
+        searchResults.appendChild(fragment);
+
+        // 使用事件委托
+        if (!searchResults.hasAttribute('data-listener-attached')) {
+          searchResults.setAttribute('data-listener-attached', 'true');
+          
+          searchResults.addEventListener('click', (e) => {
+            const item = e.target.closest('.search-result-item');
+            if (item) {
+              const lng = this.validateNumber(item.dataset.lng, 0);
+              const lat = this.validateNumber(item.dataset.lat, 0);
+              const name = item.dataset.name || '';
+              this.selectLocation(lng, lat, name);
+            }
+          });
+        }
       } else {
         searchResults.innerHTML = '<div style="text-align: center; padding: 1rem; color: #666;">未找到相关位置</div>';
       }
@@ -651,27 +720,43 @@ class WeatherApp {
     if (o3El) o3El.textContent = `${airQuality.o3 || '--'} μg/m³`;
   }
 
-  // 更新24小时预报（优化DOM操作）
+  // 更新24小时预报 - 优化DOM操作，使用DocumentFragment
   updateHourlyForecast(hourly) {
     const container = this.domElements.hourlyForecast;
     if (!container || !hourly) return;
 
-    container.innerHTML = hourly.map(item => `
-      <div class="hourly-item">
+    // 使用DocumentFragment批量更新DOM
+    const fragment = document.createDocumentFragment();
+    
+    hourly.forEach(item => {
+      const div = document.createElement('div');
+      div.className = 'hourly-item';
+      div.innerHTML = `
         <div class="hourly-time">${item.time}:00</div>
         <div class="hourly-icon">${item.weather_info.icon}</div>
         <div class="hourly-temp">${item.temperature}°</div>
-      </div>
-    `).join('');
+      `;
+      fragment.appendChild(div);
+    });
+    
+    // 一次性更新DOM
+    container.innerHTML = '';
+    container.appendChild(fragment);
   }
 
-  // 更新3天预报（优化DOM操作）
+  // 更新3天预报 - 优化DOM操作，使用DocumentFragment
   updateDailyForecast(daily) {
     const container = this.domElements.dailyForecast;
     if (!container || !daily) return;
 
-    container.innerHTML = daily.map(item => `
-      <div class="daily-item" data-weekday="${item.weekday}">
+    // 使用DocumentFragment批量更新DOM
+    const fragment = document.createDocumentFragment();
+    
+    daily.forEach(item => {
+      const div = document.createElement('div');
+      div.className = 'daily-item';
+      div.setAttribute('data-weekday', item.weekday);
+      div.innerHTML = `
         <div class="daily-left">
           <div class="daily-relative-day">${item.relativeDay || item.weekday}</div>
           <div class="daily-weekday">${item.weekday}</div>
@@ -683,8 +768,13 @@ class WeatherApp {
           </div>
           <div class="daily-temp-range">${item.min_temp}° / ${item.max_temp}°</div>
         </div>
-      </div>
-    `).join('');
+      `;
+      fragment.appendChild(div);
+    });
+    
+    // 一次性更新DOM
+    container.innerHTML = '';
+    container.appendChild(fragment);
   }
 
   // 更新生活指数提醒
@@ -968,7 +1058,7 @@ class WeatherApp {
     this.updateModalActionButtons();
   }
 
-  // 更新收藏列表显示
+  // 更新收藏列表显示 - 优化事件委托
   updateFavoriteList() {
     const favoriteLocations = document.getElementById('favoriteLocations');
     const favoriteList = document.getElementById('favoriteList');
@@ -981,69 +1071,91 @@ class WeatherApp {
     }
 
     favoriteLocations.style.display = 'block';
-    favoriteList.innerHTML = this.favoriteLocations.map((location, index) => {
+    
+    // 使用DocumentFragment批量更新
+    const fragment = document.createDocumentFragment();
+    
+    this.favoriteLocations.forEach((location, index) => {
       const isDefault = this.defaultLocation &&
         Math.abs(this.defaultLocation.lat - location.lat) < 0.001 &&
         Math.abs(this.defaultLocation.lng - location.lng) < 0.001;
 
-      return `
-        <div class="favorite-item ${isDefault ? 'default' : ''}" data-index="${index}">
-          <div class="favorite-info">
-            <div class="favorite-name">${location.name}</div>
-            <div class="favorite-address">${location.address}</div>
-          </div>
-          <div class="favorite-actions">
-            ${!isDefault ? `<button class="favorite-action-btn set-default" title="设为默认">📍</button>` : ''}
-            <button class="favorite-action-btn delete" title="删除">🗑️</button>
-          </div>
+      const div = document.createElement('div');
+      div.className = `favorite-item ${isDefault ? 'default' : ''}`;
+      div.setAttribute('data-index', index);
+      div.innerHTML = `
+        <div class="favorite-info">
+          <div class="favorite-name">${location.name}</div>
+          <div class="favorite-address">${location.address}</div>
+        </div>
+        <div class="favorite-actions">
+          ${!isDefault ? `<button class="favorite-action-btn set-default" title="设为默认">📍</button>` : ''}
+          <button class="favorite-action-btn delete" title="删除">🗑️</button>
         </div>
       `;
-    }).join('');
+      fragment.appendChild(div);
+    });
+    
+    favoriteList.innerHTML = '';
+    favoriteList.appendChild(fragment);
 
-    // 绑定收藏项点击事件
-    favoriteList.querySelectorAll('.favorite-item').forEach(item => {
-      const index = parseInt(item.dataset.index);
-      const location = this.favoriteLocations[index];
-
-      // 点击收藏项选择位置
-      item.addEventListener('click', (e) => {
-        if (e.target.classList.contains('favorite-action-btn')) return;
-        this.selectLocation(location.lng, location.lat, location.name);
-      });
-
-      // 设为默认按钮
-      const setDefaultBtn = item.querySelector('.set-default');
-      if (setDefaultBtn) {
-        setDefaultBtn.addEventListener('click', (e) => {
+    // 使用事件委托，只绑定一个事件监听器
+    if (!favoriteList.hasAttribute('data-listener-attached')) {
+      favoriteList.setAttribute('data-listener-attached', 'true');
+      
+      favoriteList.addEventListener('click', (e) => {
+        const item = e.target.closest('.favorite-item');
+        if (!item) return;
+        
+        const index = parseInt(item.dataset.index);
+        const location = this.favoriteLocations[index];
+        
+        if (e.target.classList.contains('set-default')) {
           e.stopPropagation();
           this.saveDefaultLocation(location);
           this.updateFavoriteList();
-        });
-      }
-
-      // 删除按钮
-      const deleteBtn = item.querySelector('.delete');
-      if (deleteBtn) {
-        deleteBtn.addEventListener('click', (e) => {
+        } else if (e.target.classList.contains('delete')) {
           e.stopPropagation();
           this.favoriteLocations.splice(index, 1);
           this.saveFavoriteLocations();
           this.updateFavoriteList();
           this.updateLocationActionButtons();
-        });
-      }
-    });
+        } else if (!e.target.classList.contains('favorite-action-btn')) {
+          this.selectLocation(location.lng, location.lat, location.name);
+        }
+      });
+    }
   }
 }
 
 // 页面加载完成后初始化应用
 document.addEventListener('DOMContentLoaded', () => {
-  globalThis.weatherApp = new WeatherApp();
-});
+  console.log('[页面] DOMContentLoaded事件触发');
+  try {
+    globalThis.weatherApp = new WeatherApp();
+    console.log('[页面] WeatherApp实例创建成功');
+  } catch (error) {
+    console.error('[页面] 初始化失败:', error);
+    document.getElementById('loadingState').style.display = 'none';
+    document.getElementById('errorState').style.display = 'block';
+    document.getElementById('errorMessage').textContent = '应用初始化失败: ' + error.message;
+  }
+}, { passive: true });
 
 // 页面卸载时清理资源
 globalThis.addEventListener('beforeunload', () => {
   if (globalThis.weatherApp) {
     globalThis.weatherApp.cleanup();
   }
-});
+}, { passive: true });
+
+// 页面可见性变化时暂停/恢复动画
+document.addEventListener('visibilitychange', () => {
+  if (document.hidden) {
+    // 页面隐藏时暂停动画
+    document.body.style.animationPlayState = 'paused';
+  } else {
+    // 页面显示时恢复动画
+    document.body.style.animationPlayState = 'running';
+  }
+}, { passive: true });

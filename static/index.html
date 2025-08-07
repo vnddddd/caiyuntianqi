@@ -6,7 +6,7 @@
     <title>天气 - 实时天气查看</title>
     <meta name="description" content="基于彩云天气API的响应式天气查看网站，支持实时天气、预报信息查询">
     <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🌤️</text></svg>">
-    <link rel="stylesheet" href="/static/styles.css?v=9">
+    <link rel="stylesheet" href="static/styles.css?v=13">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
@@ -207,6 +207,13 @@
         </main>
     </div>
 
-    <script src="/static/script.js?v=9"></script>
+    <script>
+        // 临时调试代码
+        console.log('[调试] 页面加载开始');
+        window.addEventListener('error', (e) => {
+            console.error('[全局错误]', e.message, e.filename, e.lineno, e.colno);
+        });
+    </script>
+    <script src="static/script.js?v=11"></script>
 </body>
 </html>

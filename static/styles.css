@@ -18,22 +18,22 @@
   --transition: all 0.3s ease;
 
   /* 液态玻璃设计系统变量 */
-  /* 透明度级别 - 增强可见性 */
-  --glass-opacity-light: rgba(255, 255, 255, 0.2);
-  --glass-opacity-medium: rgba(255, 255, 255, 0.3);
-  --glass-opacity-strong: rgba(255, 255, 255, 0.4);
-  --glass-opacity-ultra: rgba(255, 255, 255, 0.5);
+  /* 透明度级别 - 增强通透性 */
+  --glass-opacity-light: rgba(255, 255, 255, 0.08);
+  --glass-opacity-medium: rgba(255, 255, 255, 0.12);
+  --glass-opacity-strong: rgba(255, 255, 255, 0.18);
+  --glass-opacity-ultra: rgba(255, 255, 255, 0.25);
 
-  /* 背景模糊强度 */
-  --glass-blur-light: blur(8px);
-  --glass-blur-medium: blur(15px);
-  --glass-blur-strong: blur(25px);
-  --glass-blur-ultra: blur(35px);
+  /* 背景模糊强度 - 增强模糊效果 */
+  --glass-blur-light: blur(12px);
+  --glass-blur-medium: blur(20px);
+  --glass-blur-strong: blur(30px);
+  --glass-blur-ultra: blur(40px);
 
-  /* 边框颜色 - 增强可见性 */
-  --glass-border-light: rgba(255, 255, 255, 0.2);
-  --glass-border-medium: rgba(255, 255, 255, 0.3);
-  --glass-border-strong: rgba(255, 255, 255, 0.4);
+  /* 边框颜色 - 更细腻的边框 */
+  --glass-border-light: rgba(255, 255, 255, 0.15);
+  --glass-border-medium: rgba(255, 255, 255, 0.2);
+  --glass-border-strong: rgba(255, 255, 255, 0.3);
 
   /* 阴影效果 */
   --glass-shadow-light: 0 4px 16px rgba(0, 0, 0, 0.05);
@@ -71,7 +71,7 @@ body {
   font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
   line-height: 1.6;
   color: var(--text-primary);
-  background: url('/static/day.png') center center / cover no-repeat;
+  background: url('day.png') center center / cover no-repeat;
   min-height: 100vh;
   transition: background 0.8s ease-in-out;
   background-attachment: fixed;
@@ -79,13 +79,13 @@ body {
 
 /* 时间背景 - 白天背景 (6:00-19:00) */
 body.time-day {
-  background: url('/static/day.png') center center / cover no-repeat;
+  background: url('day.png') center center / cover no-repeat;
   background-attachment: fixed;
 }
 
 /* 时间背景 - 夜晚背景 (19:00-6:00) */
 body.time-night {
-  background: url('/static/night.webp') center center / cover no-repeat;
+  background: url('night.webp') center center / cover no-repeat;
   background-attachment: fixed;
 }
 
@@ -96,11 +96,11 @@ body.time-night {
   --glass-text-secondary: #e0e0e0;
   --glass-text-shadow: 0 1px 3px rgba(0, 0, 0, 0.3);
 
-  /* 夜晚模式下调整透明度 */
-  --glass-opacity-light: rgba(255, 255, 255, 0.05);
-  --glass-opacity-medium: rgba(255, 255, 255, 0.1);
-  --glass-opacity-strong: rgba(255, 255, 255, 0.15);
-  --glass-opacity-ultra: rgba(255, 255, 255, 0.2);
+  /* 夜晚模式下调整透明度 - 更通透 */
+  --glass-opacity-light: rgba(255, 255, 255, 0.03);
+  --glass-opacity-medium: rgba(255, 255, 255, 0.06);
+  --glass-opacity-strong: rgba(255, 255, 255, 0.1);
+  --glass-opacity-ultra: rgba(255, 255, 255, 0.15);
 
   /* 夜晚模式下增强边框可见性 */
   --glass-border-light: rgba(255, 255, 255, 0.15);
@@ -537,23 +537,26 @@ body.time-night {
 /* 天气内容网格 */
 .weather-content {
   display: grid;
-  gap: 1.5rem;
+  gap: 2rem;
   grid-template-columns: 1fr;
+  max-width: 100%;
+  margin: 0 auto;
 }
 
 /* 卡片基础样式 - 液态玻璃风格 */
 .current-weather-card,
 .hourly-forecast-card {
   background: var(--glass-opacity-medium);
-  backdrop-filter: var(--glass-blur-medium);
-  -webkit-backdrop-filter: var(--glass-blur-medium);
+  backdrop-filter: var(--glass-blur-medium) saturate(180%);
+  -webkit-backdrop-filter: var(--glass-blur-medium) saturate(180%);
   border: 1px solid var(--glass-border-medium);
   border-radius: var(--glass-radius-medium);
-  padding: 1.5rem;
+  padding: 2rem;
   box-shadow: var(--glass-shadow-medium);
   transition: var(--glass-transition);
   position: relative;
   overflow: hidden;
+  margin-bottom: 0.5rem;
 }
 
 /* 液态玻璃卡片悬停效果 */
@@ -570,16 +573,16 @@ body.time-night {
 /* 3天预报卡片特殊样式 - 液态玻璃风格，与生活指数卡片连接 */
 .daily-forecast-card {
   background: var(--glass-opacity-medium);
-  backdrop-filter: var(--glass-blur-medium);
-  -webkit-backdrop-filter: var(--glass-blur-medium);
+  backdrop-filter: var(--glass-blur-medium) saturate(180%);
+  -webkit-backdrop-filter: var(--glass-blur-medium) saturate(180%);
   border: 1px solid var(--glass-border-medium);
-  border-radius: var(--glass-radius-medium) var(--glass-radius-medium) 0 0;
-  border-bottom: none;
-  padding: 1.5rem;
+  border-radius: var(--glass-radius-medium);
+  padding: 2rem;
   box-shadow: var(--glass-shadow-medium);
   transition: var(--glass-transition);
   position: relative;
   overflow: hidden;
+  margin-bottom: 0.5rem;
 }
 
 /* 液态玻璃卡片悬停效果更新 */
@@ -592,20 +595,6 @@ body.time-night {
   border-color: var(--glass-border-strong);
   box-shadow: var(--glass-shadow-strong);
   transform: translateY(-2px);
-}
-
-/* 当前天气卡片 - 液态玻璃增强 */
-.current-weather-card {
-  background: var(--glass-opacity-medium);
-  backdrop-filter: var(--glass-blur-medium);
-  -webkit-backdrop-filter: var(--glass-blur-medium);
-  border: 1px solid var(--glass-border-medium);
-  border-radius: var(--glass-radius-medium);
-  padding: 1.5rem;
-  box-shadow: var(--glass-shadow-medium);
-  margin-bottom: 1.5rem;
-  position: relative;
-  overflow: hidden;
 }
 
 /* 为当前天气卡片添加微妙的内部光效 */
@@ -1442,17 +1431,24 @@ body.time-night {
   .hourly-forecast-card,
   .daily-forecast-card,
   .weather-tips-card {
-    /* 移动端使用较轻的模糊效果以提升性能 */
-    backdrop-filter: var(--glass-blur-light);
-    -webkit-backdrop-filter: var(--glass-blur-light);
+    /* 移动端使用更强的模糊效果和更低的透明度 */
+    backdrop-filter: blur(25px) saturate(150%);
+    -webkit-backdrop-filter: blur(25px) saturate(150%);
+    /* 极低的透明度以增强通透性 */
+    background: rgba(255, 255, 255, 0.05) !important;
+    /* 更细的边框 */
+    border: 1px solid rgba(255, 255, 255, 0.1) !important;
+    /* 增强阴影效果 */
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1),
+                inset 0 1px 0 rgba(255, 255, 255, 0.1) !important;
   }
-
-  /* 移动端减少动画复杂度 */
+  
+  /* 移动端卡片内边距调整 */
   .current-weather-card,
   .hourly-forecast-card,
   .daily-forecast-card,
   .weather-tips-card {
-    animation-duration: 3s; /* 减慢呼吸动画频率 */
+    padding: 1.25rem !important;
   }
 
   .search-container {
@@ -1478,15 +1474,14 @@ body.time-night {
 /* 天气生活指数提醒卡片 - 液态玻璃风格 */
 .weather-tips-card {
   background: var(--glass-opacity-medium);
-  backdrop-filter: var(--glass-blur-medium);
-  -webkit-backdrop-filter: var(--glass-blur-medium);
+  backdrop-filter: var(--glass-blur-medium) saturate(180%);
+  -webkit-backdrop-filter: var(--glass-blur-medium) saturate(180%);
   border: 1px solid var(--glass-border-medium);
-  border-radius: 0 0 var(--glass-radius-medium) var(--glass-radius-medium);
-  border-top: none;
-  padding: 1.5rem;
+  border-radius: var(--glass-radius-medium);
+  padding: 2rem;
   box-shadow: var(--glass-shadow-medium);
   transition: var(--glass-transition);
-  margin-top: 0;
+  margin-bottom: 0.5rem;
   position: relative;
   overflow: hidden;
 }
@@ -1574,86 +1569,53 @@ body.time-night {
   }
 }
 
-/* 液态玻璃高级动画效果 */
+/* 液态玻璃性能优化 - 保留效果但减少性能开销 */
 
-/* 微妙的脉冲光效 */
-@keyframes glassGlow {
-  0%, 100% {
-    box-shadow: var(--glass-shadow-medium);
-  }
-  50% {
-    box-shadow: var(--glass-shadow-medium), var(--glass-glow);
-  }
+/* 使用will-change优化动画性能 */
+.current-weather-card,
+.hourly-forecast-card,
+.daily-forecast-card,
+.weather-tips-card {
+  will-change: transform;
+  transform: translateZ(0); /* 启用硬件加速 */
 }
 
-/* 液态玻璃卡片的微妙呼吸效果 */
-@keyframes glassBreath {
-  0%, 100% {
-    backdrop-filter: var(--glass-blur-medium);
-    -webkit-backdrop-filter: var(--glass-blur-medium);
-  }
-  50% {
-    backdrop-filter: var(--glass-blur-strong);
-    -webkit-backdrop-filter: var(--glass-blur-strong);
-  }
-}
-
-/* 悬停效果保持简单 */
-.current-weather-card:hover,
-.hourly-forecast-card:hover,
-.daily-forecast-card:hover,
-.weather-tips-card:hover {
-  /* 悬停时不做特殊处理，让CSS transition处理 */
-}
-
-/* 液态玻璃元素的入场动画 */
+/* 简化的入场动画 - 只使用opacity和transform */
 @keyframes glassSlideIn {
   0% {
     opacity: 0;
     transform: translateY(20px);
-    backdrop-filter: blur(0px);
-    -webkit-backdrop-filter: blur(0px);
   }
   100% {
     opacity: 1;
     transform: translateY(0);
-    backdrop-filter: var(--glass-blur-medium);
-    -webkit-backdrop-filter: var(--glass-blur-medium);
   }
 }
 
-/* 简化的入场动画 - 移除复杂的多重动画 */
+/* 入场动画 - 移除backdrop-filter动画以提升性能 */
 .current-weather-card {
-  animation: glassSlideIn 0.6s ease-out;
+  animation: glassSlideIn 0.4s ease-out;
 }
 
 .hourly-forecast-card {
-  animation: glassSlideIn 0.6s ease-out 0.1s both;
+  animation: glassSlideIn 0.4s ease-out 0.1s both;
 }
 
 .daily-forecast-card {
-  animation: glassSlideIn 0.6s ease-out 0.2s both;
+  animation: glassSlideIn 0.4s ease-out 0.2s both;
 }
 
 .weather-tips-card {
-  animation: glassSlideIn 0.6s ease-out 0.3s both;
+  animation: glassSlideIn 0.4s ease-out 0.3s both;
 }
 
-/* 液态玻璃边框光效 */
-@keyframes glassBorderGlow {
-  0%, 100% {
-    border-color: var(--glass-border-medium);
-  }
-  50% {
-    border-color: var(--glass-border-strong);
-  }
-}
-
-/* 为交互元素添加微妙的边框光效 */
+/* 移除hover时的动画，只使用transition */
 .hourly-item:hover,
 .daily-item:hover,
 .weather-tip-item:hover {
-  animation: glassBorderGlow 1.5s ease-in-out infinite;
+  animation: none;
+  transform: translateY(-2px);
+  transition: transform 0.2s ease;
 }
 
 /* 减少动画对性能的影响 */
