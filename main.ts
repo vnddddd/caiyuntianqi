@@ -1002,6 +1002,11 @@ async function handler(req: Request, info: Deno.ServeHandlerInfo): Promise<Respo
     });
   }
 
+  // 处理PWA访问 /static/ 的情况，重定向到根路径
+  if (pathname === "/static/" || pathname === "/static") {
+    return Response.redirect(new URL("/", req.url), 301);
+  }
+
   // 静态文件服务
   if (pathname === "/" || pathname === "/index.html") {
     try {

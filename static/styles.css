@@ -1710,3 +1710,56 @@ body.time-night {
     transform: scale(1.1);
   }
 }
+
+/* PWA 更新通知样式 */
+.update-notification {
+  position: fixed;
+  top: 20px;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 10000;
+  background: var(--glass-opacity-ultra);
+  backdrop-filter: var(--glass-blur-medium);
+  -webkit-backdrop-filter: var(--glass-blur-medium);
+  border: 1px solid var(--glass-border-strong);
+  border-radius: var(--glass-radius-medium);
+  box-shadow: var(--glass-shadow-strong);
+  padding: 16px 24px;
+  max-width: 90%;
+  animation: slideDown 0.3s ease-out;
+}
+
+@keyframes slideDown {
+  from {
+    opacity: 0;
+    transform: translateX(-50%) translateY(-20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(-50%) translateY(0);
+  }
+}
+
+.update-content {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  color: var(--text-primary);
+  font-weight: 500;
+}
+
+.update-content button {
+  background: var(--glass-opacity-medium);
+  border: 1px solid var(--glass-border-light);
+  border-radius: 8px;
+  padding: 8px 16px;
+  color: var(--text-primary);
+  font-size: 14px;
+  cursor: pointer;
+  transition: var(--glass-transition-fast);
+}
+
+.update-content button:hover {
+  background: var(--glass-opacity-strong);
+  transform: translateY(-1px);
+}

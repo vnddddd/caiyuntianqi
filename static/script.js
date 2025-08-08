@@ -3,6 +3,65 @@
  * 处理位置获取、天气数据展示、用户界面更新
  */
 
+// Service Worker 注册
+if ('serviceWorker' in navigator) {
+  window.addEventListener('load', async () => {
+    try {
+      const registration = await navigator.serviceWorker.register('/static/sw.js');
+      console.log('Service Worker 注册成功:', registration.scope);
+      
+      // 监听更新
+      registration.addEventListener('updatefound', () => {
+        const newWorker = registration.installing;
+        if (newWorker) {
+          newWorker.addEventListener('statechange', () => {
+            if (newWorker.state === 'installed') {
+              if (navigator.serviceWorker.controller) {
+                console.log('Service Worker 已更新，等待激活');
+                showUpdateAvailable();
+              } else {
+                console.log('Service Worker 已安装并准备好缓存');
+              }
+            }
+          });
+        }
+      });
+    } catch (error) {
+      console.error('Service Worker 注册失败:', error);
+    }
+  });
+}
+
+// 显示更新可用提示
+function showUpdateAvailable() {
+  const notification = document.createElement('div');
+  notification.className = 'update-notification';
+  notification.innerHTML = `
+    <div class="update-content">
+      <span>应用已更新</span>
+      <button onclick="refreshPage()">刷新</button>
+      <button onclick="dismissUpdate(this)">稍后</button>
+    </div>
+  `;
+  document.body.appendChild(notification);
+}
+
+// 刷新页面应用更新
+function refreshPage() {
+  if ('serviceWorker' in navigator) {
+    navigator.serviceWorker.controller?.postMessage({ type: 'SKIP_WAITING' });
+    window.location.reload();
+  }
+}
+
+// 关闭更新提示
+function dismissUpdate(button) {
+  const notification = button.closest('.update-notification');
+  if (notification) {
+    notification.remove();
+  }
+}
+
 // 防抖函数
 function debounce(func, wait) {
   let timeout;

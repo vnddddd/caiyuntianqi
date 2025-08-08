@@ -6,7 +6,26 @@
     <title>天气 - 实时天气查看</title>
     <meta name="description" content="基于彩云天气API的响应式天气查看网站，支持实时天气、预报信息查询">
     <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🌤️</text></svg>">
-    <link rel="stylesheet" href="static/styles.css?v=13">
+    
+    <!-- PWA Meta Tags -->
+    <meta name="theme-color" content="#1976d2">
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="default">
+    <meta name="apple-mobile-web-app-title" content="彩云天气">
+    <meta name="application-name" content="彩云天气">
+    <meta name="msapplication-TileColor" content="#1976d2">
+    <meta name="msapplication-config" content="/static/browserconfig.xml">
+    
+    <!-- PWA Manifest -->
+    <link rel="manifest" href="/static/manifest.json">
+    
+    <!-- PWA Icons -->
+    <link rel="apple-touch-icon" sizes="152x152" href="/static/icons/icon-152x152.png">
+    <link rel="apple-touch-icon" sizes="180x180" href="/static/icons/icon-192x192.png">
+    <link rel="icon" type="image/png" sizes="32x32" href="/static/icons/icon-32x32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="/static/icons/icon-16x16.png">
+    <link rel="stylesheet" href="/static/styles.css?v=13">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
@@ -208,12 +227,44 @@
     </div>
 
     <script>
+        // 尽早修复被动事件监听器警告
+        (function() {
+          let supportsPassive = false;
+          try {
+            const opts = Object.defineProperty({}, 'passive', {
+              get: function() {
+                supportsPassive = true;
+              }
+            });
+            window.addEventListener('testPassive', null, opts);
+            window.removeEventListener('testPassive', null, opts);
+          } catch (e) {}
+
+          if (supportsPassive) {
+            const addEventListenerOriginal = EventTarget.prototype.addEventListener;
+            EventTarget.prototype.addEventListener = function(type, listener, options) {
+              if (type === 'touchstart' || type === 'touchmove' || type === 'wheel' || type === 'scroll' || type === 'touchend') {
+                if (typeof options === 'boolean') {
+                  options = { passive: true, capture: options };
+                } else if (typeof options === 'object' && options !== null) {
+                  if (options.passive === undefined) {
+                    options.passive = true;
+                  }
+                } else {
+                  options = { passive: true };
+                }
+              }
+              addEventListenerOriginal.call(this, type, listener, options);
+            };
+          }
+        })();
+
         // 临时调试代码
         console.log('[调试] 页面加载开始');
         window.addEventListener('error', (e) => {
             console.error('[全局错误]', e.message, e.filename, e.lineno, e.colno);
         });
     </script>
-    <script src="static/script.js?v=11"></script>
+    <script src="/static/script.js?v=11"></script>
 </body>
 </html>
